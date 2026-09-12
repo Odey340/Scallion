@@ -76,7 +76,7 @@ export default function StartScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <ThemedText type="subtitle">Your fitness age</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Ten seconds, no login. Estimate, not diagnosis.
@@ -154,6 +154,7 @@ export default function StartScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

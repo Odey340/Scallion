@@ -63,4 +63,8 @@ export const NumericStyle: { fontVariant: TextStyle['fontVariant']; fontFamily: 
   fontFamily: Fonts.display,
 };
 
-export const MaxContentWidth = 800;
+/**
+ * Content max-width. Phones are always well under this, so raising it only affects laptop/desktop
+ * viewports; kept well short of full-bleed so text stays readable on ultra-wide screens.
+ */
+export const MaxContentWidth = 1080;

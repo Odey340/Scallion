@@ -7,6 +7,7 @@
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/ui": "~57.0.18",
     "@expo/vector-icons": "^15.0.2",
+    "@supabase/supabase-js": "^2.116.0",
     "expo": "~57.0.22",
     "expo-constants": "~57.0.18",
     "expo-device": "~57.0.2",

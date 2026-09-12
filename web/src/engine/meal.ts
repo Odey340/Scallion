@@ -1,5 +1,5 @@
 /**
- * Tonight's plate: two glucose CurveBands (eat now / plus a walk) from A's SimBiology sweep,
+ * Scan's plate: two glucose CurveBands (eat now / plus a walk) from A's SimBiology sweep,
  * per web/public/engine/meal_grid.json (matlab/sweep/run_meal_sweep.m, Cobelli/Dalla Man 2007 model).
  * Contract: "C interpolates linearly on carbs and weight, nearest on variant."
  */

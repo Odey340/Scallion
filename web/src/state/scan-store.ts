@@ -8,7 +8,7 @@ export interface GeminiEstimate {
   confidence: 'low' | 'medium' | 'high';
 }
 
-export interface TonightResult {
+export interface ScanResult {
   meal: MealComputation;
   mealType: string;
   onMeds: boolean;
@@ -17,21 +17,21 @@ export interface TonightResult {
   coffee: { hoursBefore: number; byClockTime: string | null } | null;
 }
 
-let current: TonightResult | null = null;
+let current: ScanResult | null = null;
 const listeners = new Set<() => void>();
 
-export function setTonightResult(result: TonightResult) {
+export function setScanResult(result: ScanResult) {
   current = result;
   listeners.forEach((listener) => listener());
 }
 
-export function clearTonightResult() {
+export function clearScanResult() {
   current = null;
   listeners.forEach((listener) => listener());
 }
 
 /** Module-level singleton, not persisted — a fresh page load (e.g. a shared link) has no result. */
-export function useTonightResult(): TonightResult | null {
+export function useScanResult(): ScanResult | null {
   const [, forceRender] = useState(0);
 
   useEffect(() => {

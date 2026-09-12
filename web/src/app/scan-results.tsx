@@ -9,11 +9,11 @@ import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import type { MealComputation } from '@/engine/meal';
 import { computeWellbeingScore, wellbeingTier, WELLBEING_TIER_TEXT } from '@/engine/wellbeing';
-import { clearTonightResult, useTonightResult } from '@/state/tonight-store';
+import { clearScanResult, useScanResult } from '@/state/scan-store';
 
-export default function TonightResultsScreen() {
+export default function ScanResultsScreen() {
   const router = useRouter();
-  const result = useTonightResult();
+  const result = useScanResult();
 
   if (!result) {
     return (
@@ -23,7 +23,7 @@ export default function TonightResultsScreen() {
           <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
             Go back and describe a meal to see its results here.
           </ThemedText>
-          <Pressable style={styles.backButton} onPress={() => router.replace('/(tabs)/tonight')}>
+          <Pressable style={styles.backButton} onPress={() => router.replace('/(tabs)/scan')}>
             <ThemedText type="smallBold" themeColor="accentText">
               Back to your meal
             </ThemedText>
@@ -42,7 +42,7 @@ export default function TonightResultsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
           <View style={styles.hero}>
             <ThemedText type="small" themeColor="textMuted">
               {mealType} • {carbsSource === 'photo' ? 'estimated from your photo' : 'entered manually'}
@@ -113,8 +113,8 @@ export default function TonightResultsScreen() {
           <Pressable
             style={styles.backButton}
             onPress={() => {
-              clearTonightResult();
-              router.replace('/(tabs)/tonight');
+              clearScanResult();
+              router.replace('/(tabs)/scan');
             }}>
             <ThemedText type="smallBold" themeColor="accentText">
               Try another meal
@@ -152,6 +152,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
   empty: { justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four },
   emptyText: { textAlign: 'center' },
   scroll: {

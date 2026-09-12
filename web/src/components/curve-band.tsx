@@ -49,7 +49,7 @@ export function CurveBand({
   const yTicks = [minY, (minY + maxY) / 2, maxY];
 
   return (
-    <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}>
+    <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="none">
       {walkWindow && (
         <Polygon
           points={`${x(walkWindow.startMin)},${PAD_TOP} ${x(walkWindow.endMin)},${PAD_TOP} ${x(

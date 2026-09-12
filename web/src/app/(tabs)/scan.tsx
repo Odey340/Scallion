@@ -10,17 +10,17 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { lastCoffeeHoursBeforeBed, subtractHours, type CaffeineData } from '@/engine/caffeine';
 import { computeMealCurves, type MealComputation, type MealGrid } from '@/engine/meal';
-import { setTonightResult, type GeminiEstimate, type TonightResult } from '@/state/tonight-store';
+import { setScanResult, type GeminiEstimate, type ScanResult } from '@/state/scan-store';
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const LB_PER_KG = 2.20462;
 
 /**
- * A meal, any meal — not just dinner. Photo -> Gemini carbs estimate (or type it in) ->
+ * Scan any meal — not just dinner. Photo -> Gemini carbs estimate (or type it in) ->
  * two glucose CurveBands from A's meal_grid.json, plus the caffeine last-coffee line.
  * The full breakdown lives on the results page; this screen only gathers inputs.
  */
-export default function TonightScreen() {
+export default function ScanScreen() {
   const router = useRouter();
 
   const [grid, setGrid] = useState<MealGrid | null>(null);
@@ -134,7 +134,7 @@ export default function TonightScreen() {
       return;
     }
 
-    let coffee: TonightResult['coffee'] = null;
+    let coffee: ScanResult['coffee'] = null;
     if (caffeineMg && bedtime) {
       const doseNum = Number(caffeineMg);
       if (Number.isFinite(doseNum)) {
@@ -143,7 +143,7 @@ export default function TonightScreen() {
       }
     }
 
-    setTonightResult({
+    setScanResult({
       meal,
       mealType: mealType ?? 'Meal',
       onMeds: onMeds === true,
@@ -151,13 +151,13 @@ export default function TonightScreen() {
       gemini,
       coffee,
     });
-    router.push('/tonight-results');
+    router.push('/scan-results');
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <ThemedText type="subtitle">Your meal</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Breakfast, lunch, dinner, or a snack — estimate, not diagnosis.
@@ -262,6 +262,7 @@ export default function TonightScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

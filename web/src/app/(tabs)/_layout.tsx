@@ -11,7 +11,7 @@ const TAB_ICONS: Record<string, IconName> = {
   circle: 'people-outline',
   labs: 'flask-outline',
   camera: 'camera-outline',
-  tonight: 'restaurant-outline',
+  scan: 'scan-outline',
   coach: 'mic-outline',
 };
 
@@ -42,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="circle" options={{ title: 'Circle' }} />
       <Tabs.Screen name="labs" options={{ title: 'Labs' }} />
       <Tabs.Screen name="camera" options={{ title: 'Camera' }} />
-      <Tabs.Screen name="tonight" options={{ title: 'Tonight' }} />
+      <Tabs.Screen name="scan" options={{ title: 'Scan' }} />
       <Tabs.Screen name="coach" options={{ title: 'Coach' }} />
     </Tabs>
   );

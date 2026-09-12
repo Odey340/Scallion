@@ -1,5 +1,5 @@
 /**
- * Tonight's last-coffee line, from web/public/engine/caffeine.json (matlab/engine/caffeine_curve.m).
+ * Scan's last-coffee line, from web/public/engine/caffeine.json (matlab/engine/caffeine_curve.m).
  */
 
 export interface CaffeineData {
