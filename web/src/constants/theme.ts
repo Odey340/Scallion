@@ -64,7 +64,11 @@ export const NumericStyle: { fontVariant: TextStyle['fontVariant']; fontFamily: 
 };
 
 /**
- * Content max-width. Phones are always well under this, so raising it only affects laptop/desktop
- * viewports; kept well short of full-bleed so text stays readable on ultra-wide screens.
+ * Content max-width. Phones are always well under this, so this only affects laptop/desktop
+ * viewports. 1080 read as too wide/stretched (human feedback); a classic centered reading/form
+ * column reads better than maximizing fill.
  */
-export const MaxContentWidth = 1080;
+export const MaxContentWidth = 720;
+
+/** Charts read as a stretched line, not a chart, once their box gets much wider than this. */
+export const MaxChartWidth = 560;

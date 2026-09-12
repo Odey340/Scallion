@@ -6,7 +6,7 @@ import { CurveBand } from '@/components/curve-band';
 import { ScoreRing } from '@/components/score-ring';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { CardShadow, Colors, MaxChartWidth, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import type { MealComputation } from '@/engine/meal';
 import { computeWellbeingScore, wellbeingTier, WELLBEING_TIER_TEXT } from '@/engine/wellbeing';
 import { clearScanResult, useScanResult } from '@/state/scan-store';
@@ -185,7 +185,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginBottom: Spacing.three,
   },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: MaxChartWidth,
+    alignSelf: 'center',
+  },
   stat: { alignItems: 'center', gap: Spacing.half },
   statValue: { fontSize: 18, lineHeight: 22 },
   disclaimer: { textAlign: 'center', marginBottom: Spacing.four },

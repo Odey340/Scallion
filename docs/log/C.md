@@ -78,9 +78,6 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 
 **Contract changes needed:** `[contract] v10` already made (route rename, renumbered to v11 after a collision with D's own v10 — same pattern as A's earlier `k`/`t_months` renumbering, resolved the same way: pull, renumber, keep going).
 
-
-
-
 ## Session 6 (2026-09-12): checklist audit of docs/lanes/C.md, no feature work
 
 **Done:** Audited every checkbox in `docs/lanes/C.md` against `web/` and the deployed site (a parallel Lane C session landed the `/scan` rename + onboarding while this ran; audit re-based on `60ba625`). Fresh `npm ci` on this checkout (no `node_modules`, no `web/.vercel` link here), then `tsc --noEmit`, `expo lint`, `expo export -p web` all pass. `scallion.us` `/`, `/start`, the meal screen, `/labs`, `/engine/phenoage.json` return 200; `api.scallion.us/health` reports gemini live, auth jwt, db tiger, tts live, memory backboard. First real browser check of the meal form -> results page (sessions 3-4 never got one): form, medication gate, both CurveBands, Buffey label, caffeine line all render.
@@ -118,5 +115,19 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 **Not done:** no 20 s recording (no screen capture from this session; a human should record Home + /start on a phone). Nudge feedback buttons (Block 4) and the daily 1 pm card are not on Home yet. The "+/- 15 years" fitness band is still the honest SEE-derived number flagged in Session 1.
 
 **Next:** Labs (upload -> review -> waterfall, `phenoage.ts` + `POST /clock` so Home flips to PhenoAge), then Circle, Camera, Coach.
+
+## Session 9 (2026-09-12): width/centering feedback, Supabase keys landed
+
+Concurrent with sessions 6-8 above (a parallel Lane C session/teammate) — discovered on rebase, not before. Renumbered from my own "Session 6" to avoid colliding with theirs. Worth flagging back: their audit's flag (1) questions whether the wellbeing score I added in Session 4 conflicts with CLAUDE.md rule 1 (every on-screen number from A's export or B's package) — it's labelled as Lane C's own heuristic everywhere it appears, but the concern is legitimate and now raised independently twice; worth a product decision rather than either of us unilaterally removing it. Their flag (6) that `docs/lanes/C.md` still says "Tonight" is fixed below.
+
+**Done:** Human said the desktop layout from last session's fix was now "too stretched out" and asked to center text and graphs. Root cause of the overcorrection: `MaxContentWidth` at 1080 combined with the just-fixed `ScrollView` stretch made every screen fill nearly the full laptop viewport, and `CurveBand`'s `preserveAspectRatio="none"` let the chart stretch to that same width, turning a 1.6:1 chart into something closer to 5:1 — flat and stretched, not a chart. Fixed by: `MaxContentWidth` 1080 -> 720 (a standard centered content/form column instead of maximizing fill — the original "squished" complaint turned out to be the ScrollView bug at ~520px, not the 800px setting, so a moderate width was likely fine all along); added `MaxChartWidth` (560) and wrapped `CurveBand`'s `<Svg>` in a `View` capped at that width and centered, so charts read as charts regardless of how wide their parent card is; capped `scan-results.tsx`'s summary-stat row to the same width so it lines up under the chart instead of spanning the wider card. Verified visually against a real rebuild: chart now has real proportions, no more thin stretched line, comfortable margins either side of the form column.
+
+**Done:** Human provided the Supabase project URL and anon key (`https://cmjxjgsoyydqlbgillkx.supabase.co` + anon JWT — an anon key is meant to be public/client-embedded, unlike the Gemini key, so no special secrecy handling needed). Set both as `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` Vercel env vars (production + preview; the anon key needed `--type config --value ... --yes` since the CLI's interactive secret/public prompt doesn't work non-interactively). Sign-in should now be live on the next deploy — not yet manually walked through end-to-end in a browser.
+
+**Also cleaned up:** found and removed leftover duplicate/orphaned paragraphs and stray blank lines in this log file from an earlier session's edit mistake (not this session's fault, just noticed and fixed while appending).
+
+**Blocked:** Nothing.
+
+**Next:** Walk through the actual OTP sign-in flow end to end now that Supabase keys are live (send code, receive email, verify, confirm `/me`/`/me/answers` work with a real session). Then Persona verification end to end. Also pick up the concurrent session's "Next" queue above (Labs upload/review/waterfall, Circle, Camera, Coach) — whichever of us continues Lane C next should read both trails, not just the latest.
 
 **Contract changes needed:** None.

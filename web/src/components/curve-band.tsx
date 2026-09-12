@@ -1,6 +1,7 @@
+import { View } from 'react-native';
 import Svg, { Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors, Fonts, MaxChartWidth } from '@/constants/theme';
 import type { MealCurveSeries } from '@/engine/meal';
 
 const VIEW_WIDTH = 320;
@@ -49,67 +50,69 @@ export function CurveBand({
   const yTicks = [minY, (minY + maxY) / 2, maxY];
 
   return (
-    <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="none">
-      {walkWindow && (
-        <Polygon
-          points={`${x(walkWindow.startMin)},${PAD_TOP} ${x(walkWindow.endMin)},${PAD_TOP} ${x(
-            walkWindow.endMin
-          )},${PAD_TOP + plotH} ${x(walkWindow.startMin)},${PAD_TOP + plotH}`}
-          fill={Colors.connection}
-          fillOpacity={0.08}
-        />
-      )}
+    <View style={{ width: '100%', maxWidth: MaxChartWidth, alignSelf: 'center' }}>
+      <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="none">
+        {walkWindow && (
+          <Polygon
+            points={`${x(walkWindow.startMin)},${PAD_TOP} ${x(walkWindow.endMin)},${PAD_TOP} ${x(
+              walkWindow.endMin
+            )},${PAD_TOP + plotH} ${x(walkWindow.startMin)},${PAD_TOP + plotH}`}
+            fill={Colors.connection}
+            fillOpacity={0.08}
+          />
+        )}
 
-      {yTicks.map((v) => (
+        {yTicks.map((v) => (
+          <Line
+            key={v}
+            x1={PAD_LEFT}
+            x2={VIEW_WIDTH - PAD_RIGHT}
+            y1={y(v)}
+            y2={y(v)}
+            stroke={Colors.border}
+            strokeWidth={1}
+          />
+        ))}
+
         <Line
-          key={v}
           x1={PAD_LEFT}
           x2={VIEW_WIDTH - PAD_RIGHT}
-          y1={y(v)}
-          y2={y(v)}
-          stroke={Colors.border}
+          y1={y(basalMgdl)}
+          y2={y(basalMgdl)}
+          stroke={Colors.textMuted}
           strokeWidth={1}
+          strokeDasharray="4,3"
         />
-      ))}
 
-      <Line
-        x1={PAD_LEFT}
-        x2={VIEW_WIDTH - PAD_RIGHT}
-        y1={y(basalMgdl)}
-        y2={y(basalMgdl)}
-        stroke={Colors.textMuted}
-        strokeWidth={1}
-        strokeDasharray="4,3"
-      />
+        <Polygon points={bandPoints} fill={Colors.accent} fillOpacity={0.15} />
+        <Polyline points={linePoints} fill="none" stroke={Colors.accent} strokeWidth={2.5} />
 
-      <Polygon points={bandPoints} fill={Colors.accent} fillOpacity={0.15} />
-      <Polyline points={linePoints} fill="none" stroke={Colors.accent} strokeWidth={2.5} />
+        {yTicks.map((v) => (
+          <SvgText
+            key={v}
+            x={PAD_LEFT - 6}
+            y={y(v) + 3}
+            fontSize={9}
+            fontFamily={Fonts.body}
+            fill={Colors.textMuted}
+            textAnchor="end">
+            {Math.round(v)}
+          </SvgText>
+        ))}
 
-      {yTicks.map((v) => (
-        <SvgText
-          key={v}
-          x={PAD_LEFT - 6}
-          y={y(v) + 3}
-          fontSize={9}
-          fontFamily={Fonts.body}
-          fill={Colors.textMuted}
-          textAnchor="end">
-          {Math.round(v)}
-        </SvgText>
-      ))}
-
-      {xTicks.map((t) => (
-        <SvgText
-          key={t}
-          x={x(t)}
-          y={VIEW_HEIGHT - 6}
-          fontSize={9}
-          fontFamily={Fonts.body}
-          fill={Colors.textMuted}
-          textAnchor="middle">
-          {t}m
-        </SvgText>
-      ))}
-    </Svg>
+        {xTicks.map((t) => (
+          <SvgText
+            key={t}
+            x={x(t)}
+            y={VIEW_HEIGHT - 6}
+            fontSize={9}
+            fontFamily={Fonts.body}
+            fill={Colors.textMuted}
+            textAnchor="middle">
+            {t}m
+          </SvgText>
+        ))}
+      </Svg>
+    </View>
   );
 }
