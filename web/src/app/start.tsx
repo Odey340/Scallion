@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -150,48 +151,6 @@ export default function StartScreen() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      {children}
-    </View>
-  );
-}
-
-function NumberInput({
-  value,
-  onChangeText,
-  placeholder,
-}: {
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <TextInput
-      style={styles.input}
-      keyboardType="numeric"
-      placeholderTextColor={Colors.textMuted}
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-    />
-  );
-}
-
-function SegmentButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable style={[styles.segment, active && styles.segmentActive]} onPress={onPress}>
-      <ThemedText type="small" themeColor={active ? 'accentText' : 'text'}>
-        {label}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
@@ -202,31 +161,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.five,
     gap: Spacing.four,
   },
-  field: { gap: Spacing.two },
   row: { flexDirection: 'row', gap: Spacing.two },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.medium,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    color: Colors.text,
-    backgroundColor: Colors.surface,
-    fontSize: 16,
-  },
-  segment: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.medium,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    backgroundColor: Colors.surface,
-  },
-  segmentActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
-  },
   submit: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.medium,
