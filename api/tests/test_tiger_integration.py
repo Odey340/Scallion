@@ -1,4 +1,4 @@
-"""Runs only when TIGER_DATABASE_URL is set: applies the migrations to the real Tiger Data
+"""Runs only when TIGER_DATABASE_URL is set in the environment (conftest moves it to TIGER_TEST_URL): applies the migrations to the real Tiger Data
 service and round-trips one row through every table. Safe to re-run; it cleans up after itself."""
 import os
 import uuid
@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-URL = os.environ.get("TIGER_DATABASE_URL", "")
+from tests.conftest import TIGER_TEST_URL as URL
 pytestmark = pytest.mark.skipif(not URL, reason="TIGER_DATABASE_URL not set")
 
 

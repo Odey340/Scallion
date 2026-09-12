@@ -16,7 +16,7 @@ def _load_apply():
 
 def test_files_are_numbered_without_gaps():
     files = _load_apply().migration_files()
-    assert [p.name[:4] for p in files] == ["0001", "0002", "0003", "0004"]
+    assert [p.name[:4] for p in files] == ["0001", "0002", "0003", "0004", "0005"]
 
 
 @pytest.mark.parametrize(
@@ -30,6 +30,7 @@ def test_files_are_numbered_without_gaps():
                              "pulse_bpm", "breathing_bpm", "stress_index"]),
         ("0004_clock_history.sql", ["create table if not exists clock_history", "create_hypertable('clock_history', 'computed_at'",
                                     "'phenoage', 'fitness', 'social_risk'"]),
+        ("0005_daily_connection_realtime.sql", ["timescaledb.materialized_only = false"]),
     ],
 )
 def test_migration_contains_contract_objects(name, needles):
@@ -41,7 +42,7 @@ def test_migration_contains_contract_objects(name, needles):
 def test_every_migration_is_rerunnable():
     for p in MIG.glob("*.sql"):
         sql = p.read_text(encoding="utf-8").lower()
-        assert "if not exists" in sql, p.name
+        assert "if not exists" in sql or "if exists" in sql, p.name
         assert "drop " not in sql, p.name
 
 
