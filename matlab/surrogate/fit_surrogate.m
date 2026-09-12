@@ -35,10 +35,13 @@ for k = 1:numel(targets)
         'cv_rmse', rmse, 'cv_r2', r2, 'n', height(T));
     ax = subplot(1, 2, k, 'Parent', fig); hold(ax, 'on');
     set(ax, 'Color', 'w', 'XColor', [0.2 0.2 0.2], 'YColor', [0.2 0.2 0.2]);
-    scatter(ax, y, pred, 18, double(T.variant), 'filled'); colormap(ax, lines(3));
-    lim = [min([y; pred]) max([y; pred])]; plot(ax, lim, lim, 'k--');
-    xlabel(ax, sprintf('simulated %s', strrep(targets{k}, '_', ' '))); ylabel(ax, 'surrogate (held-out fold)');
-    title(ax, sprintf('%s: 5-fold RMSE %.1f, R^2 %.4f', strrep(targets{k}, '_', ' '), rmse, r2)); grid(ax, 'on'); axis(ax, 'square');
+    scale = 1; unit = 'mg/dL'; if k == 2, scale = 1000; unit = 'x1000 mg/dL min'; end   % keep the axes free of x10^4 exponents
+    scatter(ax, y / scale, pred / scale, 18, double(T.variant), 'filled'); colormap(ax, lines(3));
+    lim = [min([y; pred]) max([y; pred])] / scale; plot(ax, lim, lim, 'k--');
+    ax.XAxis.Exponent = 0; ax.YAxis.Exponent = 0;
+    name = strrep(strrep(targets{k}, 'iauc_mgdL_min', 'incremental AUC'), 'peak_mgdL', 'peak');
+    xlabel(ax, sprintf('simulated %s (%s)', name, unit)); ylabel(ax, sprintf('surrogate, held-out fold (%s)', unit));
+    title(ax, sprintf('%s: 5-fold RMSE %.1f, R^2 %.4f', name, rmse / scale, r2)); grid(ax, 'on'); axis(ax, 'square');
     fprintf('fit_surrogate: %s  CV RMSE %.2f  R^2 %.4f  (n = %d)\n', targets{k}, rmse, r2, height(T));
 end
 sgtitle(fig, 'Surrogate vs full SimBiology simulation (colour = variant)');
