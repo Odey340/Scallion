@@ -5,11 +5,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { computeFitnessAge, PAI_OPTIONS, type FitnessAgeResult, type HuntData, type Sex } from '@/engine/fitness-age';
+import {
+  computeFitnessAge,
+  FALLBACK_PAI_OPTIONS,
+  type FitnessAgeResult,
+  type HuntData,
+  type Sex,
+} from '@/engine/fitness-age';
 
 /**
  * QR landing: fitness age in ten seconds, no login. docs/lanes/C.md Block 1.
- * TODO(A): reads the placeholder web/public/engine/hunt.json until A's export lands.
+ * Reads A's export at web/public/engine/hunt.json (Nes 2011 VO2max model, Kurtze 2008 PAI).
  */
 export default function StartScreen() {
   const [hunt, setHunt] = useState<HuntData | null>(null);
@@ -31,8 +37,10 @@ export default function StartScreen() {
         return res.json();
       })
       .then(setHunt)
-      .catch(() => setHuntError('Could not load the fitness-age model (hunt.json). TODO(A).'));
+      .catch(() => setHuntError('Could not load the fitness-age model (hunt.json).'));
   }, []);
+
+  const paiOptions = hunt?.pai_options ?? FALLBACK_PAI_OPTIONS;
 
   const handleSubmit = () => {
     setFormError(null);
@@ -57,7 +65,7 @@ export default function StartScreen() {
 
     try {
       setResult(
-        computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: PAI_OPTIONS[paiIndex].pai }, hunt)
+        computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: paiOptions[paiIndex].pai }, hunt)
       );
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not compute a fitness age.');
@@ -100,9 +108,9 @@ export default function StartScreen() {
 
           <Field label="How often do you exercise hard enough to raise your heart rate?">
             <View style={styles.wrap}>
-              {PAI_OPTIONS.map((option, index) => (
+              {paiOptions.map((option, index) => (
                 <SegmentButton
-                  key={option.label}
+                  key={option.key}
                   label={option.label}
                   active={paiIndex === index}
                   onPress={() => setPaiIndex(index)}
@@ -127,11 +135,12 @@ export default function StartScreen() {
             <ThemedView type="surface" style={styles.resultCard}>
               <ThemedText type="numeric">{Math.round(result.fitnessAge)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                fitness age, +/- {result.band} years
+                fitness age, +/- {Math.round(result.band)} years
               </ThemedText>
               <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
-                Estimate, not diagnosis. From an unvalidated placeholder model — TODO(A): replace hunt.json and the
-                activity-question mapping with the export from Lane A.
+                Estimate, not diagnosis. {hunt?.label ?? 'From age, waist, resting pulse and activity.'}
+                {hunt?.vo2max_source ? ` VO2max: ${hunt.vo2max_source}.` : ''}
+                {hunt?.pai_source ? ` Activity index: ${hunt.pai_source}.` : ''}
               </ThemedText>
             </ThemedView>
           )}

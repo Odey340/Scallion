@@ -1,6 +1,6 @@
 /**
- * Fitness age from HUNT's VO2max model, per docs/contracts.md §1 (`hunt.json`).
- * Units assumed metric (waist cm, resting HR bpm) — not specified in the contract;
+ * Fitness age from HUNT's VO2max model, per web/public/engine/hunt.json (Lane A's export).
+ * Units assumed metric (waist cm, resting HR bpm) — not stated explicitly in hunt.json;
  * HUNT is a Norwegian cohort and the rest of the contract defaults to SI. Confirm with A.
  */
 
@@ -12,11 +12,23 @@ interface Vo2maxCoefficients {
   waist: number;
   rhr: number;
   pai: number;
+  /** Standard error of the estimate, in the same VO2max units. Used to derive the fitness-age band. */
+  see?: number;
+}
+
+export interface PaiOption {
+  key: string;
+  label: string;
+  pai: number;
 }
 
 export interface HuntData {
   vo2max: Record<Sex, Partial<Vo2maxCoefficients>>;
   fitness_age_lookup: Record<Sex, [age: number, vo2max: number][]>;
+  pai_options?: PaiOption[];
+  vo2max_source?: string;
+  pai_source?: string;
+  label?: string;
 }
 
 export interface FitnessAgeInput {
@@ -24,16 +36,24 @@ export interface FitnessAgeInput {
   sex: Sex;
   waistCm: number;
   rhr: number;
-  /** HUNT Physical Activity Index. See PAI_OPTIONS for the placeholder derivation. */
+  /** HUNT Physical Activity Index — pick a value from hunt.json's `pai_options`. */
   pai: number;
 }
 
 export interface FitnessAgeResult {
   vo2max: number;
   fitnessAge: number;
-  /** +/- years. TODO(A): hunt.json has no uncertainty field yet; placeholder band. */
+  /** +/- years, derived from the model's standard error where hunt.json provides one. */
   band: number;
 }
+
+/** Placeholder only for hunt.json shapes that predate `pai_options` (contracts.md §1's minimal example). */
+export const FALLBACK_PAI_OPTIONS: PaiOption[] = [
+  { key: 'none', label: 'Rarely or never', pai: 0 },
+  { key: 'light', label: '1-2 days a week', pai: 25 },
+  { key: 'moderate', label: '3-4 days a week', pai: 55 },
+  { key: 'hard', label: '5+ days a week', pai: 85 },
+];
 
 export function computeFitnessAge(input: FitnessAgeInput, hunt: HuntData): FitnessAgeResult {
   const coef = hunt.vo2max[input.sex];
@@ -52,8 +72,9 @@ export function computeFitnessAge(input: FitnessAgeInput, hunt: HuntData): Fitne
 
   const lookup = hunt.fitness_age_lookup[input.sex];
   const fitnessAge = fitnessAgeFromVo2max(vo2max, lookup);
+  const band = coef.see !== undefined ? bandFromSee(vo2max, coef.see, lookup) : 3;
 
-  return { vo2max, fitnessAge, band: 3 };
+  return { vo2max, fitnessAge, band };
 }
 
 /** VO2max falls with age in the lookup table; find the age whose median VO2max equals `vo2max`, interpolating linearly. */
@@ -81,14 +102,9 @@ function fitnessAgeFromVo2max(vo2max: number, lookup: [number, number][]): numbe
   return oldest[0];
 }
 
-/**
- * TODO(A): the contract's "one activity question" has no defined PAI derivation.
- * Placeholder heuristic mapping exercise frequency to a HUNT-style Physical Activity
- * Index score, unvalidated. Replace once A specifies the real derivation.
- */
-export const PAI_OPTIONS = [
-  { label: 'Rarely or never', pai: 0 },
-  { label: '1-2 days a week', pai: 25 },
-  { label: '3-4 days a week', pai: 55 },
-  { label: '5+ days a week', pai: 85 },
-] as const;
+/** Converts the regression's VO2max standard error into an age-equivalent +/- band via the lookup curve's local slope. */
+function bandFromSee(vo2max: number, see: number, lookup: [number, number][]): number {
+  const ageAtPlus = fitnessAgeFromVo2max(vo2max + see, lookup);
+  const ageAtMinus = fitnessAgeFromVo2max(vo2max - see, lookup);
+  return Math.abs(ageAtMinus - ageAtPlus) / 2;
+}
