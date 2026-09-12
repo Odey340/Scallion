@@ -22,7 +22,11 @@ def _context(user_id: str, settings: Settings) -> dict:
     profile = persona_route.get_store().get(user_id)
     clocks = clock_route.get_store().latest(user_id)
     vitals = vitals_route.get_store().latest(user_id)
-    circle = None  # TODO(B): social/ metrics once POST /events data is summarised by B's package
+    from .circle import circle_summary  # local import: circle imports coach.context
+
+    circle = circle_summary(user_id, settings)
+    if not circle.get("available"):
+        circle = None
     history = memory_route.get_store().recent(user_id, 8)
     return build_context(settings, profile, clocks, vitals, circle, history=history)
 

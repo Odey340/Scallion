@@ -16,6 +16,7 @@ class EventsStore(Protocol):
     def insert(self, user_id: str, events: list[Event]) -> int: ...
     def delete(self, user_id: str, contact: str | None = None) -> int: ...
     def count(self, user_id: str) -> int: ...
+    def all(self, user_id: str, since_days: int = 400) -> list[Event]: ...
 
 
 def _key(e: Event) -> tuple:
@@ -51,6 +52,12 @@ class MemoryEventsStore:
 
     def count(self, user_id: str) -> int:
         return len(self._rows.get(user_id, {}))
+
+    def all(self, user_id: str, since_days: int = 400) -> list[Event]:
+        from datetime import datetime, timedelta, timezone
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=since_days)
+        return sorted((e for e in self._rows.get(user_id, {}).values() if (e.ts if e.ts.tzinfo else e.ts.replace(tzinfo=timezone.utc)) >= cutoff), key=lambda e: e.ts)
 
     def clear(self) -> None:
         self._rows.clear()
@@ -89,6 +96,15 @@ class PgEventsStore:
         with self._pool.connection() as conn:
             (n,) = conn.execute("select count(*) from contact_events where user_id = %s", (user_id,)).fetchone()
             return n
+
+    def all(self, user_id: str, since_days: int = 400) -> list[Event]:
+        with self._pool.connection() as conn:
+            rows = conn.execute(
+                "select contact_hash, ts, app, dir, len_bucket from contact_events"
+                " where user_id = %s and ts >= now() - make_interval(days => %s) order by ts",
+                (user_id, since_days),
+            ).fetchall()
+        return [Event(contact=r[0], ts=r[1], app=r[2], dir=r[3], len=r[4]) for r in rows]
 
 
 def build_store(settings: Settings) -> EventsStore:

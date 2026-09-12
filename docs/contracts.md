@@ -10,6 +10,7 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 **v7 (Sat H11): `POST /clock` + `GET /clock/latest` (C records the clock it computed); `PUT /me/answers` (onboarding); `/coach/context` shape below; `POST /coach/validate` (number validator).**
 **v8 (Sat H14): coach memory `POST /coach/checkin`, `GET /coach/checkins`; tool handlers `POST /coach/meal`, `POST /coach/share`; `GET /coach/session` (agent id + signed URL); `GET /coach/explain/{name}`; context gained `history`, `last_plan`, `today.meal`.**
 **v9 (Sat H14): `/extract` gained `complete` (what to order for missing analytes, re-test date, fasting action; reference prices labelled, never engine).**
+**v10 (Sat H22): `GET /circle/summary` served by the API from `contact_events` as a stand-in for B's package (same thresholds, TODO(B)); `web/src/lib/api.ts` typed client for C.**
 **v8 (Fri H5, A): `phenoage.json` `k` is 0.090165 (Levine 2018 Supplement 1; 0.09165 was a typo) and the horizon key is `t_months` (120), not `t_days`. Additive keys now exported: `a`, `offset`, `affine.A`, `imputation_sd_by_age_sex`, `cohort_offset_rule`, `waterfall_rule`, `band_rule`, `labels`; `meal_grid.json` gained `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`. C must compute the cohort offset at the user's exact age (see below).**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
@@ -106,7 +107,7 @@ create materialized view daily_connection with (timescaledb.continuous) as
 | `POST /events` | `{"events": Event[]}` (max 50k, `contact` must be 64 hex chars) -> `{"inserted": n, "received": m, "duplicates": m-n}`. Idempotent: a re-sent batch inserts 0 (unique on user, contact, ts, app, dir). |
 | `DELETE /events` | -> `{"deleted": n}` (one-tap delete-all) |
 | `DELETE /events/{contact}` | -> `{"deleted": n}` (per-contact forget) |
-| `GET /circle/summary` | -> `{"metrics": Metrics, "lsns": {...}, "nudges": Nudge[], "heatmap": Day[], "alerts": [...]}` |
+| `GET /circle/summary?window_days=30` | -> `{"available": true, "metrics": Metrics, "previous": Metrics, "lsns": {"score", "atRisk", "items", "fromMessaging": 4, "fromUser": 2, "asked", "label"}, "nudges": Nudge[], "heatmap": Day[] (364 days), "alerts": [...], "risk": risk_years social_isolation row|null, "events": n, "source"}` or `{"available": false, "events": 0}`. Until B's `social/` lands the API computes this from `contact_events` with the section 2 thresholds (`api/app/circle/metrics.py`, TODO(B)); `lsns.items[4:6]` come from `/me/answers` help_family/help_friends. |
 | `POST /vitals` | `{"source":"presage","pulse_bpm":62,"breathing_bpm":14,"stress_index":98,"captured_at":"..."}` (from the worker) -> `{"ok":true}` |
 | `GET /vitals/latest` | -> latest row |
 | `POST /clock` | `{"clock": "phenoage"|"fitness"|"social_risk", "years": 41.3, "chronological_age": 34, "band": 2.4, "inputs": {"albumin": 44, ..., "imputed": ["crp"]}, "engine_version": "1"}` -> the row with `computed_at`. C posts what it computed from A's export (si values by canonical key in `inputs`); the API stores, never computes. `GET /clock/latest` -> `{"phenoage": row, "fitness": row}`. |
@@ -154,3 +155,7 @@ C imports this file (copy or fetch at build time; it is versioned) and applies i
 - Apply per line (pdf.js items grouped by y, joined with a space). Rules run in order; the first `drop_line` match removes the whole line (black out every item's box); `mask` rules replace only the matched substring (same regex, global flag) with `mask_token`.
 - A line matching `keep_if` (an analyte result row) is never dropped, only masked.
 - Kept on purpose: Sex, Age, Collected/Reported dates, section titles. Upload only the redacted document, never the original.
+
+## 8. Web client (D provides, C consumes): `web/src/lib/api.ts`
+
+One typed function per route above (`api.extract`, `api.postClock`, `api.me`, `api.coachContext`, `api.session`, `api.circle`, `api.tts`, ...). Base URL `EXPO_PUBLIC_API_URL` (default `https://api.scallion.us`); `setToken(jwt)` after login or `EXPO_PUBLIC_DEMO_TOKEN` for the judged account; `api.extract(file, {preferCache: true})` sends `X-Scallion-Cache: prefer`. Errors throw `ApiError(status, detail)`.
