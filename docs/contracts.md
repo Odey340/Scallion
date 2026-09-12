@@ -11,6 +11,7 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 **v8 (Sat H14): coach memory `POST /coach/checkin`, `GET /coach/checkins`; tool handlers `POST /coach/meal`, `POST /coach/share`; `GET /coach/session` (agent id + signed URL); `GET /coach/explain/{name}`; context gained `history`, `last_plan`, `today.meal`.**
 **v9 (Sat H14): `/extract` gained `complete` (what to order for missing analytes, re-test date, fasting action; reference prices labelled, never engine).**
 **v10 (Sat H22): `GET /circle/summary` served by the API from `contact_events` as a stand-in for B's package (same thresholds, TODO(B)); `web/src/lib/api.ts` typed client for C.**
+**v11 (Sat, C): route `/tonight` renamed to `/scan` (screen is meal-agnostic now, not dinner-only; human request). `/scan-results` added — submitting `/scan` navigates to a results page instead of showing results inline. No response/route-elsewhere shape changed.**
 **v8 (Fri H5, A): `phenoage.json` `k` is 0.090165 (Levine 2018 Supplement 1; 0.09165 was a typo) and the horizon key is `t_months` (120), not `t_days`. Additive keys now exported: `a`, `offset`, `affine.A`, `imputation_sd_by_age_sex`, `cohort_offset_rule`, `waterfall_rule`, `band_rule`, `labels`; `meal_grid.json` gained `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`. C must compute the cohort offset at the user's exact age (see below).**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
@@ -130,7 +131,7 @@ create materialized view daily_connection with (timescaledb.continuous) as
 
 ## 5. Screens (C) and routes
 
-`/start` (QR landing: fitness age in ten seconds), `/` Home (clock + levers ledger + today's nudge), `/circle`, `/labs` (upload -> review -> waterfall), `/camera`, `/tonight`, `/coach`, `/onboarding` (what leaves your phone; medication question; the two LSNS questions). Large-type mode toggled by `over_65` or by hand; Spanish by device locale.
+`/start` (QR landing: fitness age in ten seconds), `/` Home (clock + levers ledger + today's nudge), `/circle`, `/labs` (upload -> review -> waterfall), `/camera`, `/scan` (was `/tonight`: photo or typed meal -> carbs -> `/scan-results`), `/scan-results`, `/coach`, `/onboarding` (what leaves your phone; medication question; the two LSNS questions; Persona verification). Large-type mode toggled by `over_65` or by hand; Spanish by device locale.
 
 ## 6. Fixtures (`fixtures/`)
 
