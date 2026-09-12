@@ -1,0 +1,150 @@
+{
+ "note": "Real 30 s capture on the demo laptop (Sat 2026-09-12, HP 5MP camera), samples only, no frames. Used by `node index.mjs --replay test/fixtures/capture_real.json` when no face/camera is available.",
+ "seconds": 30,
+ "samples": [
+  {
+   "t": 12665,
+   "pulse": 70.528,
+   "pulseConf": 0.692,
+   "stable": true
+  },
+  {
+   "t": 13143,
+   "pulse": 72.663,
+   "pulseConf": 0.542,
+   "stable": true
+  },
+  {
+   "t": 13942,
+   "pulse": 69.525,
+   "pulseConf": 0.53,
+   "stable": true
+  },
+  {
+   "t": 14932,
+   "pulse": 68.076,
+   "pulseConf": 0.5,
+   "stable": true
+  },
+  {
+   "t": 15924,
+   "pulse": 69.474,
+   "pulseConf": 0.792,
+   "stable": true
+  },
+  {
+   "t": 16736,
+   "pulse": 68.351,
+   "pulseConf": 0.812,
+   "stable": true
+  },
+  {
+   "t": 17732,
+   "pulse": 68.154,
+   "pulseConf": 0.915,
+   "stable": true
+  },
+  {
+   "t": 18539,
+   "pulse": 68.536,
+   "pulseConf": 0.928,
+   "stable": true
+  },
+  {
+   "t": 19362,
+   "pulse": 68.182,
+   "pulseConf": 0.919,
+   "stable": true
+  },
+  {
+   "t": 20150,
+   "pulse": 68.793,
+   "pulseConf": 0.884,
+   "stable": true
+  },
+  {
+   "t": 20814,
+   "breathing": 5.699,
+   "breathingConf": 0,
+   "stable": false
+  },
+  {
+   "t": 20948,
+   "pulse": 68.771,
+   "pulseConf": 0.814,
+   "stable": true
+  },
+  {
+   "t": 21782,
+   "pulse": 68.628,
+   "pulseConf": 0.756,
+   "stable": true
+  },
+  {
+   "t": 22755,
+   "pulse": 68.507,
+   "pulseConf": 0.679,
+   "stable": true
+  },
+  {
+   "t": 23797,
+   "pulse": 68.901,
+   "pulseConf": 0.704,
+   "stable": true
+  },
+  {
+   "t": 23846,
+   "breathing": 6.751,
+   "breathingConf": 0,
+   "stable": false
+  },
+  {
+   "t": 24562,
+   "pulse": 67.929,
+   "pulseConf": 0.681,
+   "stable": true
+  },
+  {
+   "t": 25588,
+   "pulse": 68.479,
+   "pulseConf": 0.576,
+   "stable": true
+  },
+  {
+   "t": 26556,
+   "pulse": 68.603,
+   "pulseConf": 0.566,
+   "stable": true
+  },
+  {
+   "t": 27388,
+   "pulse": 68.514,
+   "pulseConf": 0.571,
+   "stable": true
+  },
+  {
+   "t": 28210,
+   "pulse": 66.771,
+   "pulseConf": 0.795,
+   "stable": true
+  },
+  {
+   "t": 29003,
+   "pulse": 66.563,
+   "pulseConf": 0.854,
+   "stable": true
+  },
+  {
+   "t": 29811,
+   "breathing": 7.56,
+   "breathingConf": 0,
+   "stable": false
+  },
+  {
+   "t": 30008,
+   "pulse": 67.31,
+   "pulseConf": 0.935,
+   "stable": true
+  }
+ ]
+}
