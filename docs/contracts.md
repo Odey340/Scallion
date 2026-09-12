@@ -7,8 +7,8 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 **v4 (Sat H9): `/extract` analytes gained `si_value`, `si_unit`, `derived`, `note` (unit normalizer); a derived `lymph_pct` row may appear.**
 **v5 (Sat H10): `/events` response gained `received`, `duplicates`; `DELETE /events` and `DELETE /events/{contact}` added for B's forget/delete-all.**
 **v6 (Sat H10): `GET /me` gained `age` (verified only) and `verify_url` (Persona hosted flow); `PUT /me/lang` added; `GET /tts?text=&lang=` added.**
-**v7 (Fri H5, A): `phenoage.json` `k` is 0.090165 (Levine 2018 Supplement 1; 0.09165 was a typo) and the horizon key is `t_months` (120), not `t_days`. Additive keys now exported: `a`, `offset`, `affine.A`, `imputation_sd_by_age_sex`, `cohort_offset_rule`, `waterfall_rule`, `band_rule`, `labels`; `meal_grid.json` gained `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`. C must compute the cohort offset at the user's exact age (see below).**
 **v7 (Sat H11): `POST /clock` + `GET /clock/latest` (C records the clock it computed); `PUT /me/answers` (onboarding); `/coach/context` shape below; `POST /coach/validate` (number validator).**
+**v8 (Fri H5, A): `phenoage.json` `k` is 0.090165 (Levine 2018 Supplement 1; 0.09165 was a typo) and the horizon key is `t_months` (120), not `t_days`. Additive keys now exported: `a`, `offset`, `affine.A`, `imputation_sd_by_age_sex`, `cohort_offset_rule`, `waterfall_rule`, `band_rule`, `labels`; `meal_grid.json` gained `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`. C must compute the cohort offset at the user's exact age (see below).**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -41,7 +41,7 @@ A verifies the coefficient units against Levine 2018 Table 1 before exporting; t
 ```
 Waterfall rule: `age + cohort_offset + sum(analyte years) == phenoage` exactly (affine identity). Imputed analytes carry `"imputed": true` and widen `band`.
 
-v7 clarifications (A): PhenoAge is affine in the linear predictor, `phenoage = affine.A + xb / k`, so `cohort_offset = phenoage(reference_by_age_sex[sex][band], age, sex) - age` evaluated at the user's exact age (the `cohort_offset_by_age_sex` table is the band-midpoint value, for display only), and each analyte's years are `coef * (term(x) - term(reference)) / k` with `term_crp = ln(max(crp, crp_floor_mgdL))`. `band` is 1 SD: `sqrt(sum((coef/k * sd)^2))` with `sd = x * sqrt(cv_within^2 + cv_analytical^2)` for measured analytes (for CRP the CV itself, on the log term) and `sd = imputation_sd_by_age_sex[sex][band][analyte]` for imputed ones. `vectors.json` entries carry `fasting`, `imputed`, `markers_used`, `xb`, `mortality_10y` for finer checks.
+v8 clarifications (A): PhenoAge is affine in the linear predictor, `phenoage = affine.A + xb / k`, so `cohort_offset = phenoage(reference_by_age_sex[sex][band], age, sex) - age` evaluated at the user's exact age (the `cohort_offset_by_age_sex` table is the band-midpoint value, for display only), and each analyte's years are `coef * (term(x) - term(reference)) / k` with `term_crp = ln(max(crp, crp_floor_mgdL))`. `band` is 1 SD: `sqrt(sum((coef/k * sd)^2))` with `sd = x * sqrt(cv_within^2 + cv_analytical^2)` for measured analytes (for CRP the CV itself, on the log term) and `sd = imputation_sd_by_age_sex[sex][band][analyte]` for imputed ones. `vectors.json` entries carry `fasting`, `imputed`, `markers_used`, `xb`, `mortality_10y` for finer checks.
 
 ### `nhanes_percentiles.json`
 `{"phenoage_accel": {"M": {"30-39": {"p5":-8.1,"p25":-3.2,"p50":-0.4,"p75":2.9,"p95":8.0}}}, "analytes": {"rdw": {"M": {"30-39": {"p5":11.9,"p50":13.0,"p95":15.1}}}}}`
