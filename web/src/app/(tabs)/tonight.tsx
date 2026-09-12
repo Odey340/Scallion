@@ -13,6 +13,7 @@ import { computeMealCurves, type MealComputation, type MealGrid } from '@/engine
 import { setTonightResult, type GeminiEstimate, type TonightResult } from '@/state/tonight-store';
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+const LB_PER_KG = 2.20462;
 
 /**
  * A meal, any meal — not just dinner. Photo -> Gemini carbs estimate (or type it in) ->
@@ -34,7 +35,7 @@ export default function TonightScreen() {
 
   const [carbsG, setCarbsG] = useState('');
   const [fastingMgdl, setFastingMgdl] = useState('');
-  const [weightKg, setWeightKg] = useState('');
+  const [weightLb, setWeightLb] = useState('');
   const [onMeds, setOnMeds] = useState<boolean | null>(null);
   const [caffeineMg, setCaffeineMg] = useState('');
   const [bedtime, setBedtime] = useState('');
@@ -110,22 +111,24 @@ export default function TonightScreen() {
       setFormError('Still loading the meal model.');
       return;
     }
-    if (!carbsG || !fastingMgdl || !weightKg || onMeds === null) {
+    if (!carbsG || !fastingMgdl || !weightLb || onMeds === null) {
       setFormError('Fill in carbs, fasting glucose, weight, and the medication question.');
       return;
     }
 
     const carbsNum = Number(carbsG);
     const fastingNum = Number(fastingMgdl);
-    const weightNum = Number(weightKg);
-    if (!Number.isFinite(carbsNum) || !Number.isFinite(fastingNum) || !Number.isFinite(weightNum)) {
+    const weightLbNum = Number(weightLb);
+    if (!Number.isFinite(carbsNum) || !Number.isFinite(fastingNum) || !Number.isFinite(weightLbNum)) {
       setFormError('Carbs, fasting glucose, and weight must be numbers.');
       return;
     }
 
+    const weightKgNum = weightLbNum / LB_PER_KG;
+
     let meal: MealComputation;
     try {
-      meal = computeMealCurves({ carbsG: carbsNum, fastingMgdl: fastingNum, weightKg: weightNum }, grid);
+      meal = computeMealCurves({ carbsG: carbsNum, fastingMgdl: fastingNum, weightKg: weightKgNum }, grid);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not compute a curve for this meal.');
       return;
@@ -220,8 +223,8 @@ export default function TonightScreen() {
             <NumberInput value={fastingMgdl} onChangeText={setFastingMgdl} placeholder="95" />
           </Field>
 
-          <Field label="Weight (kg)">
-            <NumberInput value={weightKg} onChangeText={setWeightKg} placeholder="78" />
+          <Field label="Weight (lb)">
+            <NumberInput value={weightLb} onChangeText={setWeightLb} placeholder="172" />
           </Field>
 
           <Field label="Do you take medicine that affects your blood sugar?">
