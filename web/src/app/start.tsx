@@ -1,0 +1,237 @@
+import { useEffect, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { computeFitnessAge, PAI_OPTIONS, type FitnessAgeResult, type HuntData, type Sex } from '@/engine/fitness-age';
+
+/**
+ * QR landing: fitness age in ten seconds, no login. docs/lanes/C.md Block 1.
+ * TODO(A): reads the placeholder web/public/engine/hunt.json until A's export lands.
+ */
+export default function StartScreen() {
+  const [hunt, setHunt] = useState<HuntData | null>(null);
+  const [huntError, setHuntError] = useState<string | null>(null);
+
+  const [age, setAge] = useState('');
+  const [sex, setSex] = useState<Sex>('M');
+  const [waistCm, setWaistCm] = useState('');
+  const [rhr, setRhr] = useState('');
+  const [paiIndex, setPaiIndex] = useState<number | null>(null);
+
+  const [result, setResult] = useState<FitnessAgeResult | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/engine/hunt.json')
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        return res.json();
+      })
+      .then(setHunt)
+      .catch(() => setHuntError('Could not load the fitness-age model (hunt.json). TODO(A).'));
+  }, []);
+
+  const handleSubmit = () => {
+    setFormError(null);
+    setResult(null);
+
+    if (!hunt) {
+      setFormError('Still loading the fitness-age model.');
+      return;
+    }
+    if (!age || !waistCm || !rhr || paiIndex === null) {
+      setFormError('Fill in every field.');
+      return;
+    }
+
+    const ageNum = Number(age);
+    const waistNum = Number(waistCm);
+    const rhrNum = Number(rhr);
+    if (!Number.isFinite(ageNum) || !Number.isFinite(waistNum) || !Number.isFinite(rhrNum)) {
+      setFormError('Age, waist, and resting heart rate must be numbers.');
+      return;
+    }
+
+    try {
+      setResult(
+        computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: PAI_OPTIONS[paiIndex].pai }, hunt)
+      );
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not compute a fitness age.');
+    }
+  };
+
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <ThemedText type="subtitle">Your fitness age</ThemedText>
+          <ThemedText type="default" themeColor="textSecondary">
+            Ten seconds, no login. Estimate, not diagnosis.
+          </ThemedText>
+
+          {huntError && (
+            <ThemedText type="small" themeColor="silence">
+              {huntError}
+            </ThemedText>
+          )}
+
+          <Field label="Age (years)">
+            <NumberInput value={age} onChangeText={setAge} placeholder="34" />
+          </Field>
+
+          <Field label="Sex">
+            <View style={styles.row}>
+              <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
+              <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
+            </View>
+          </Field>
+
+          <Field label="Waist (cm)">
+            <NumberInput value={waistCm} onChangeText={setWaistCm} placeholder="85" />
+          </Field>
+
+          <Field label="Resting heart rate (bpm)">
+            <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
+          </Field>
+
+          <Field label="How often do you exercise hard enough to raise your heart rate?">
+            <View style={styles.wrap}>
+              {PAI_OPTIONS.map((option, index) => (
+                <SegmentButton
+                  key={option.label}
+                  label={option.label}
+                  active={paiIndex === index}
+                  onPress={() => setPaiIndex(index)}
+                />
+              ))}
+            </View>
+          </Field>
+
+          {formError && (
+            <ThemedText type="small" themeColor="silence">
+              {formError}
+            </ThemedText>
+          )}
+
+          <Pressable style={styles.submit} onPress={handleSubmit}>
+            <ThemedText type="smallBold" themeColor="accentText">
+              Get my fitness age
+            </ThemedText>
+          </Pressable>
+
+          {result && (
+            <ThemedView type="surface" style={styles.resultCard}>
+              <ThemedText type="numeric">{Math.round(result.fitnessAge)}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                fitness age, +/- {result.band} years
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
+                Estimate, not diagnosis. From an unvalidated placeholder model — TODO(A): replace hunt.json and the
+                activity-question mapping with the export from Lane A.
+              </ThemedText>
+            </ThemedView>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View style={styles.field}>
+      <ThemedText type="smallBold" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      {children}
+    </View>
+  );
+}
+
+function NumberInput({
+  value,
+  onChangeText,
+  placeholder,
+}: {
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <TextInput
+      style={styles.input}
+      keyboardType="numeric"
+      placeholderTextColor={Colors.textMuted}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+    />
+  );
+}
+
+function SegmentButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable style={[styles.segment, active && styles.segmentActive]} onPress={onPress}>
+      <ThemedText type="small" themeColor={active ? 'accentText' : 'text'}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: { flex: 1, alignItems: 'center' },
+  scroll: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
+    gap: Spacing.four,
+  },
+  field: { gap: Spacing.two },
+  row: { flexDirection: 'row', gap: Spacing.two },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.medium,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    color: Colors.text,
+    backgroundColor: Colors.surface,
+    fontSize: 16,
+  },
+  segment: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    backgroundColor: Colors.surface,
+  },
+  segmentActive: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  submit: {
+    backgroundColor: Colors.accent,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+  },
+  resultCard: {
+    borderRadius: Radius.large,
+    padding: Spacing.four,
+    gap: Spacing.one,
+    alignItems: 'center',
+  },
+  disclaimer: {
+    textAlign: 'center',
+    marginTop: Spacing.two,
+  },
+});
