@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routes import extract, health, vitals
+from .routes import events, extract, health, vitals
 
 log = logging.getLogger("scallion")
 
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(extract.router)
     app.include_router(vitals.router)
+    app.include_router(events.router)
 
     if settings.dev_auth_bypass:
         log.warning("DEV_AUTH_BYPASS is on: every request runs as the dev user")

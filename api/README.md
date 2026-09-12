@@ -1,6 +1,6 @@
 # Scallion API (Lane D)
 
-FastAPI service: labs intake (`POST /extract`), vitals from the presage-worker (`POST /vitals`, `GET /vitals/latest`), and later circle summary and coach context.
+FastAPI service: labs intake (`POST /extract`), vitals from the presage-worker (`POST /vitals`, `GET /vitals/latest`), B's hashed events (`POST /events`, `DELETE /events[/{contact}]`), and later circle summary and coach context.
 
 ```
 cp ../.env.example ../.env          # fill GEMINI_API_KEY and SUPABASE_JWT_SECRET

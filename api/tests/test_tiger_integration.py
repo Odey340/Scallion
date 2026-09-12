@@ -89,3 +89,29 @@ def test_pg_vitals_store_roundtrip(conn):
         assert store.latest(str(uuid.uuid4())) is None
     finally:
         conn.execute("delete from vitals where user_id=%s", (user,))
+
+
+def test_pg_events_store_dedup_and_forget(conn):
+    import hashlib
+    from datetime import datetime, timezone
+
+    from app.events.schema import Event
+    from app.events.store import PgEventsStore
+
+    user = str(uuid.uuid4())
+    h = [hashlib.sha256(f"c{i}".encode()).hexdigest() for i in range(2)]
+    store = PgEventsStore(URL)
+    batch = [
+        Event(contact=h[0], ts=datetime(2026, 9, 12, 9, tzinfo=timezone.utc), app="gmail", dir="in", len=1),
+        Event(contact=h[0], ts=datetime(2026, 9, 12, 10, tzinfo=timezone.utc), app="gmail", dir="out", len=2),
+        Event(contact=h[1], ts=datetime(2026, 9, 12, 9, tzinfo=timezone.utc), app="whatsapp", dir="in", len=0),
+    ]
+    try:
+        assert store.insert(user, batch) == 3
+        assert store.insert(user, batch) == 0  # unique index contact_events_dedup
+        assert store.count(user) == 3
+        assert store.delete(user, h[0]) == 2
+        assert store.delete(user) == 1
+        assert store.count(user) == 0
+    finally:
+        conn.execute("delete from contact_events where user_id=%s", (user,))
