@@ -190,5 +190,6 @@ end
 end
 
 function band(ax, t, c, col)
-patch(ax, [t fliplr(t)], [c.p10 fliplr(c.p90)], col, 'FaceAlpha', 0.18, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+p = patch(ax, [t fliplr(t)], [c.p10 fliplr(c.p90)], col, 'FaceAlpha', 0.18, 'EdgeColor', 'none');
+p.Annotation.LegendInformation.IconDisplayStyle = 'off';   % cla only clears visible handles, so keep it visible
 end

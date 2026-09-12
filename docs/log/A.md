@@ -53,3 +53,16 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 8. Contract: unchanged.
 9. Human: run `registerWithOS.exe` elevated once before judging so the desktop starts with a full path (README).
 10. Rehearsal note: the demo laptop must have `C:\MATLAB\R2026a` licensed (sign-in done Fri) and the insulindemo example downloaded (done, `Documents\MATLAB\Examples\R2026a\simbio\insulindemo`).
+
+## Session 5 (Fri H4.5-H5, agent, 2026-09-12): Block 5
+
+1. Done: `tools/make_video.m` renders the MATLAB segment with VideoWriter from the real artifacts: title card, the project open + live script with the tests actually running (11/11), the five engine figures, then the console (carbs 20 -> 120 g drag, walk on, fasting 112 and 130 mg/dL variant switches, Validate against the full simulation, Clock tab), closing card. `media/matlab_segment.mp4`, 73 s, 1280x780, 15 fps, 6.7 MB. `.mp4` is git-ignored by design; the render is reproducible in ~3 min with `make_video`.
+2. Why rendered, not screen-captured: the mpm install never registered MATLAB with Windows, so desktop automation cannot address the MATLAB window; every frame is nonetheless a real uifigure snapshot or figure export, nothing mocked.
+3. Fixed a real console bug found by the render: the Tonight band patches had hidden handles, so `cla` left them behind and bands accumulated on every slider move. Bands are now visible-handle patches excluded from the legend.
+4. Fixed: HTML link tags in the captured test-runner output.
+5. Blocked: nothing.
+6. Next (Block 5, human): (a) run `registerWithOS.exe` elevated, then the desktop can also be screen-recorded live if the team prefers; (b) rehearse the 20 s MathWorks swap-in: open `Scallion.prj`, click the shortcut, `ScallionEngineer`, drag carbs, press Validate; (c) the `[contract]` commit for `k` / `t_months`; (d) hand `media/matlab_segment.mp4` to Lane C's editor.
+7. Contract: unchanged.
+8. Cut-order status: caffeine `.sbproj` not built (closed form exported and labelled); Compiler SDK never started; surrogate delivered; App Designer polish delivered as a coded uifigure app.
+9. Live script still exits 0 after the console fix (the render itself constructs the app and calls update/validate).
+10. Judging laptop checklist: MATLAB signed in, `insulindemo` example present, `matlab/sweep/*.mat` present (committed), `python matlab/tools/crosscheck/crosscheck.py` prints PASS.
