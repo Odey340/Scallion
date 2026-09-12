@@ -69,3 +69,21 @@ test('postVitals sends a bearer token and JSON, and throws on non-2xx', async ()
   const bad = async () => ({ ok: false, status: 422, text: async () => 'nope' });
   await assert.rejects(postVitals({}, { apiUrl: 'http://api.test', fetchImpl: bad }), /422: nope/);
 });
+
+test('samplesFromMetrics flattens whole series and normalises 0..100 confidence', async () => {
+  const { samplesFromMetrics, normConf } = await import('../src/flatten.mjs');
+  assert.ok(Math.abs(normConf(90.58) - 0.9058) < 1e-9);
+  assert.equal(normConf(0.7), 0.7);
+  assert.equal(normConf(null), null);
+  const m = {
+    cardio: { pulseRate: [{ time: 10, value: 81, confidence: 12.58 }, { time: 11, value: 85, confidence: 90.58, stable: true }],
+              hrv: [{ timestamp: 20, baevsky: 98, rmssd: 41 }] },
+    breathing: { rate: [{ time: 10.5, value: 14, confidence: 80 }] },
+  };
+  const s = samplesFromMetrics(m, 5000);
+  assert.equal(s.length, 4);
+  assert.equal(s[1].t, 11000); assert.equal(s[1].pulse, 85); assert.ok(Math.abs(s[1].pulseConf - 0.9058) < 1e-9); assert.equal(s[1].stable, true);
+  assert.equal(s[2].breathing, 14);
+  assert.equal(s[3].baevsky, 98);
+  assert.equal(samplesFromMetrics({ cardio: { pulseRate: [{ value: 60 }] } }, 7000)[0].t, 7000);
+});
