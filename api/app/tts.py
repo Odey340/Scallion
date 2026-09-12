@@ -10,7 +10,7 @@ from .config import Settings
 
 ELEVEN_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 MODEL_ID = "eleven_multilingual_v2"  # English and Spanish from one model
-DEFAULT_VOICE = "21m00Tcm4TlvDv6d5uSPM"  # ElevenLabs premade "Rachel"; override with ELEVENLABS_VOICE_ID
+DEFAULT_VOICE = "EXAVITQu4vr4xnSDxMaL"  # ElevenLabs premade "Sarah" (multilingual v2); override with ELEVENLABS_VOICE_ID
 
 
 class Synth(Protocol):
@@ -34,7 +34,7 @@ class ElevenLabsSynth:
             ELEVEN_URL.format(voice_id=self._voice),
             headers={"xi-api-key": self._key, "accept": "audio/mpeg", "content-type": "application/json"},
             params={"output_format": "mp3_44100_64"},
-            json={"text": text, "model_id": MODEL_ID, "language_code": lang},
+            json={"text": text, "model_id": MODEL_ID},  # multilingual v2 detects the language; language_code is only for flash/turbo
         )
         r.raise_for_status()
         return r.content
