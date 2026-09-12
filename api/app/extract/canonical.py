@@ -1,10 +1,11 @@
 """Map printed analyte names to the canonical keys in phenoage.json.
 
 Gemini never does this mapping; it copies names verbatim and this table decides.
-Unknown names become "other:<raw>". English aliases only; the Spanish table is Block 2.
+Unknown names become "other:<raw>". English and Spanish aliases; accents are folded before lookup.
 """
 import json
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -71,20 +72,58 @@ _ALIASES: dict[str, str] = {
     "leukocytes": "wbc",
     "leukocyte count": "wbc",
     "total leukocyte count": "wbc",
+    # Spanish (accents folded by _norm): the 30-line alias table from docs/lanes/D.md Block 2
+    "glucosa": "glucose",
+    "glucosa en ayunas": "glucose",
+    "glucosa basal": "glucose",
+    "glucemia": "glucose",
+    "glucemia en ayunas": "glucose",
+    "creatinina": "creatinine",
+    "creatinina serica": "creatinine",
+    "creatinina en suero": "creatinine",
+    "proteina c reactiva": "crp",
+    "proteina c reactiva ultrasensible": "crp",
+    "proteina c reactiva de alta sensibilidad": "crp",
+    "pcr": "crp",
+    "pcr ultrasensible": "crp",
+    "pcr us": "crp",
+    "pcr hs": "crp",
+    "pcr alta sensibilidad": "crp",
+    "leucocitos": "wbc",
+    "recuento de leucocitos": "wbc",
+    "leucocitos totales": "wbc",
+    "globulos blancos": "wbc",
+    "linfocitos": "lymph_pct",
+    "linfocitos pct": "lymph_pct",
+    "linfocitos relativos": "lymph_pct",
+    "linfocitos porcentaje": "lymph_pct",
+    "vcm": "mcv",
+    "volumen corpuscular medio": "mcv",
+    "ade": "rdw",
+    "amplitud de distribucion eritrocitaria": "rdw",
+    "indice de distribucion eritrocitaria": "rdw",
+    "fosfatasa alcalina": "alp",
+    "fal": "alp",
+    "albumina": "albumin",
+    "albumina serica": "albumin",
+    "albumina en suero": "albumin",
 }
 
 # Names that look like a canonical analyte but are a different measurement.
 # They must never map to a PhenoAge key. (Block 2 derives lymph_pct from absolutes.)
 _EXCLUDE_PATTERNS = [
     re.compile(r"\babs\b|\babsolute\b|\b#\s*$|\bcount\b.*\blymph|\blymph.*\bcount\b"),
-    re.compile(r"\burine\b|\burinary\b|\bcsf\b"),
+    re.compile(r"\burine\b|\burinary\b|\bcsf\b|\borina\b|\burinario\b"),
+    re.compile(r"\babsolutos?\b|\bhcm\b|\bchcm\b"),
     re.compile(r"\bmch\b|\bmchc\b|\brdw\s*sd\b"),
     re.compile(r"\begfr\b|\bratio\b|\bbun\b"),
 ]
 
 
 def _norm(raw: str) -> str:
-    s = raw.lower().replace("%", " pct ")
+    s = unicodedata.normalize("NFKD", raw)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.lower().replace("%", " pct ")
     s = re.sub(r"[^a-z0-9#]+", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 

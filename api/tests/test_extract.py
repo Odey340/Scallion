@@ -1,5 +1,7 @@
 import os
 import tempfile
+
+import pytest
 from pathlib import Path
 
 from app.extract.canonical import canonical_keys
@@ -34,6 +36,18 @@ def test_extract_synthetic_pdf_returns_nine_analytes(client):
             assert body["text"][s:e].startswith(a["raw_name"]), a
     others = [a for a in body["analytes"] if a["name"].startswith("other:")]
     assert any(a["raw_name"] == "Lymphs (Absolute)" for a in others)
+
+    # v4: every canonical row carries the paper's unit; nothing derived because Lymphs % is printed.
+    si = {a["name"]: (a["si_value"], a["si_unit"]) for a in body["analytes"] if a["name"] in NINE}
+    assert si["glucose"] == (pytest.approx(5.384, abs=1e-3), "mmol/L")
+    assert si["creatinine"] == (pytest.approx(80.462, abs=1e-3), "umol/L")
+    assert si["albumin"] == (44.0, "g/L")
+    assert si["crp"] == (pytest.approx(0.08), "mg/dL")
+    assert si["alp"] == (70.0, "U/L")
+    assert si["wbc"] == (6.2, "10^9/L")
+    assert si["lymph_pct"] == (30.0, "%")
+    assert all(a["note"] is None for a in body["analytes"] if a["name"] in NINE)
+    assert not any(a["derived"] for a in body["analytes"])
 
     # Nothing written anywhere.
     assert _snapshot(tmp) == before

@@ -29,6 +29,11 @@ class Analyte(BaseModel):
     source_span: tuple[int, int] | None = None  # [start, end) offsets into ExtractResponse.text
     source_text: str
     raw_name: str
+    # v4 (normalizer): value in the PhenoAge paper's unit, or null when the printed unit is unknown.
+    si_value: float | None = None
+    si_unit: str | None = None
+    derived: str | None = None  # "lymph_pct_from_absolute" when computed from an absolute count
+    note: str | None = None  # "unknown_unit:<printed>"
 
 
 class ExtractResponse(BaseModel):
