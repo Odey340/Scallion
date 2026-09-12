@@ -3,6 +3,7 @@
 Change only by agreement: edit here, commit `[contract] ...`, post in Discord. Bump the version line.
 
 **v2 (Fri H2): `/extract` response gained `text`, `source_text`, `raw_name`, `missing`; `source_span` indexes into `text`.**
+**v3 (Sat): section 7, client-side redaction rules at `api/redaction_rules.json` (D produces, C applies before upload).**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -112,3 +113,23 @@ create materialized view daily_connection with (timescaledb.continuous) as
 ## 6. Fixtures (`fixtures/`)
 
 `lab_report_redacted.pdf` (one real, consented, redacted), `lab_report_es.pdf` (Spanish-format sample), `whatsapp_sample.txt` (synthetic, 90 days, 12 contacts), `gmail_metadata_sample.json` (synthetic), `nhanes_2017_2020_labs.parquet` (A builds Friday). Never commit unredacted files.
+
+## 7. Redaction rules (D produces, C applies in the browser): `api/redaction_rules.json`
+
+C imports this file (copy or fetch at build time; it is versioned) and applies it to the pdf.js text layer before anything leaves the phone. D tests it here (`api/tests/test_redaction.py`) and keeps a Python reference applier in `api/app/redaction.py`.
+
+```json
+{"version": 1,
+ "regex_dialect": "ECMAScript, case-insensitive; no inline flags, no lookbehind, no named groups",
+ "mask_token": "[REDACTED]",
+ "keep_if": {"pattern": "<a result row: name, number, unit>"},
+ "rules": [
+   {"id": "patient_name_label", "category": "name", "action": "drop_line", "pattern": "^\s*(patient|name|nombre|paciente)...[:#]", "note": "..."},
+   {"id": "email", "category": "contact", "action": "mask", "pattern": "[A-Za-z0-9._%+-]+@...", "note": "..."}
+ ]}
+```
+
+- `category` is one of `name | dob | mrn | address | physician | contact`. Every rule has a unique `id`.
+- Apply per line (pdf.js items grouped by y, joined with a space). Rules run in order; the first `drop_line` match removes the whole line (black out every item's box); `mask` rules replace only the matched substring (same regex, global flag) with `mask_token`.
+- A line matching `keep_if` (an analyte result row) is never dropped, only masked.
+- Kept on purpose: Sex, Age, Collected/Reported dates, section titles. Upload only the redacted document, never the original.
