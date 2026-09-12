@@ -25,7 +25,9 @@ scp -i "$KEY" -o StrictHostKeyChecking=accept-new "$ROOT/.env" "$HOST:/srv/scall
 rm -f "$TMPTAR"
 
 echo "== building + starting"
-$SSH 'set -e; cd /srv/scallion && tar -xzf api.tgz && rm api.tgz && chmod 600 .env
+$SSH 'set -e; command -v docker >/dev/null || (curl -fsSL https://get.docker.com | sh && systemctl enable --now docker)
+      docker compose version >/dev/null 2>&1 || apt-get install -y docker-compose-plugin
+      cd /srv/scallion && tar -xzf api.tgz && rm api.tgz && chmod 600 .env
       cd api/deploy && docker compose up -d --build --remove-orphans
       sleep 4; docker compose ps; curl -s http://127.0.0.1/health || true; echo'
 echo "== done: http://$(echo "$HOST" | cut -d@ -f2)/health and https://api.scallion.us/health once DNS points here"
