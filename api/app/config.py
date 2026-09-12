@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     web_origin: str = "http://localhost:8081"
     max_upload_mb: int = 15
 
+    # Tiger Data (TimescaleDB). Empty = in-memory stores (tests, offline demo fallback).
+    tiger_database_url: str = ""
+
     # Where A's exports land. Falls back to the contract-shaped copy in api/fixtures.
     engine_dir: Path = REPO_DIR / "web" / "public" / "engine"
 

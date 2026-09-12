@@ -14,3 +14,12 @@ Live mode needs `GEMINI_API_KEY`; `/health` reports `"gemini": "live"|"fake"` an
 Uploads are read into memory and never written to disk. Docker: `docker build -t scallion-api . && docker run -p 8000:8000 --env-file ../.env scallion-api`.
 Redaction rules for lane C live in `redaction_rules.json` (contract section 7); `app/redaction.py` is the reference applier and `tests/test_redaction.py` runs them against the fixture.
 Canonical analyte keys come from `web/public/engine/phenoage.json` (A) with `fixtures/phenoage.contract.json` as the fallback.
+
+## Tiger Data
+
+Schema lives in `migrations/NNNN_*.sql` (contact_events hypertable, daily_connection continuous aggregate, vitals, clock_history).
+
+```
+uv run python migrations/apply.py --show   # needs TIGER_DATABASE_URL in ../.env; autocommit, once per file
+uv run pytest tests/test_tiger_integration.py   # runs only when TIGER_DATABASE_URL is set
+```

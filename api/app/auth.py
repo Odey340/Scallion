@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Request
 
 from .config import Settings, get_settings
 
-DEV_USER_ID = "00000000-0000-4000-8000-000000000d3v"
+DEV_USER_ID = "00000000-0000-4000-8000-000000000001"  # must be a valid uuid: tables key on user_id uuid
 
 
 @dataclass(frozen=True)
