@@ -7,7 +7,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * planned Gemini extraction (contract has no route for it yet) — see docs/log/C.md.
  */
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 
 const PROMPT = `You are looking at a photo of a plate of food. Estimate the total carbohydrate content in grams for
 everything visible on the plate, using typical portion sizes. Respond with strict JSON only, no markdown fences:
