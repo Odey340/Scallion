@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # ElevenLabs (GET /tts and, later, the coach). Fake = silent MP3 for tests and offline demos.
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = ""
+    elevenlabs_agent_id: str = ""
     elevenlabs_fake: bool = False
 
     # Persona (webhook signature, hosted-flow link). Empty secret = webhook answers 503.

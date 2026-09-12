@@ -155,3 +155,22 @@ def test_pg_answers_merge_and_clock_latest(conn):
     finally:
         conn.execute("delete from profiles where user_id=%s", (user,))
         conn.execute("delete from clock_history where user_id=%s", (user,))
+
+
+def test_pg_checkins_recent_and_kind_filter(conn):
+    from datetime import datetime, timedelta, timezone
+
+    from app.checkins.schema import CheckinIn
+    from app.checkins.store import PgCheckinStore
+
+    user = str(uuid.uuid4())
+    store = PgCheckinStore(URL)
+    now = datetime.now(timezone.utc)
+    try:
+        store.insert(user, CheckinIn(kind="plan", text="walk"), ts=now - timedelta(days=1))
+        store.insert(user, CheckinIn(kind="meal", data={"carbs_g": 75}))
+        rows = store.recent(user, 10)
+        assert [r.kind for r in rows] == ["meal", "plan"] and rows[0].data == {"carbs_g": 75}
+        assert store.recent(user, 10, "plan")[0].text == "walk"
+    finally:
+        conn.execute("delete from checkins where user_id=%s", (user,))

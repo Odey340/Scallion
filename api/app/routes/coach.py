@@ -11,6 +11,7 @@ from ..coach.validator import validate_narration
 from ..config import API_DIR
 from ..config import Settings, get_settings
 from . import clock as clock_route
+from . import memory as memory_route
 from . import persona as persona_route
 from . import vitals as vitals_route
 
@@ -22,7 +23,8 @@ def _context(user_id: str, settings: Settings) -> dict:
     clocks = clock_route.get_store().latest(user_id)
     vitals = vitals_route.get_store().latest(user_id)
     circle = None  # TODO(B): social/ metrics once POST /events data is summarised by B's package
-    return build_context(settings, profile, clocks, vitals, circle)
+    history = memory_route.get_store().recent(user_id, 8)
+    return build_context(settings, profile, clocks, vitals, circle, history=history)
 
 
 @router.get("/coach/context")

@@ -7,7 +7,7 @@ _NUM = re.compile(r"(?<![\w.])[-+]?\d{1,3}(?:,\d{3})+(?:\.\d+)?|(?<![\w.])[-+]?\
 # Timestamps and dates in the context (generated_at, captured_at, computed_at) must not license
 # numbers like 12 or 2026 in narration.
 _TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ][\d:.+\-Z]*)?|\b\d{1,2}:\d{2}(?::\d{2})?\b")
-_SKIP_KEYS = {"generated_at", "captured_at", "computed_at", "received_at", "source", "rule", "condition"}
+_SKIP_KEYS = {"generated_at", "captured_at", "computed_at", "received_at", "source", "rule", "condition", "ts", "issued_at"}
 
 
 def _forms(x: float) -> set[str]:

@@ -131,6 +131,7 @@ def build_context(
     vitals: VitalsOut | None,
     circle: dict | None,
     today: date | None = None,
+    history: list | None = None,
 ) -> dict:
     today = today or datetime.now(timezone.utc).date()
     phenoage = _export(settings.engine_dir, "phenoage.json")
@@ -165,6 +166,9 @@ def build_context(
         "show_age": not crit["critical"],
         "lang": me.lang,
     }
+    hist = [h.model_dump(mode="json") for h in (history or [])]
+    meals_today = [h for h in hist if h["kind"] == "meal" and str(h["ts"])[:10] == today.isoformat()]
+    last_plan = next((h for h in hist if h["kind"] == "plan"), None)
     return {
         "clock": clock_out,
         "circle": circle,
@@ -172,10 +176,12 @@ def build_context(
             "vitals": vitals.model_dump(mode="json") if vitals else None,
             "caffeine": caffeine_plan(caffeine, answers),
             "nudge": (circle.get("nudges") or [None])[0] if circle.get("available") else None,
-            "meal": None,  # C computes from meal_grid.json in the browser; log_meal records carbs here later
+            "meal": ({"carbs_g": (meals_today[0].get("data") or {}).get("carbs_g"), "ts": meals_today[0]["ts"], "note": meals_today[0].get("text")} if meals_today else None),
         },
         "levers": active,
         "levers_unknown": unknown,
+        "history": hist,  # newest first: check-ins, plans, nudges, replies, meals, shares
+        "last_plan": last_plan,
         "flags": flags,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "engine": {"phenoage_version": (phenoage or {}).get("version"), "risk_years_rows": len(risk_years or [])},
