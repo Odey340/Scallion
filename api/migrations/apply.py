@@ -66,10 +66,10 @@ def show(url: str) -> None:
         ):
             print(f"  {name}  dims={dims} chunks={chunks}")
         print("continuous aggregates:")
-        for name, mat_only, finalized in conn.execute(
-            "select view_name, materialized_only, finalized from timescaledb_information.continuous_aggregates order by 1"
+        for name, mat_only in conn.execute(
+            "select view_name, materialized_only from timescaledb_information.continuous_aggregates order by 1"
         ):
-            print(f"  {name}  materialized_only={mat_only} finalized={finalized}")
+            print(f"  {name}  materialized_only={mat_only}")
         print("row counts:")
         for t in ("contact_events", "vitals", "clock_history"):
             (n,) = conn.execute(f"select count(*) from {t}").fetchone()
