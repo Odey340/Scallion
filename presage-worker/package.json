@@ -1,0 +1,16 @@
+{
+  "name": "scallion-presage-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scallion lane D: 30-second webcam vitals (Presage SmartSpectra) posted to the API as /vitals",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node index.mjs",
+    "dry-run": "node index.mjs --dry-run",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@smartspectra/node-sdk": "^3.3.0"
+  }
+}

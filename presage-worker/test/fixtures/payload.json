@@ -1,0 +1,10 @@
+{
+  "source": "presage",
+  "pulse_bpm": 62,
+  "breathing_bpm": 15,
+  "stress_index": 98.4,
+  "captured_at": "2026-09-12T14:00:00.000Z",
+  "hrv_rmssd_ms": 41.2,
+  "confidence": 0.9,
+  "samples": 15
+}
