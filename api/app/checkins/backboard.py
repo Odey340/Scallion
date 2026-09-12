@@ -44,7 +44,8 @@ class BackboardMemory:
         def _go() -> None:
             try:
                 aid = self._assistant(user_id)
-                self._client.post(f"/assistants/{aid}/memories", json={"content": text, "metadata": metadata or {}}).raise_for_status()
+                # Backboard returns 500 for most metadata shapes; the kind lives in the text instead.
+                self._client.post(f"/assistants/{aid}/memories", json={"content": text}).raise_for_status()
             except Exception as e:  # memory is best-effort; the Postgres table is the record
                 log.warning("backboard remember failed: %s", e.__class__.__name__)
 
