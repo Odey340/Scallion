@@ -23,6 +23,7 @@
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
     "expo-web-browser": "~57.0.3",
+    "pdfjs-dist": "^6.3.289",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -50,9 +51,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export -p web",
+    "build:web": "node ./scripts/sync-assets.js && expo export -p web",
     "lint": "expo lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "node ./scripts/sync-assets.js"
   },
   "private": true
 }

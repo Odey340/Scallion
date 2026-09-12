@@ -45,3 +45,6 @@ example
 .vercel
 .env*
 !.env.example
+
+# copied from node_modules by scripts/sync-assets.js
+public/pdfjs/

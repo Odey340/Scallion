@@ -46,6 +46,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="scan-results" />
+        <Stack.Screen name="labs-results" />
       </Stack>
     </ThemeProvider>
   );
