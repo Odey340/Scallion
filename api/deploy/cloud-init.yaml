@@ -1,0 +1,23 @@
+#cloud-config
+# Vultr user-data for the Scallion API box. Installs Docker, adds the deploy key, opens the
+# firewall. Applied via PATCH /v2/instances/{id} (os_id + user_data) or on first boot.
+# SSH_AUTHORIZED_KEYS is substituted by deploy.sh before upload.
+ssh_authorized_keys:
+__SSH_AUTHORIZED_KEYS__
+package_update: true
+package_upgrade: false
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - ufw
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable --now docker
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw allow 443/udp
+  - ufw --force enable
+  - mkdir -p /srv/scallion
+  - touch /srv/scallion/.cloud-init-done

@@ -1,0 +1,38 @@
+# Scallion API on the Vultr box: the API container behind Caddy (automatic Let's Encrypt TLS).
+# Lives at /srv/scallion on the server; `docker compose up -d --build` after every deploy.sh.
+services:
+  api:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    image: scallion-api:latest
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DEV_AUTH_BYPASS: "0"
+      GEMINI_FAKE: "0"
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  caddy_data:
+  caddy_config:

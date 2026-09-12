@@ -1,0 +1,11 @@
+# api.scallion.us -> the API container. Caddy fetches and renews the certificate itself once the
+# GoDaddy A record for `api` points at this box. Until then it keeps retrying; :80 still answers.
+api.scallion.us {
+	encode gzip
+	reverse_proxy api:8000
+}
+
+# Plain-HTTP fallback by IP so /health can be checked before DNS exists.
+:80 {
+	reverse_proxy api:8000
+}
