@@ -80,3 +80,17 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 
 
 
+
+## Session 6 (2026-09-12): checklist audit of docs/lanes/C.md, no feature work
+
+**Done:** Audited every checkbox in `docs/lanes/C.md` against `web/` and the deployed site (a parallel Lane C session landed the `/scan` rename + onboarding while this ran; audit re-based on `60ba625`). Fresh `npm ci` on this checkout (no `node_modules`, no `web/.vercel` link here), then `tsc --noEmit`, `expo lint`, `expo export -p web` all pass. `scallion.us` `/`, `/start`, the meal screen, `/labs`, `/engine/phenoage.json` return 200; `api.scallion.us/health` reports gemini live, auth jwt, db tiger, tts live, memory backboard. First real browser check of the meal form -> results page (sessions 3-4 never got one): form, medication gate, both CurveBands, Buffey label, caffeine line all render.
+
+**Complete:** Setup (scaffold, tokens, route skeleton, Vercel + scallion.us); Block 1 `/start`; Block 3 meal screen (`/scan`: photo->carbs, two CurveBands, medication gate, caffeine line); Block 4 onboarding UI (what-leaves-your-phone card, medication, two LSNS questions, Persona link) — blocked on `EXPO_PUBLIC_SUPABASE_URL`/`ANON_KEY` before anything saves.
+
+**Not started (still placeholder screens):** Home, Circle, Labs review + waterfall, Camera, Coach. `phenoage.ts` and its vectors test do not exist; no `Heatmap`/`Waterfall`/`ReviewTable` components; no pdf.js, no `@vladmandic/human`, no ElevenLabs client, no Spanish strings, no large-type mode, no daily card, no nudge feedback, no family-tag step. No Lane C screen recordings in `media/` and no video (A's segment exists). `www.scallion.us` TLS fails (domain not added to the Vercel project). Gates H10 and H19 are not evidenced anywhere in the logs.
+
+**Flags:** (1) The meal "wellbeing %" is a Lane-C-invented on-screen number, which conflicts with CLAUDE.md rule 1 (every number from A's JSON or B's package) even though it is labelled. (2) Results page says "last coffee by 13:22 tonight" for an afternoon cutoff; wording only. (3) Walk curve returns to baseline later than eat-now (220 m vs 185 m at 78 g / 70 kg) — A's grid, worth a glance. (4) Untracked `scallion-lane-d.patch` at the repo root and timestamp-only regen diffs in `web/public/engine/*.json` + three `media/*.png` are not Lane C's; left alone. (5) No `.vercel` link on this machine, so deploys need `vercel link` first. (6) `docs/lanes/C.md` still says "Tonight"; the route is `/scan` since contract v11.
+
+**Next (in lane order):** `phenoage.ts` + vectors test (unblocks Home, Labs result, coach `POST /clock`); Home; Labs upload/review/waterfall; Circle from `api.circle()` (D's stand-in); Camera; Coach; Spanish + large type; recordings and the video.
+
+**Contract changes needed:** None.
