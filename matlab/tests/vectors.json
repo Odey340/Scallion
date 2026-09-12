@@ -81,7 +81,7 @@
       "crp": 0.6,
       "lymph_pct": 22,
       "mcv": 94,
-      "rdw": 15.0,
+      "rdw": 15,
       "alp": 95,
       "wbc": 8.1
     },
@@ -115,7 +115,7 @@
       "glucose": 5.2,
       "lymph_pct": 33,
       "mcv": 89,
-      "rdw": 13.0,
+      "rdw": 13,
       "alp": 64,
       "wbc": 5.9
     },
@@ -126,7 +126,7 @@
       "albumin": -0.7452,
       "creatinine": 0.2478,
       "glucose": -0.7582,
-      "crp": 0.0,
+      "crp": 0,
       "lymph_pct": -0.3726,
       "mcv": 0.0594,
       "rdw": -2.2001,

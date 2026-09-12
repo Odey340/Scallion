@@ -1,50 +1,50 @@
 {
-  "half_life_h": 5.0,
+  "half_life_h": 5,
   "modifiers": {
     "smoker": 0.5,
-    "oral_contraceptive": 2.0
+    "oral_contraceptive": 2
   },
   "bedtime_threshold_mg": 50,
   "threshold_note": "assumption: ~half a cup of coffee remaining; evidence for the 6 h rule is Drake 2013",
   "source": "Fredholm 1999; Benowitz 1989; Abernethy & Todd 1985; Drake 2013",
   "curve": {
     "t_h": [
-      0.0,
+      0,
       0.5,
-      1.0,
+      1,
       1.5,
-      2.0,
+      2,
       2.5,
-      3.0,
+      3,
       3.5,
-      4.0,
+      4,
       4.5,
-      5.0,
+      5,
       5.5,
-      6.0,
+      6,
       6.5,
-      7.0,
+      7,
       7.5,
-      8.0,
+      8,
       8.5,
-      9.0,
+      9,
       9.5,
-      10.0,
+      10,
       10.5,
-      11.0,
+      11,
       11.5,
-      12.0,
+      12,
       12.5,
-      13.0,
+      13,
       13.5,
-      14.0,
+      14,
       14.5,
-      15.0,
+      15,
       15.5,
-      16.0
+      16
     ],
     "fraction": [
-      1.0,
+      1,
       0.933,
       0.8706,
       0.8123,
@@ -82,7 +82,7 @@
   "rule": "last_coffee_h_before_bed = half_life_h * modifier * log2(dose_mg / bedtime_threshold_mg)",
   "version": 1,
   "meta": {
-    "generated_by": "matlab/tools/crosscheck/crosscheck.py (PROVISIONAL: regenerate with matlab/export/export_artifacts.m)",
-    "generated_at": "2026-09-12T15:24:05Z"
+    "generated_by": "matlab/export/export_artifacts.m",
+    "generated_at": "2026-09-12T16:39:04Z"
   }
 }

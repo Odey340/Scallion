@@ -13,7 +13,12 @@ main_live_script                    % tests -> norms -> insulindemo -> (sweep) -
 
 Requirements: MATLAB R2026a, SimBiology, Statistics and Machine Learning Toolbox (for `xptread` and Regression Learner), Simulink (SimBiology dependency). MATLAB Compiler SDK is optional and unused.
 
-**Machine status (Fri H1):** MATLAB is not installed on the Lane A laptop yet and the Agentic Toolkit MCP is not registered. Until it is, `matlab/tools/crosscheck/crosscheck.py` (an independent Python mirror of the same equations) produced the current exports; each file says so in `meta.generated_by`. First thing after installing MATLAB: `main_live_script`, then `git diff web/public/engine` must be numerically empty.
+**Machine status (Fri H2.5):** MATLAB R2026a Update 5 is installed at `C:\MATLAB\R2026a` (via `mpm`, products MATLAB, Simulink, SimBiology, Statistics and Machine Learning Toolbox) and licensed through the MathWorks sign-in. Two quirks of that install:
+
+- The OS-registration step needs an admin prompt and was skipped, so a fresh session starts with an empty path. `main_live_script` calls `restoredefaultpath` when it detects this; for batch runs use `matlab -batch "restoredefaultpath; ..."`. To fix it for good run `C:\MATLAB\R2026a\bin\win64\registerWithOS.exe -matlabroot C:\MATLAB\R2026a` from an admin prompt.
+- Example files are not shipped; `run_insulindemo` calls `openExample('simbio/insulindemo')` on first use, which downloads the project into `Documents\MATLAB\Examples\R2026a\simbio\insulindemo`.
+
+All exports in `web/public/engine/` are now written by `export_artifacts.m` (see `meta.generated_by`). `python matlab/tools/crosscheck/crosscheck.py` is an independent Python mirror of the same equations; it recomputes the norms, the vectors and the small exports and reports `CROSSCHECK PASS` when they agree (norms to 1e-13, vectors exactly).
 
 ## Files and the screen each one drives
 

@@ -6,7 +6,9 @@ C = phenoage_constants();
 names = [{'cohort_offset'}, C.analytes];
 vals = cellfun(@(n) o.waterfall.(n), names);
 labels = [{'cohort offset'}, strrep(C.analytes, '_', ' ')];
-figure('Color', 'w', 'Position', [100 100 900 420]); hold on;
+fig = figure('Color', 'w', 'Position', [100 100 900 420]); hold on;
+try, fig.Theme = 'light'; catch, end                                       % batch mode otherwise picks the dark theme
+set(gca, 'Color', 'w', 'XColor', [0.2 0.2 0.2], 'YColor', [0.2 0.2 0.2]);
 base = o.age;
 xs = 1:(numel(vals) + 2);
 bar(xs(1), o.age, 'FaceColor', [0.45 0.45 0.45], 'EdgeColor', 'none');

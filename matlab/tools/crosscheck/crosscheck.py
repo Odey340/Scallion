@@ -200,7 +200,9 @@ def hunt_constants():
         lo = mean[0] + (mean[1] - mean[0]) / (mid[1] - mid[0]) * (ages - mid[0])
         hi = mean[-2] + (mean[-1] - mean[-2]) / (mid[-1] - mid[-2]) * (ages - mid[-2])
         m = np.where(ages < mid[0], lo, np.where(ages > mid[-1], hi, m))
-        H["fitness_age_lookup"][s] = [[int(a), float(round(v, 1))] for a, v in zip(ages, m)]
+        # left unrounded on purpose: MATLAB rounds the table to 0.1 (decimal-aware round), and the
+        # comparison below allows 0.051 so exact halves such as 33.35 cannot produce a false DIFF
+        H["fitness_age_lookup"][s] = [[int(a), float(v)] for a, v in zip(ages, m)]
     return H
 
 
@@ -300,15 +302,65 @@ def export(norms, out_dir, provisional):
         print("wrote", out_dir / name)
 
 
+def flatten(obj, prefix=""):
+    """Flatten nested dict/list of numbers to {path: value} for numeric comparison."""
+    out = {}
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out.update(flatten(v, f"{prefix}.{k}" if prefix else str(k)))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            out.update(flatten(v, f"{prefix}[{i}]"))
+    elif isinstance(obj, (int, float)) and not isinstance(obj, bool):
+        out[prefix] = float(obj)
+    return out
+
+
+def compare(label, mine, theirs, tol):
+    a, b = flatten(mine), flatten(theirs)
+    missing = sorted(set(a) - set(b))
+    extra = sorted(set(b) - set(a))
+    worst = max(((abs(a[k] - b[k]), k) for k in a if k in b), default=(0.0, ""))
+    bad = [k for k in a if k in b and abs(a[k] - b[k]) > tol]
+    status = "OK" if not bad and not missing else "DIFF"
+    print(f"[{status}] {label}: {len(a)} numbers, max |diff| = {worst[0]:.3g} at {worst[1] or '-'}; "
+          f"{len(bad)} over tol {tol}; missing in MATLAB {len(missing)}; extra in MATLAB {len(extra)}")
+    for k in bad[:8]:
+        print(f"      {k}: python {a[k]:.6g} vs matlab {b[k]:.6g}")
+    return status == "OK"
+
+
 if __name__ == "__main__":
     provisional = "--provisional-export" in sys.argv
-    N = nhanes_norms()
-    (MATLAB / "engine" / "norms_cache.json").write_text(json.dumps(N, indent=2), encoding="utf-8")
-    print(f"norms: {N['n_adults']} adults, {N['n_complete_fasting']} complete fasting cases")
+    N = nhanes_norms(write_fixture=provisional)
+    print(f"python norms: {N['n_adults']} adults, {N['n_complete_fasting']} complete fasting cases")
     V = build_vectors(N)
-    (MATLAB / "tests" / "vectors.json").write_text(json.dumps(V, indent=2), encoding="utf-8")
     for v in V:
         print(f"{v['name']:>18}: phenoage {v['phenoage']:.2f} +/- {v['band']:.2f}  cohort {v['waterfall']['cohort_offset']:+.2f}  imputed {v['imputed']}")
+    if provisional:
+        # No MATLAB on this machine: seed the cache and the vectors from Python.
+        (MATLAB / "engine" / "norms_cache.json").write_text(json.dumps(N, indent=2), encoding="utf-8")
+        (MATLAB / "tests" / "vectors.json").write_text(json.dumps(V, indent=2), encoding="utf-8")
+    else:
+        # MATLAB is the source of truth: compare against what it wrote.
+        ok = True
+        cache = MATLAB / "engine" / "norms_cache.json"
+        if cache.exists():
+            ok &= compare("engine/norms_cache.json", N, json.loads(cache.read_text()), tol=1e-6)
+        vec = MATLAB / "tests" / "vectors.json"
+        if vec.exists():
+            ok &= compare("tests/vectors.json", V, json.loads(vec.read_text()), tol=0.05)
+        eng = ROOT / "web" / "public" / "engine"
+        Hm = hunt_constants(); Hm["version"] = 1
+        # hunt.json holds a lookup rounded to 0.1; MATLAB's decimal round and IEEE halves can differ by one ulp of that
+        for name, mine, tol in [("hunt.json", Hm, 0.051), ("risk_years.json", risk_years(), 1e-6), ("caffeine.json", caffeine_curve(), 1e-6)]:
+            if (eng / name).exists():
+                theirs = json.loads((eng / name).read_text())
+                if isinstance(theirs, dict):
+                    theirs.pop("meta", None)
+                ok &= compare(f"web/public/engine/{name}", mine, theirs, tol=tol)
+        print("CROSSCHECK", "PASS" if ok else "FAIL")
+        sys.exit(0 if ok else 1)
     # self-checks that mirror tests/test_phenoage.m
     o = phenoage(V[0]["values"], 34, "M", N)
     assert abs(o["phenoage"] - o["phenoage_direct"]) < 1e-9, "affine != direct"

@@ -6,21 +6,22 @@
 % Sections: 1 tests, 2 norms, 3 insulindemo, 4 sweep (Block 3), 5 surrogate
 % (Block 3), 6 export.
 
+if isempty(which('runtests')), restoredefaultpath; end   % mpm install without OS registration leaves the path empty
 here = fileparts(mfilename('fullpath'));
 addpath(genpath(here));
 cd(here);
 
-%% 1. Toolboxes and tests
+%% 1. Toolboxes and NHANES norms (downloads the public XPTs on first run, ~10 MB)
 v = ver;
 fprintf('%s\n', strjoin(unique({v.Name}), ' | '));
-results = runtests('tests/test_phenoage.m');
-disp(table(results));
-assert(all([results.Passed]), 'engine tests failed');
-
-%% 2. NHANES norms (downloads the public XPTs on first run, ~10 MB)
 download_nhanes();
 N = nhanes_norms();
 fprintf('adults %d, complete fasting cases %d\n', N.n_adults, N.n_complete_fasting);
+
+%% 2. Tests: reference vectors, waterfall identity, band, imputation, safety gates
+results = runtests('tests/test_phenoage.m');
+disp(table(results));
+assert(all([results.Passed]), 'engine tests failed');
 
 %% 3. One person through the clock
 vals = struct('albumin', 44, 'creatinine', 80, 'glucose', 5.4, 'crp', 0.08, ...

@@ -39,7 +39,7 @@
     "layer": "lifestyle",
     "exposure": "long_sleep",
     "hr": 1.3,
-    "years": 3.0,
+    "years": 3,
     "source": "Cappuccio 2010, Sleep 33:585",
     "condition": "sleep_h > 9",
     "label": "risk-equivalent years, if sustained, population estimate"
