@@ -1,0 +1,232 @@
+{
+  "vo2max": {
+    "M": {
+      "intercept": 100.27,
+      "age": -0.296,
+      "waist": -0.369,
+      "rhr": -0.155,
+      "pai": 0.226,
+      "see": 5.7
+    },
+    "F": {
+      "intercept": 74.74,
+      "age": -0.247,
+      "waist": -0.259,
+      "rhr": -0.114,
+      "pai": 0.198,
+      "see": 5.14
+    }
+  },
+  "vo2max_source": "Nes 2011, Scand J Med Sci Sports 21:e1-e9",
+  "reference": {
+    "age_mid": [
+      25,
+      35,
+      45,
+      55,
+      65,
+      75
+    ],
+    "M": {
+      "mean": [
+        54.4,
+        49.1,
+        47.2,
+        42.6,
+        39.2,
+        35.3
+      ],
+      "sd": [
+        8.4,
+        7.5,
+        7.7,
+        7.4,
+        6.7,
+        6.5
+      ]
+    },
+    "F": {
+      "mean": [
+        43.0,
+        40.0,
+        38.4,
+        34.4,
+        31.1,
+        28.3
+      ],
+      "sd": [
+        7.7,
+        6.8,
+        6.9,
+        5.7,
+        5.1,
+        5.2
+      ]
+    }
+  },
+  "reference_source": "Loe 2013, PLoS One 8(5):e64319, Table 2 (HUNT3 Fitness, n = 3678)",
+  "pai_options": [
+    {
+      "key": "none",
+      "label": "Rarely or never",
+      "pai": 0
+    },
+    {
+      "key": "light_weekly",
+      "label": "Light, about once a week",
+      "pai": 0.75
+    },
+    {
+      "key": "moderate_2_3",
+      "label": "Moderate, 2-3 times a week, 30-60 min",
+      "pai": 3.75
+    },
+    {
+      "key": "hard_2_3",
+      "label": "Hard, 2-3 times a week, 30-60 min",
+      "pai": 5.625
+    },
+    {
+      "key": "hard_daily",
+      "label": "Hard, almost every day, over an hour",
+      "pai": 15
+    }
+  ],
+  "pai_source": "Kurtze 2008, Scand J Public Health 36:52-61 (HUNT PA index)",
+  "age_range": [
+    20,
+    90
+  ],
+  "fitness_age_lookup": {
+    "M": [
+      [
+        20,
+        57.0
+      ],
+      [
+        25,
+        54.4
+      ],
+      [
+        30,
+        51.8
+      ],
+      [
+        35,
+        49.1
+      ],
+      [
+        40,
+        48.2
+      ],
+      [
+        45,
+        47.2
+      ],
+      [
+        50,
+        44.9
+      ],
+      [
+        55,
+        42.6
+      ],
+      [
+        60,
+        40.9
+      ],
+      [
+        65,
+        39.2
+      ],
+      [
+        70,
+        37.2
+      ],
+      [
+        75,
+        35.3
+      ],
+      [
+        80,
+        33.3
+      ],
+      [
+        85,
+        31.4
+      ],
+      [
+        90,
+        29.4
+      ]
+    ],
+    "F": [
+      [
+        20,
+        44.5
+      ],
+      [
+        25,
+        43.0
+      ],
+      [
+        30,
+        41.5
+      ],
+      [
+        35,
+        40.0
+      ],
+      [
+        40,
+        39.2
+      ],
+      [
+        45,
+        38.4
+      ],
+      [
+        50,
+        36.4
+      ],
+      [
+        55,
+        34.4
+      ],
+      [
+        60,
+        32.8
+      ],
+      [
+        65,
+        31.1
+      ],
+      [
+        70,
+        29.7
+      ],
+      [
+        75,
+        28.3
+      ],
+      [
+        80,
+        26.9
+      ],
+      [
+        85,
+        25.5
+      ],
+      [
+        90,
+        24.1
+      ]
+    ]
+  },
+  "version": 1,
+  "label": "Estimate from age, waist, resting pulse and activity; not a fitness test",
+  "meta": {
+    "generated_by": "matlab/tools/crosscheck/crosscheck.py (PROVISIONAL: regenerate with matlab/export/export_artifacts.m)",
+    "generated_at": "2026-09-12T15:24:05Z"
+  }
+}

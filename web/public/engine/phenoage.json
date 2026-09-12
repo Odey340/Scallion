@@ -1,0 +1,448 @@
+{
+  "version": 1,
+  "source": "Levine 2018, Aging 10:573, Table 1 + Supplement 1",
+  "units": {
+    "albumin": "g/L",
+    "creatinine": "umol/L",
+    "glucose": "mmol/L",
+    "crp": "mg/dL",
+    "lymph_pct": "%",
+    "mcv": "fL",
+    "rdw": "%",
+    "alp": "U/L",
+    "wbc": "10^9/L",
+    "age": "years"
+  },
+  "coefficients": {
+    "albumin": -0.03359355,
+    "creatinine": 0.009506491,
+    "glucose": 0.1953192,
+    "ln_crp": 0.09536762,
+    "lymph_pct": -0.01199984,
+    "mcv": 0.02676401,
+    "rdw": 0.3306156,
+    "alp": 0.001868778,
+    "wbc": 0.05542406,
+    "age": 0.08035356
+  },
+  "intercept": -19.90667,
+  "gamma": 0.007692696,
+  "t_months": 120,
+  "k": 0.090165,
+  "a": 0.0055305,
+  "offset": 141.50225,
+  "affine": {
+    "A": 142.4653089283912,
+    "rule": "phenoage = A + xb / k, where xb = intercept + sum(coef_i * term_i) + coef_age * age; term_crp = ln(max(crp, crp_floor_mgdL))"
+  },
+  "crp_floor_mgdL": 0.1,
+  "crp_acute_mgdL": 1.0,
+  "reference_by_age_sex": {
+    "M": {
+      "20-29": {
+        "albumin": 44.0,
+        "creatinine": 80.44,
+        "glucose": 5.5,
+        "crp": 0.126,
+        "lymph_pct": 32.6,
+        "mcv": 88.0,
+        "rdw": 13.0,
+        "alp": 72.0,
+        "wbc": 6.7
+      },
+      "30-39": {
+        "albumin": 43.0,
+        "creatinine": 81.33,
+        "glucose": 5.61,
+        "crp": 0.141,
+        "lymph_pct": 31.4,
+        "mcv": 88.1,
+        "rdw": 13.2,
+        "alp": 69.0,
+        "wbc": 6.9
+      },
+      "40-49": {
+        "albumin": 42.0,
+        "creatinine": 83.98,
+        "glucose": 5.77,
+        "crp": 0.173,
+        "lymph_pct": 30.6,
+        "mcv": 89.6,
+        "rdw": 13.3,
+        "alp": 69.0,
+        "wbc": 6.7
+      },
+      "50-59": {
+        "albumin": 41.0,
+        "creatinine": 84.86,
+        "glucose": 5.94,
+        "crp": 0.174,
+        "lymph_pct": 29.6,
+        "mcv": 89.5,
+        "rdw": 13.5,
+        "alp": 73.0,
+        "wbc": 7.0
+      },
+      "60-69": {
+        "albumin": 41.0,
+        "creatinine": 86.63,
+        "glucose": 6.22,
+        "crp": 0.188,
+        "lymph_pct": 27.1,
+        "mcv": 90.5,
+        "rdw": 13.6,
+        "alp": 73.0,
+        "wbc": 7.0
+      },
+      "70-79": {
+        "albumin": 41.0,
+        "creatinine": 87.52,
+        "glucose": 6.27,
+        "crp": 0.16,
+        "lymph_pct": 25.8,
+        "mcv": 91.0,
+        "rdw": 13.7,
+        "alp": 72.0,
+        "wbc": 6.7
+      },
+      "80+": {
+        "albumin": 40.0,
+        "creatinine": 94.59,
+        "glucose": 6.16,
+        "crp": 0.13899999999999998,
+        "lymph_pct": 24.7,
+        "mcv": 93.0,
+        "rdw": 14.1,
+        "alp": 76.0,
+        "wbc": 7.1
+      }
+    },
+    "F": {
+      "20-29": {
+        "albumin": 41.0,
+        "creatinine": 61.88,
+        "glucose": 5.22,
+        "crp": 0.19,
+        "lymph_pct": 30.9,
+        "mcv": 88.1,
+        "rdw": 13.2,
+        "alp": 66.0,
+        "wbc": 7.5
+      },
+      "30-39": {
+        "albumin": 40.0,
+        "creatinine": 62.76,
+        "glucose": 5.38,
+        "crp": 0.196,
+        "lymph_pct": 30.6,
+        "mcv": 89.3,
+        "rdw": 13.3,
+        "alp": 64.0,
+        "wbc": 7.3
+      },
+      "40-49": {
+        "albumin": 40.0,
+        "creatinine": 63.65,
+        "glucose": 5.55,
+        "crp": 0.265,
+        "lymph_pct": 30.2,
+        "mcv": 88.8,
+        "rdw": 13.6,
+        "alp": 67.0,
+        "wbc": 7.2
+      },
+      "50-59": {
+        "albumin": 40.0,
+        "creatinine": 63.65,
+        "glucose": 5.72,
+        "crp": 0.238,
+        "lymph_pct": 32.1,
+        "mcv": 89.3,
+        "rdw": 13.5,
+        "alp": 81.0,
+        "wbc": 6.8
+      },
+      "60-69": {
+        "albumin": 40.0,
+        "creatinine": 68.95,
+        "glucose": 5.88,
+        "crp": 0.22000000000000003,
+        "lymph_pct": 30.6,
+        "mcv": 89.7,
+        "rdw": 13.6,
+        "alp": 80.0,
+        "wbc": 6.6
+      },
+      "70-79": {
+        "albumin": 40.0,
+        "creatinine": 71.6,
+        "glucose": 5.83,
+        "crp": 0.213,
+        "lymph_pct": 28.3,
+        "mcv": 90.9,
+        "rdw": 13.7,
+        "alp": 81.0,
+        "wbc": 6.8
+      },
+      "80+": {
+        "albumin": 39.0,
+        "creatinine": 81.33,
+        "glucose": 5.88,
+        "crp": 0.194,
+        "lymph_pct": 23.4,
+        "mcv": 91.5,
+        "rdw": 14.1,
+        "alp": 79.0,
+        "wbc": 7.2
+      }
+    }
+  },
+  "imputation_sd_by_age_sex": {
+    "M": {
+      "20-29": {
+        "albumin": 2.965159377316531,
+        "creatinine": 12.446256486286131,
+        "glucose": 0.4521868050407712,
+        "crp": 0.7994140706824241,
+        "lymph_pct": 7.412898443291327,
+        "mcv": 4.002965159377321,
+        "rdw": 0.6671608598962196,
+        "alp": 18.532246108228318,
+        "wbc": 1.8532246108228312
+      },
+      "30-39": {
+        "albumin": 2.965159377316531,
+        "creatinine": 11.7939214232765,
+        "glucose": 0.5411415863602672,
+        "crp": 0.8983995359341087,
+        "lymph_pct": 7.931801334321722,
+        "mcv": 3.7805782060785833,
+        "rdw": 0.5930318754633054,
+        "alp": 18.532246108228318,
+        "wbc": 2.1497405485544845
+      },
+      "40-49": {
+        "albumin": 2.965159377316531,
+        "creatinine": 13.758339510748705,
+        "glucose": 0.5337286879169754,
+        "crp": 0.999312934247363,
+        "lymph_pct": 7.635285396590067,
+        "mcv": 4.07709414381023,
+        "rdw": 0.6671608598962196,
+        "alp": 17.790956263899186,
+        "wbc": 2.075611564121572
+      },
+      "50-59": {
+        "albumin": 2.965159377316531,
+        "creatinine": 16.382505559673827,
+        "glucose": 0.6597479614529286,
+        "crp": 0.9718546157296839,
+        "lymph_pct": 8.376575240919198,
+        "mcv": 4.002965159377321,
+        "rdw": 0.6671608598962196,
+        "alp": 16.30837657524092,
+        "wbc": 1.8532246108228319
+      },
+      "60-69": {
+        "albumin": 2.965159377316531,
+        "creatinine": 16.382505559673838,
+        "glucose": 1.0303928836174943,
+        "crp": 1.049557571061108,
+        "lymph_pct": 7.709414381022979,
+        "mcv": 4.299481097108978,
+        "rdw": 0.6671608598962196,
+        "alp": 20.014825796886583,
+        "wbc": 2.2238695329873983
+      },
+      "70-79": {
+        "albumin": 2.965159377316531,
+        "creatinine": 17.6945885841364,
+        "glucose": 0.9933283914010377,
+        "crp": 0.904988822381289,
+        "lymph_pct": 7.931801334321722,
+        "mcv": 4.892512972572272,
+        "rdw": 0.8154188287620471,
+        "alp": 18.532246108228318,
+        "wbc": 1.6308376575240922
+      },
+      "80+": {
+        "albumin": 2.965159377316531,
+        "creatinine": 22.28317272053373,
+        "glucose": 0.9859154929577465,
+        "crp": 0.9093493634510196,
+        "lymph_pct": 6.968124536693849,
+        "mcv": 4.595997034840625,
+        "rdw": 0.9636767976278731,
+        "alp": 25.203854707190512,
+        "wbc": 2.0756115641215716
+      }
+    },
+    "F": {
+      "20-29": {
+        "albumin": 2.965159377316531,
+        "creatinine": 9.829503335804304,
+        "glucose": 0.4521868050407705,
+        "crp": 1.179595212606693,
+        "lymph_pct": 7.635285396590067,
+        "mcv": 4.373610081541877,
+        "rdw": 0.8895478131949587,
+        "alp": 20.014825796886583,
+        "wbc": 1.9273535952557455
+      },
+      "30-39": {
+        "albumin": 2.965159377316531,
+        "creatinine": 11.141586360266865,
+        "glucose": 0.49666419570051884,
+        "crp": 1.2836586695021124,
+        "lymph_pct": 7.338769458858415,
+        "mcv": 4.670126019273534,
+        "rdw": 0.8154188287620457,
+        "alp": 20.014825796886583,
+        "wbc": 2.149740548554485
+      },
+      "40-49": {
+        "albumin": 2.965159377316531,
+        "creatinine": 11.141586360266865,
+        "glucose": 0.7412898443291327,
+        "crp": 1.2747524481599073,
+        "lymph_pct": 8.080059303187545,
+        "mcv": 5.0407709414381,
+        "rdw": 1.186063750926612,
+        "alp": 21.49740548554485,
+        "wbc": 2.1497405485544845
+      },
+      "50-59": {
+        "albumin": 2.965159377316531,
+        "creatinine": 11.13417346182357,
+        "glucose": 0.5411415863602672,
+        "crp": 1.24182776350786,
+        "lymph_pct": 8.005930318754636,
+        "mcv": 4.966641957005192,
+        "rdw": 0.8895478131949587,
+        "alp": 24.46256486286138,
+        "wbc": 2.075611564121572
+      },
+      "60-69": {
+        "albumin": 2.2238695329873983,
+        "creatinine": 16.382505559673834,
+        "glucose": 0.7783543365455892,
+        "crp": 1.190088874007829,
+        "lymph_pct": 7.78354336545589,
+        "mcv": 4.002965159377321,
+        "rdw": 0.6671608598962196,
+        "alp": 24.46256486286138,
+        "wbc": 2.0756115641215716
+      },
+      "70-79": {
+        "albumin": 2.965159377316531,
+        "creatinine": 17.03484062268347,
+        "glucose": 0.8673091178650852,
+        "crp": 1.0107764077073937,
+        "lymph_pct": 8.15418828762046,
+        "mcv": 4.5959970348406145,
+        "rdw": 0.8895478131949587,
+        "alp": 21.49740548554485,
+        "wbc": 1.9273535952557448
+      },
+      "80+": {
+        "albumin": 2.965159377316531,
+        "creatinine": 22.935507783543365,
+        "glucose": 0.9117865085248336,
+        "crp": 1.0201957192486204,
+        "lymph_pct": 8.22831727205337,
+        "mcv": 4.447739065974797,
+        "rdw": 1.1119347664936992,
+        "alp": 23.721275018532246,
+        "wbc": 1.7790956263899187
+      }
+    }
+  },
+  "cohort_offset_by_age_sex": {
+    "M": {
+      "20-29": -4.163,
+      "30-39": -3.444,
+      "40-49": -2.522,
+      "50-59": -1.666,
+      "60-69": -0.883,
+      "70-79": -1.457,
+      "80+": 0.722
+    },
+    "F": {
+      "20-29": -3.817,
+      "30-39": -3.462,
+      "40-49": -2.764,
+      "50-59": -4.024,
+      "60-69": -3.749,
+      "70-79": -3.527,
+      "80+": -0.706
+    }
+  },
+  "cohort_offset_rule": "exact: phenoage(reference_by_age_sex[sex][band], age, sex) - age at the user's exact age; the table above is the value at the band midpoint, for display only",
+  "waterfall_rule": "years_i = coef_i * (term_i(x_i) - term_i(reference_i)) / k; age + cohort_offset + sum(years_i) == phenoage exactly",
+  "band_rule": "1 SD: sqrt(sum_i (coef_i/k * sd_i)^2); measured: sd_i = x_i * sqrt(cv_within^2 + cv_analytical^2) (crp: the cv itself, on the log term); imputed: sd_i = imputation_sd_by_age_sex",
+  "cv": {
+    "albumin": {
+      "within": 0.031,
+      "analytical": 0.016
+    },
+    "creatinine": {
+      "within": 0.043,
+      "analytical": 0.022
+    },
+    "glucose": {
+      "within": 0.045,
+      "analytical": 0.023
+    },
+    "crp": {
+      "within": 0.422,
+      "analytical": 0.211
+    },
+    "lymph_pct": {
+      "within": 0.104,
+      "analytical": 0.052
+    },
+    "mcv": {
+      "within": 0.013,
+      "analytical": 0.007
+    },
+    "rdw": {
+      "within": 0.035,
+      "analytical": 0.018
+    },
+    "alp": {
+      "within": 0.064,
+      "analytical": 0.032
+    },
+    "wbc": {
+      "within": 0.109,
+      "analytical": 0.055
+    }
+  },
+  "critical_ranges": {
+    "glucose_mgdL": [
+      55,
+      250
+    ],
+    "wbc": [
+      2,
+      30
+    ],
+    "creatinine_x_ref_high": 2
+  },
+  "creatinine_ref_high_default_umolL": 110,
+  "fasting_rule": "glucose is imputed (greyed, \"8 of 9 markers\") unless the report states fasting",
+  "labels": {
+    "estimate": "Estimate, not diagnosis",
+    "critical": "See a clinician first",
+    "imputed": "8 of 9 markers"
+  },
+  "norms": {
+    "source": "NHANES 2017-March 2020 pre-pandemic (P_DEMO, P_CBC, P_BIOPRO, P_HSCRP, P_GLU)",
+    "n_adults": 8521,
+    "n_complete_fasting": 3888
+  },
+  "meta": {
+    "generated_by": "matlab/tools/crosscheck/crosscheck.py (PROVISIONAL: regenerate with matlab/export/export_artifacts.m)",
+    "generated_at": "2026-09-12T15:24:05Z"
+  }
+}

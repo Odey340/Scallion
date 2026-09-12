@@ -1,0 +1,143 @@
+[
+  {
+    "name": "ref_34M",
+    "age": 34,
+    "sex": "M",
+    "fasting": true,
+    "values": {
+      "albumin": 44,
+      "creatinine": 80,
+      "glucose": 5.4,
+      "crp": 0.08,
+      "lymph_pct": 30,
+      "mcv": 90,
+      "rdw": 13.1,
+      "alp": 70,
+      "wbc": 6.2
+    },
+    "phenoage": 29.3079,
+    "band": 2.2943,
+    "waterfall": {
+      "cohort_offset": -3.3351,
+      "albumin": -0.3726,
+      "creatinine": -0.1402,
+      "glucose": -0.4549,
+      "crp": -0.3634,
+      "lymph_pct": 0.1863,
+      "mcv": 0.564,
+      "rdw": -0.3667,
+      "alp": 0.0207,
+      "wbc": -0.4303
+    },
+    "imputed": [],
+    "markers_used": 9,
+    "xb": -10.202841,
+    "mortality_10y": 0.007283
+  },
+  {
+    "name": "ref_58F",
+    "age": 58,
+    "sex": "F",
+    "fasting": true,
+    "values": {
+      "albumin": 41,
+      "creatinine": 62,
+      "glucose": 6.1,
+      "crp": 0.35,
+      "lymph_pct": 27,
+      "mcv": 91,
+      "rdw": 14.2,
+      "alp": 88,
+      "wbc": 7.4
+    },
+    "phenoage": 58.5979,
+    "band": 2.4367,
+    "waterfall": {
+      "cohort_offset": -4.3507,
+      "albumin": -0.3726,
+      "creatinine": -0.174,
+      "glucose": 0.8232,
+      "crp": 0.4079,
+      "lymph_pct": 0.6787,
+      "mcv": 0.5046,
+      "rdw": 2.5667,
+      "alp": 0.1451,
+      "wbc": 0.3688
+    },
+    "imputed": [],
+    "markers_used": 9,
+    "xb": -7.561907,
+    "mortality_10y": 0.097449
+  },
+  {
+    "name": "ref_71M",
+    "age": 71,
+    "sex": "M",
+    "fasting": true,
+    "values": {
+      "albumin": 39,
+      "creatinine": 105,
+      "glucose": 6.8,
+      "crp": 0.6,
+      "lymph_pct": 22,
+      "mcv": 94,
+      "rdw": 15.0,
+      "alp": 95,
+      "wbc": 8.1
+    },
+    "phenoage": 82.6133,
+    "band": 2.5898,
+    "waterfall": {
+      "cohort_offset": -1.0213,
+      "albumin": 0.7452,
+      "creatinine": 1.843,
+      "glucose": 1.1481,
+      "crp": 1.398,
+      "lymph_pct": 0.5057,
+      "mcv": 0.8905,
+      "rdw": 4.7668,
+      "alp": 0.4767,
+      "wbc": 0.8606
+    },
+    "imputed": [],
+    "markers_used": 9,
+    "xb": -5.396557,
+    "mortality_10y": 0.590912
+  },
+  {
+    "name": "imputed_crp_45F",
+    "age": 45,
+    "sex": "F",
+    "fasting": true,
+    "values": {
+      "albumin": 42,
+      "creatinine": 66,
+      "glucose": 5.2,
+      "lymph_pct": 33,
+      "mcv": 89,
+      "rdw": 13.0,
+      "alp": 64,
+      "wbc": 5.9
+    },
+    "phenoage": 37.606,
+    "band": 2.5866,
+    "waterfall": {
+      "cohort_offset": -2.7638,
+      "albumin": -0.7452,
+      "creatinine": 0.2478,
+      "glucose": -0.7582,
+      "crp": 0.0,
+      "lymph_pct": -0.3726,
+      "mcv": 0.0594,
+      "rdw": -2.2001,
+      "alp": -0.0622,
+      "wbc": -0.7991
+    },
+    "imputed": [
+      "crp"
+    ],
+    "markers_used": 8,
+    "xb": -9.454643,
+    "mortality_10y": 0.015328
+  }
+]

@@ -16,3 +16,6 @@ fixtures/*.pdf
 media/*.mp4
 media/*.mov
 .DS_Store
+
+# Lane A raw data (public NHANES XPTs, ~10 MB; regenerate with matlab/data/download_nhanes.m)
+matlab/data/nhanes/*.xpt

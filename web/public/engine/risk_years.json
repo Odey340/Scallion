@@ -1,0 +1,74 @@
+[
+  {
+    "layer": "social",
+    "exposure": "social_isolation",
+    "hr": 1.29,
+    "years": 2.9,
+    "source": "Holt-Lunstad 2015, Perspect Psychol Sci 10:227",
+    "condition": "lsns_proxy < 12",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "social",
+    "exposure": "loneliness",
+    "hr": 1.26,
+    "years": 2.7,
+    "source": "Holt-Lunstad 2015, Perspect Psychol Sci 10:227",
+    "condition": "lonely == true",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "social",
+    "exposure": "living_alone",
+    "hr": 1.32,
+    "years": 3.2,
+    "source": "Holt-Lunstad 2015, Perspect Psychol Sci 10:227",
+    "condition": "lives_alone == true",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "lifestyle",
+    "exposure": "short_sleep",
+    "hr": 1.12,
+    "years": 1.3,
+    "source": "Cappuccio 2010, Sleep 33:585",
+    "condition": "sleep_h < 6",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "lifestyle",
+    "exposure": "long_sleep",
+    "hr": 1.3,
+    "years": 3.0,
+    "source": "Cappuccio 2010, Sleep 33:585",
+    "condition": "sleep_h > 9",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "lifestyle",
+    "exposure": "smoking",
+    "hr": 2.8,
+    "years": 11.9,
+    "source": "Jha 2013, NEJM 368:341 (men; women 3.0)",
+    "condition": "smoker == true",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "fitness",
+    "exposure": "low_fitness",
+    "hr": 1.7,
+    "years": 6.1,
+    "source": "Kodama 2009, JAMA 301:2024 (low vs high CRF)",
+    "condition": "vo2max < reference_p20",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  },
+  {
+    "layer": "fitness",
+    "exposure": "per_met_fitness",
+    "hr": 0.87,
+    "years": -1.6,
+    "source": "Kodama 2009, JAMA 301:2024 (per 1 MET)",
+    "condition": "per 3.5 mL/kg/min of VO2max",
+    "label": "risk-equivalent years, if sustained, population estimate"
+  }
+]
