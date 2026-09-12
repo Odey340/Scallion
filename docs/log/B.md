@@ -1,3 +1,13 @@
 # Lane B log
 
 Append ten lines per session: done, blocked, next, contract changes needed.
+
+## Session 1 (2026-09-12): recovered from an uncommitted checkout, ported into this repo
+
+**Human directive:** an earlier lane-B session had built the ingest half of the social package in a sibling checkout (`../Scallion`, the repo this one was re-cloned from) but never committed or pushed it — three real sessions of work (parsers, OAuth, fixtures) sitting only in that working tree. Human asked to revive it here.
+
+**Done:** ported `social/` verbatim from the old checkout — `types.ts` (`Event`/`App`), `hash.ts` (`hashContact` = sha256(normalized handle + salt)), `bucket.ts` (`bucketLength`, the `<20/<100/<500/>=500` buckets), `parsers/whatsapp.ts` (iOS + Android export formats, multi-line folding, 1:1-chat-only with `UnsupportedChatError` for group exports), `parsers/gmail.ts` (`gmail.metadata`-scope message mapping, outgoing fan-out per `To` recipient, `Cc` ignored). Copied `fixtures/whatsapp_sample.txt` and `fixtures/gmail_metadata_sample.json` (both synthetic) so the package's own tests run here. 42/42 vitest tests pass unchanged, `tsc -b` clean. Added `web/package.json`'s `"social": "file:../social"` dependency (same pattern the old checkout used) — `npm install` symlinks it.
+**New (not in the old checkout):** `social/src/strength.ts` — `contactStrengths(events, now, windowDays)`, a per-contact tier (`close`/`active`/`weak`) using the same exchange-day/two-way thresholds as `api/app/circle/metrics.py`, but keeping per-contact detail the server's aggregate `Metrics` doesn't expose. Built for lane C's Circle dot map; runs client-side over Events already headed to `POST /events`, so nothing new leaves the device. Exported from `social/src/index.ts`.
+**Blocked:** same as the old checkout's session 2/3 — a real Google Cloud OAuth Client ID is still needed to test the live Gmail flow end to end. `web/.env.example` documents `EXPO_PUBLIC_GOOGLE_CLIENT_ID`; the root `.env.example`'s `GOOGLE_OAUTH_CLIENT_ID` is presumably the same credential, just needs the `EXPO_PUBLIC_` mirror for the Expo bundle to read it client-side.
+**Next:** once the Client ID lands, verify the live OAuth popup + `fetchRecentMessages` end to end (this was the old checkout's H6 gate, never reached). `parseSmsBackupXml`/`parseImessageRows` from the contract's full surface (`docs/contracts.md` §2) are still unbuilt — "eventually iMessage" per the human's ask, not this session.
+**Contract changes needed:** none for the ported functions (they match §2 exactly). `contactStrengths`/`ContactStrength`/`StrengthTier` are new exports not yet in `docs/contracts.md` §2 — additive and C-only for now; worth adding to the contract if another lane ends up consuming it.

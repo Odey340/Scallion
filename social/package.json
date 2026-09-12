@@ -1,0 +1,22 @@
+{
+  "name": "social",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -b",
+    "fixture:whatsapp": "node scripts/generate-whatsapp-fixture.mjs",
+    "fixture:gmail": "node scripts/generate-gmail-fixture.mjs"
+  },
+  "dependencies": {
+    "js-sha256": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.0"
+  }
+}
