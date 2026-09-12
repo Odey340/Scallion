@@ -1,6 +1,6 @@
 # Scallion API (Lane D)
 
-FastAPI service: labs intake (`POST /extract`), vitals from the presage-worker (`POST /vitals`, `GET /vitals/latest`), B's hashed events (`POST /events`, `DELETE /events[/{contact}]`), one spoken sentence (`GET /tts?text=&lang=en|es`, ElevenLabs or a fake MP3 with `ELEVENLABS_FAKE=1`), and later circle summary and coach context.
+FastAPI service: labs intake (`POST /extract`), vitals from the presage-worker (`POST /vitals`, `GET /vitals/latest`), B's hashed events (`POST /events`, `DELETE /events[/{contact}]`), one spoken sentence (`GET /tts?text=&lang=en|es`, ElevenLabs or a fake MP3 with `ELEVENLABS_FAKE=1`), Persona webhook + `GET /me` (`over_65`, `verify_url`) + `PUT /me/lang`, and later circle summary and coach context.
 
 ```
 cp ../.env.example ../.env          # fill GEMINI_API_KEY and SUPABASE_JWT_SECRET

@@ -115,3 +115,22 @@ def test_pg_events_store_dedup_and_forget(conn):
         assert store.count(user) == 0
     finally:
         conn.execute("delete from contact_events where user_id=%s", (user,))
+
+
+def test_pg_profile_store_roundtrip(conn):
+    from datetime import date
+
+    from app.profile.store import PgProfileStore
+
+    user = str(uuid.uuid4())
+    store = PgProfileStore(URL)
+    try:
+        assert store.get(user).verified is False
+        p = store.set_lang(user, "es")
+        assert p.lang == "es" and p.verified is False
+        p = store.set_verified(user, date(1958, 3, 2), "inq_x")
+        assert p.verified is True and p.birthdate == date(1958, 3, 2) and p.lang == "es"
+        p = store.set_verified(user, None, "inq_y")  # selfie-only re-run clears the birthdate
+        assert p.verified is True and p.birthdate is None and p.inquiry_id == "inq_y"
+    finally:
+        conn.execute("delete from profiles where user_id=%s", (user,))

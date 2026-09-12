@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     elevenlabs_voice_id: str = ""
     elevenlabs_fake: bool = False
 
+    # Persona (webhook signature, hosted-flow link). Empty secret = webhook answers 503.
+    persona_webhook_secret: str = ""
+    persona_template_id: str = ""
+    persona_environment_id: str = ""
+
     # Tiger Data (TimescaleDB). Empty = in-memory stores (tests, offline demo fallback).
     tiger_database_url: str = ""
 

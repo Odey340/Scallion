@@ -6,6 +6,7 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 **v3 (Sat): section 7, client-side redaction rules at `api/redaction_rules.json` (D produces, C applies before upload).**
 **v4 (Sat H9): `/extract` analytes gained `si_value`, `si_unit`, `derived`, `note` (unit normalizer); a derived `lymph_pct` row may appear.**
 **v5 (Sat H10): `/events` response gained `received`, `duplicates`; `DELETE /events` and `DELETE /events/{contact}` added for B's forget/delete-all.**
+**v6 (Sat H10): `GET /me` gained `age` (verified only) and `verify_url` (Persona hosted flow); `PUT /me/lang` added; `GET /tts?text=&lang=` added.**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -104,7 +105,9 @@ create materialized view daily_connection with (timescaledb.continuous) as
 | `GET /vitals/latest` | -> latest row |
 | `GET /coach/context` | -> `{"clock": {...}, "circle": {...}, "today": {...}, "levers": [...], "flags": {"on_glucose_meds": false, "critical": false, "verified": true, "over_65": false}}` |
 | `POST /persona/webhook` | Persona inquiry events -> sets `verified`, `birthdate` |
-| `GET /me` | -> `{"verified": bool, "over_65": bool, "lang": "en"|"es"}` |
+| `GET /me` | -> `{"verified": bool, "over_65": bool, "lang": "en"|"es", "age": int|null, "verify_url": str|null}`. `age` only after Persona verified a government ID (selfie-only gives `verified` without `age`); `verify_url` is the hosted Persona link with `reference-id=<user id>`, null once verified. |
+| `PUT /me/lang` | `{"lang": "en"|"es"}` -> the `/me` body |
+| `GET /tts?text=<=300 chars&lang=en|es` | -> `audio/mpeg` (one sentence; 503 when no ElevenLabs key and no fake) |
 
 ## 4. Coach tools (D implements as ElevenLabs Agents client tools)
 
