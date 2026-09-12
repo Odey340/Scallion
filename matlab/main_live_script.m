@@ -46,5 +46,13 @@ else
 end
 fprintf('walk: Vm0 x %.2f during 15-45 min -> peak -%.0f%%\n', W.vm0_factor, 100 * W.peak_reduction_achieved);
 
-%% 6. Export every JSON the app reads
+%% 6. Surrogate: Gaussian-process fit of the sweep table, validated against the simulation
+fit_surrogate();
+
+%% 7. Export every JSON the app reads
 export_artifacts();
+
+%% 8. The console (app/ScallionEngineer.m): opens in the desktop; in batch it only saves a snapshot
+app = ScallionEngineer('nolive');
+app.snapshot(fullfile(here, '..', 'media', 'app_console_tonight.png'), 1);
+if usejava('desktop'), fprintf('console open; press Validate for the full simulation\n'); else, app.close(); end

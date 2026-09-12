@@ -5,11 +5,12 @@ Every number the Scallion app shows comes from a JSON file in `web/public/engine
 ## Run it
 
 ```matlab
-cd matlab                      % or open Scallion.prj
-addpath(genpath(pwd))
+openProject('matlab/Scallion.prj')  % paths, startup, and a shortcut to the live script
 runtests('tests/test_phenoage.m')   % reference vectors, waterfall identity, safety gates
-main_live_script                    % tests -> norms -> insulindemo -> (sweep) -> export
+main_live_script                    % norms -> tests -> clock -> insulindemo -> sweep -> surrogate -> export -> console
+ScallionEngineer                    % the console on its own
 ```
+Batch equivalent (works without the desktop): `matlab -batch "restoredefaultpath; cd matlab; main_live_script"`.
 
 Requirements: MATLAB R2026a, SimBiology, Statistics and Machine Learning Toolbox (for `xptread` and Regression Learner), Simulink (SimBiology dependency). MATLAB Compiler SDK is optional and unused.
 
@@ -36,7 +37,9 @@ All exports in `web/public/engine/` are now written by `export_artifacts.m` (see
 | `models/variant_rule.m` | fasting glucose -> `normal` / `low_si` / `t2d` (ADA cut points) | Tonight, Labs review |
 | `models/calibrate_walk.m` | bisection on the `Vm0` multiplier until a 30 min walk at 15 min cuts the reference peak 15% (Buffey 2022 window 10-20%) | Tonight: "plus a walk" |
 | `sweep/run_meal_sweep.m` | 144 cells x 3 insulin-sensitivity scalings -> `sweep/meal_grid.mat`, `meal_sweep_table.csv`, `media/meal_sweep.png` | Tonight: both curves and the band |
-| `surrogate/`, `app/` | Block 4: Regression Learner surrogate (deferred; the grid is exported raw), App Designer console | MathWorks demo |
+| `surrogate/fit_surrogate.m`, `surrogate/predictMealResponse.m` | Gaussian-process surrogate of the sweep (5-fold CV, `media/surrogate_validation.png`); the app reads the grid, the surrogate is the smooth what-if model | MathWorks demo |
+| `app/ScallionEngineer.m`, `app/meal_lookup.m` | the console: sidebar of inputs, tabs Tonight (grid curves + caffeine), Clock (waterfall), Validation (grid vs full simulation). `meal_lookup` interpolates exactly as Lane C does | MathWorks demo, video |
+| `Scallion.prj`, `make_project.m`, `engine/project_startup.m` | the MATLAB project (built from code so it is reproducible): paths, files, startup, shortcut to the live script | judging: open the project, run the shortcut |
 | `export/export_artifacts.m` | writes `phenoage.json`, `nhanes_percentiles.json`, `hunt.json`, `risk_years.json`, `caffeine.json`, `meal_grid.json` | the app |
 | `tests/test_phenoage.m`, `tests/vectors.json` | the reference vectors Lane C's TypeScript port must reproduce to 0.05 years | C's unit test |
 | `data/download_nhanes.m` | fetches the five public XPT files (git-ignored, ~10 MB) | `nhanes_norms.m` |

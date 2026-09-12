@@ -40,3 +40,16 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 8. Blocked: nothing. Warnings from the example's `tanh` rule are silenced by id; the live script is otherwise clean.
 9. Next: (a) `Scallion.prj` + `.mlx` in the desktop; (b) Block 4 App Designer console (fasting glucose, weight, carbs, walk toggle -> curve band + waterfall); (c) optional Regression Learner surrogate on `meal_sweep_table.csv` with a validation plot; (d) caffeine `.sbproj` only if time.
 10. Contract: `meal_grid.json` additive keys `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`, `walk_calibration.vm0_factor/walk_start_min/walk_end_min/post-walk mechanism`. No shape changes.
+
+## Session 4 (Fri H3.5-H4.5, agent, 2026-09-12): Block 4
+
+1. Done: `app/ScallionEngineer.m`, the console, built in code with uifigure components (explorer layout: sidebar of inputs; tabs Tonight, Clock, Validation). Reads `sweep/meal_grid.mat` (falls back to `meal_grid.json`), interpolates with `app/meal_lookup.m` exactly as Lane C does; Validate runs the full SimBiology model at the exact inputs (grid vs simulation: 1.0 mg/dL max error on the test cell); Export calls `export_artifacts`. Snapshots `media/app_console_{tonight,clock,validation}.png`. Not an `.mlapp`: App Designer cannot be scripted, and the class runs from the project and the live script the same way.
+2. Done: `Scallion.prj` created from code by `make_project.m` (name-value `createProject`, files, paths, startup `engine/project_startup.m`, shortcut to the live script); 51 files. The project's own `.gitignore`/`.gitattributes` are committed.
+3. Done: `surrogate/fit_surrogate.m` (Gaussian process, ARD kernel, 5-fold CV: peak RMSE 1.2 mg/dL, R^2 0.9997; iAUC R^2 0.9988) + `surrogate/predictMealResponse.m` + `media/surrogate_validation.png`. The app still reads the grid; the surrogate is the smooth what-if model and the MathWorks "validated model" beat.
+4. Done: `main_live_script` now runs norms -> tests -> clock -> insulindemo -> sweep (cached) -> surrogate -> export -> console snapshot, exit 0 in batch. `plot_waterfall` accepts an axes so the console reuses it.
+5. Done: `.gitignore` un-ignores `sweep/meal_grid.mat` and `walk_calibration.mat` (57 KB) so a fresh clone opens the console without re-running the sweep.
+6. Blocked: nothing. Cosmetic: the surrogate figure's right title overlaps the x10^4 axis label.
+7. Next: (a) Block 5: record the MATLAB segment (open `Scallion.prj`, run the shortcut, open `ScallionEngineer`, drag carbs, press Validate) into `media/`; (b) optionally save `main_live_script.m` as `.mlx` from the Live Editor for the judged look; (c) the `[contract]` commit for `k` / `t_months`; (d) caffeine `.sbproj` only if time.
+8. Contract: unchanged.
+9. Human: run `registerWithOS.exe` elevated once before judging so the desktop starts with a full path (README).
+10. Rehearsal note: the demo laptop must have `C:\MATLAB\R2026a` licensed (sign-in done Fri) and the insulindemo example downloaded (done, `Documents\MATLAB\Examples\R2026a\simbio\insulindemo`).

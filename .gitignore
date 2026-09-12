@@ -22,3 +22,7 @@ media/*.mov
 
 # Lane A raw data (public NHANES XPTs, ~10 MB; regenerate with matlab/data/download_nhanes.m)
 matlab/data/nhanes/*.xpt
+
+# Lane A sweep caches are small and the console reads them
+!matlab/sweep/meal_grid.mat
+!matlab/sweep/walk_calibration.mat
