@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import {
   computeFitnessAge,
   FALLBACK_PAI_OPTIONS,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   segment: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.medium,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     backgroundColor: Colors.surface,
@@ -234,10 +234,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resultCard: {
-    borderRadius: Radius.large,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.four,
     gap: Spacing.one,
     alignItems: 'center',
+    ...CardShadow,
   },
   disclaimer: {
     textAlign: 'center',

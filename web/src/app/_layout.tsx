@@ -4,7 +4,8 @@ import {
   SpaceGrotesk_700Bold,
   useFonts as useSpaceGroteskFonts,
 } from '@expo-google-fonts/space-grotesk';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
@@ -28,7 +29,8 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={DarkTheme}>
+    <ThemeProvider value={DefaultTheme}>
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,

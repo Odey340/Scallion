@@ -8,7 +8,7 @@
 ## Setup (H0-1)
 
 - [ ] Expo scaffold, expo-router, NativeWind; web export builds; Vercel project; `EXPO_PUBLIC_API_URL`.
-- [ ] Design tokens (one file): dark-first slate ground, off-white text, a single gold accent, green for connection days, red for silence, tabular numerals for every number. Type: one display face, one body face. No emoji as UI.
+- [ ] Design tokens (one file): clinical off-white ground, near-black text, a single professional blue accent, green for connection days, red for silence, tabular numerals for every number. Type: one display face, one body face. No emoji as UI. (Pivoted from an earlier dark-gold spec to a light, formal healthcare look — human request, see `docs/log/C.md`.)
 - [ ] Route skeleton from contract section 5 with placeholder screens so every teammate can deep-link today.
 - [ ] Everyone: request the patient-portal lab PDF; C keeps two printed copies of the consented one for judging.
 

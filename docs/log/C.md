@@ -20,6 +20,17 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 
 **Contract changes needed:** None. Waist/RHR units in `hunt.json` still unconfirmed with A (assumed cm/bpm) — A's export didn't add a `units` block the way `phenoage.json` has one.
 
+## Session 2 (2026-09-12): design pivot to light/clinical
+
+**Done:** Human asked for a more "healthcare related," professional/formal look instead of the original dark-gold minimalist spec — light mode, not dark. Since every color in the app already routed through `src/constants/theme.ts` (verified by grepping for stray hex codes in `src/` — found none outside that file), the whole repaint was four files: `theme.ts` (new palette — off-white `#F6F8FA` ground, near-black text, clinical blue `#1B5E8C` accent, adjusted green/red for light-background contrast, added a `CardShadow` token for card elevation), `_layout.tsx` (`DefaultTheme` instead of `DarkTheme`, `<StatusBar style="dark" />`), `start.tsx` (applied `CardShadow` to the result card, swapped pill-shaped segment buttons for rounded-rect `Radius.medium` — reads more like a formal form control), and `app.json` (splash screen background to match, so it doesn't flash blue before the light app loads). No component logic, routes, or data fetching touched. Verified visually in a real browser against the rebuilt static export (`/start` filled out end-to-end, tab bar, Home) before shipping. Updated `docs/lanes/C.md`'s Block 1 design-tokens line to match, since it described the old dark-gold spec.
+
+**Blocked:** Nothing.
+
+**Next:** Same as before — camera/PDF picker UI, `phenoage.ts`, then Block 2. No engine/data work happened this session, purely visual.
+
+**Contract changes needed:** None — this was a Lane-C-internal visual change; no other lane consumes `web/`'s design tokens.
+
+
 
 **Contract changes needed:** None required to proceed, but two gaps worth Lane A confirming when convenient: (1) `hunt.json` has no uncertainty/band field the way `phenoage.json` does — C is using a placeholder +/-3y band; (2) the contract's "one activity question" for `/start` has no defined PAI derivation — C is using an unvalidated frequency-to-PAI heuristic (0/25/55/85 for none/1-2/3-4/5+ days/week). Also unconfirmed: waist/RHR units in `hunt.json` — assumed metric (cm, bpm).
 
