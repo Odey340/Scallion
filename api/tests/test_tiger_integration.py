@@ -73,3 +73,19 @@ def test_vitals_and_clock_history_roundtrip(conn):
     finally:
         conn.execute("delete from vitals where user_id=%s", (user,))
         conn.execute("delete from clock_history where user_id=%s", (user,))
+
+
+def test_pg_vitals_store_roundtrip(conn):
+    from app.vitals.schema import VitalsIn
+    from app.vitals.store import PgVitalsStore
+
+    user = str(uuid.uuid4())
+    store = PgVitalsStore(URL)
+    try:
+        store.insert(user, VitalsIn(pulse_bpm=70, captured_at=datetime(2026, 9, 12, 15, tzinfo=timezone.utc)))
+        store.insert(user, VitalsIn(pulse_bpm=60, breathing_bpm=14, captured_at=datetime(2026, 9, 12, 13, tzinfo=timezone.utc)))
+        row = store.latest(user)
+        assert row is not None and row.pulse_bpm == 70 and row.received_at is not None
+        assert store.latest(str(uuid.uuid4())) is None
+    finally:
+        conn.execute("delete from vitals where user_id=%s", (user,))

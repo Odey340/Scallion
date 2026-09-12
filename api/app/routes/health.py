@@ -15,4 +15,5 @@ def health(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
         "version": VERSION,
         "gemini": "fake" if settings.gemini_fake else "live",
         "auth": "bypass" if settings.dev_auth_bypass else "jwt",
+        "db": "tiger" if settings.tiger_database_url else "memory",
     }
