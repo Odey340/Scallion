@@ -27,3 +27,16 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 8. Blocked: nothing. Agentic Toolkit MCP still not registered (batch via CLI works); `Scallion.prj` and `.mlx` still to be created inside the desktop.
 9. Next: (a) create `Scallion.prj` and save `main_live_script.mlx` in the desktop; (b) Block 3: variant rule from fasting glucose, weight scaling, walk calibration to 10-20% peak drop, `sweep/run_meal_sweep.m`, surrogate, `meal_grid.json`; (c) attend the 9:30 workshop with the model open.
 10. Contract: no new changes beyond session 1 (additive keys, `k` fix, `t_months`). Still needs the `[contract]` commit.
+
+## Session 3 (Fri H2.5-H3.5, agent, 2026-09-12): Block 3
+
+1. Done: variant rule (`models/variant_rule.m`, ADA cut points -> normal / low_si / t2d, mapped to the example's "Low insulin sensitivity" and "Type 2 diabetic" variants).
+2. Done: `models/meal_model.m` + `simulate_meal.m`: insulindemo configured for Scallion (6 h, 5 min grid, `Body Weight` as the weight axis, `Vmx` x {0.8, 1, 1.2} as the band, accelerated at 0.2 s per run).
+3. Done: walk calibration (`models/calibrate_walk.m`): Vm0 x 4.68 during 15-45 min with a 60 min post-walk decay gives -15.0% peak on the 78 g reference cell (Buffey 2022 window 10-20%). First attempt with an instant reset needed x12.2 and produced a dip-and-rebound curve; replaced. Figure `media/walk_calibration.png`.
+4. Done: `sweep/run_meal_sweep.m`: 144 cells x 3 = 432 simulations in 24 s -> `sweep/meal_grid.mat`, `meal_sweep_table.csv`, `media/meal_sweep.png`; `export_artifacts.m` now writes `web/public/engine/meal_grid.json` (350 KB, contract shape, keys `carbs|variant|weight|walk`, 49 time points 0-240 min).
+5. Done: `crosscheck.py` validates the grid physiologically (all cells present, p10 <= p50 <= p90, peak rises with carbs and falls with weight, walk never raises a peak, calibration inside the window): PASS.
+6. Decisions: basal glucose is the variant's, not the user's (label covers it); band is a sensitivity band named p10/p90 for the contract shape; surrogate deferred per cut order (C interpolates the raw grid). Plan in `Markdowns/block3_meal_sweep_plan.md`.
+7. Told C: `meal_grid.json` is live; `summary` also carries `basal_mgdL`; `labels.walk` and `labels.medication` hold the on-screen strings.
+8. Blocked: nothing. Warnings from the example's `tanh` rule are silenced by id; the live script is otherwise clean.
+9. Next: (a) `Scallion.prj` + `.mlx` in the desktop; (b) Block 4 App Designer console (fasting glucose, weight, carbs, walk toggle -> curve band + waterfall); (c) optional Regression Learner surrogate on `meal_sweep_table.csv` with a validation plot; (d) caffeine `.sbproj` only if time.
+10. Contract: `meal_grid.json` additive keys `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`, `walk_calibration.vm0_factor/walk_start_min/walk_end_min/post-walk mechanism`. No shape changes.

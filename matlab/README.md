@@ -31,8 +31,12 @@ All exports in `web/public/engine/` are now written by `export_artifacts.m` (see
 | `engine/risk_years.m` | published hazard ratios -> years via `8 * log2(HR)` | Home levers ledger, Circle "what isolation costs" |
 | `engine/caffeine_curve.m` | closed-form 5 h half-life decay (SimBiology `caffeine_pk.sbproj` replaces it if built) | Tonight: last-coffee line |
 | `engine/plot_waterfall.m` | the waterfall figure for media/ and the console | Devpost, video |
-| `models/run_insulindemo.m` | SimBiology glucose-insulin meal model, base vs variants (H6 gate) | Tonight: plate curves (via Block 3 sweep) |
-| `sweep/`, `surrogate/`, `app/` | Block 3-4: parameter sweep, Regression Learner surrogate, App Designer console | Tonight; MathWorks demo |
+| `models/run_insulindemo.m` | SimBiology glucose-insulin meal model, base vs variants (H6 gate) | Devpost figure |
+| `models/load_insulindemo.m`, `models/meal_model.m`, `models/simulate_meal.m` | the Cobelli model configured for Scallion: weight parameter, variant, walk events on `Vm0`, accelerated; one cell = one call | Tonight |
+| `models/variant_rule.m` | fasting glucose -> `normal` / `low_si` / `t2d` (ADA cut points) | Tonight, Labs review |
+| `models/calibrate_walk.m` | bisection on the `Vm0` multiplier until a 30 min walk at 15 min cuts the reference peak 15% (Buffey 2022 window 10-20%) | Tonight: "plus a walk" |
+| `sweep/run_meal_sweep.m` | 144 cells x 3 insulin-sensitivity scalings -> `sweep/meal_grid.mat`, `meal_sweep_table.csv`, `media/meal_sweep.png` | Tonight: both curves and the band |
+| `surrogate/`, `app/` | Block 4: Regression Learner surrogate (deferred; the grid is exported raw), App Designer console | MathWorks demo |
 | `export/export_artifacts.m` | writes `phenoage.json`, `nhanes_percentiles.json`, `hunt.json`, `risk_years.json`, `caffeine.json`, `meal_grid.json` | the app |
 | `tests/test_phenoage.m`, `tests/vectors.json` | the reference vectors Lane C's TypeScript port must reproduce to 0.05 years | C's unit test |
 | `data/download_nhanes.m` | fetches the five public XPT files (git-ignored, ~10 MB) | `nhanes_norms.m` |
@@ -63,6 +67,7 @@ Constants were checked against Levine 2018 Table 1 (coefficients, units) and Sup
 - VO2max: Nes BM et al., Scand J Med Sci Sports 2011;21:e1-e9. Age reference: Loe U et al., PLoS One 2013;8:e64319, Table 2. Activity index: Kurtze 2008.
 - Risk years: Holt-Lunstad 2015, Cappuccio 2010, Jha 2013, Kodama 2009; conversion `years = 8 * log2(HR)` from the human Gompertz mortality doubling time (~8 years). Sanity check: smoking HR 2.8 -> 11.9 years, matching Jha's ~10 years.
 - Caffeine: Fredholm 1999 (5 h), Benowitz 1989 (smokers x0.5), Abernethy & Todd 1985 (oral contraceptives x2), Drake 2013 (6 h rule). The 50 mg bedtime threshold is a labelled assumption.
+- Meal curves: the SimBiology `insulindemo` example (Cobelli / Dalla Man 2007 meal model) with its own variants. Variant rule: ADA fasting cut points (< 100, 100-125, >= 126 mg/dL). Weight: the model's `Body Weight` parameter (per-kg model). Walk: `Vm0` (insulin-independent glucose utilisation) x 4.68 during a 30 min walk starting 15 min after eating, decaying with a 60 min half-life afterwards; the factor is calibrated so the reference peak drops 15%, inside the 10-20% window from Buffey 2022 (Sports Med meta-analysis). The decay half-life and the exact window are assumptions and are stated in `meal_grid.json`. The band is insulin sensitivity `Vmx` +/-20%, not a statistical percentile. The curve keeps the variant's basal glucose (not the user's), hence the label "a typical curve for someone with your fasting glucose and weight".
 
 ## Regenerate the exports
 

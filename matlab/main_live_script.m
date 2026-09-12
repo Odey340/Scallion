@@ -34,12 +34,17 @@ plot_waterfall(o, fullfile(here, '..', 'media', 'phenoage_waterfall.png'));
 %% 4. SimBiology meal model (H6: two variants plotted)
 run_insulindemo(78);
 
-%% 5. Meal sweep and surrogate (Block 3; loads the cached sweep when present)
+%% 5. Meal model: variant rule, walk calibration, the 144-cell sweep (loads the cache when present)
+fprintf('variant for fasting 95 / 110 / 130 mg/dL: %s / %s / %s\n', variant_rule(95), variant_rule(110), variant_rule(130));
 if isfile(fullfile(here, 'sweep', 'meal_grid.mat'))
-    fprintf('using cached sweep/meal_grid.mat\n');
-elseif exist('run_meal_sweep', 'file')
-    run_meal_sweep();
+    fprintf('using cached sweep/meal_grid.mat (delete it to re-run the ~2 min sweep)\n');
+    S = load(fullfile(here, 'sweep', 'walk_calibration.mat')); W = S.W;
+else
+    M = meal_model();
+    W = calibrate_walk(M);
+    run_meal_sweep(M, W);
 end
+fprintf('walk: Vm0 x %.2f during 15-45 min -> peak -%.0f%%\n', W.vm0_factor, 100 * W.peak_reduction_achieved);
 
 %% 6. Export every JSON the app reads
 export_artifacts();

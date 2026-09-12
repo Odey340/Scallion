@@ -330,6 +330,65 @@ def compare(label, mine, theirs, tol):
     return status == "OK"
 
 
+def check_meal_grid(G):
+    """SimBiology cannot be mirrored in Python; check the physiology of the grid instead:
+    every cell present, bands ordered, peaks rise with carbs, fall with weight, and the
+    calibrated walk lowers every peak by an amount inside Buffey's 10-20% window on the
+    reference cell and never raises it elsewhere."""
+    ax = G["axes"]; bad = []
+    keys = [f"{c}|{v}|{w}|{k}" for c in ax["carbs_g"] for v in ax["variant"] for w in ax["weight_kg"] for k in ax["walk"]]
+    missing = [k for k in keys if k not in G["curves"] or k not in G["summary"]]
+    if missing:
+        bad.append(f"{len(missing)} cells missing, e.g. {missing[0]}")
+    n = len(G["t_min"])
+    for k in keys:
+        if k in missing:
+            continue
+        c = G["curves"][k]
+        if not (len(c["p10"]) == len(c["p50"]) == len(c["p90"]) == n):
+            bad.append(f"{k}: curve length != t_min"); continue
+        if any(not (lo - 1e-6 <= mid <= hi + 1e-6) for lo, mid, hi in zip(c["p10"], c["p50"], c["p90"])):
+            bad.append(f"{k}: band not ordered p10 <= p50 <= p90")
+        if abs(max(c["p50"]) - G["summary"][k]["peak_mgdL"]) > 0.11:
+            bad.append(f"{k}: summary peak != curve peak")
+    peak = lambda c, v, w, k: G["summary"][f"{c}|{v}|{w}|{k}"]["peak_mgdL"]
+    for v in ax["variant"]:
+        for w in ax["weight_kg"]:
+            for k in ax["walk"]:
+                p = [peak(c, v, w, k) for c in ax["carbs_g"]]
+                if any(b < a for a, b in zip(p, p[1:])):
+                    bad.append(f"{v}|{w}|{k}: peak not increasing with carbs {p}")
+        for c in ax["carbs_g"]:
+            p = [peak(c, v, w, 0) for w in ax["weight_kg"]]
+            if any(b > a for a, b in zip(p, p[1:])):
+                bad.append(f"{c}|{v}: peak not decreasing with weight {p}")
+    raised = [(c, v, w) for c in ax["carbs_g"] for v in ax["variant"] for w in ax["weight_kg"] if peak(c, v, w, 1) > peak(c, v, w, 0) + 1e-6]
+    if raised:
+        bad.append(f"walk raises the peak in {len(raised)} cells, e.g. {raised[0]}")
+    wc = G["walk_calibration"]
+    lo, hi = wc["peak_reduction_target"]
+    if not (lo <= wc["achieved"] <= hi):
+        bad.append(f"walk calibration {wc['achieved']:.3f} outside [{lo}, {hi}]")
+    status = "OK" if not bad else "DIFF"
+    print(f"[{status}] web/public/engine/meal_grid.json: {len(keys)} cells, {n} time points, walk Vm0 x {wc['vm0_factor']:.2f} -> -{100*wc['achieved']:.1f}% peak on the reference cell")
+    for b in bad[:8]:
+        print("      " + b)
+    return not bad
+    # self-checks that mirror tests/test_phenoage.m
+    o = phenoage(V[0]["values"], 34, "M", N)
+    assert abs(o["phenoage"] - o["phenoage_direct"]) < 1e-9, "affine != direct"
+    ref = N["reference"]["M"]["b40_49"]; r = phenoage(ref, 45, "M", N)
+    assert all(abs(r["waterfall"][a]) < 1e-12 for a in ANALYTES)
+    assert phenoage({**V[0]["values"], "crp": 0.02}, 34, "M", N)["phenoage"] == phenoage({**V[0]["values"], "crp": 0.1}, 34, "M", N)["phenoage"]
+    assert phenoage({**V[0]["values"], "glucose": 300 / MGDL_PER_MMOL}, 34, "M", N)["flags"]["critical_analytes"] == ["glucose"]
+    assert phenoage(V[0]["values"], 34, "M", N, fasting=None)["imputed"] == ["glucose"]
+    h = hunt_fitness_age(45, "M", 95, 62, (47.2 - (100.27 - 0.296 * 45 - 0.369 * 95 - 0.155 * 62)) / 0.226)
+    assert abs(h["fitness_age"] - 45) < 0.5, h
+    print("self-checks passed")
+    if provisional:
+        export(N, ROOT / "web" / "public" / "engine", provisional=True)
+
+
 if __name__ == "__main__":
     provisional = "--provisional-export" in sys.argv
     N = nhanes_norms(write_fixture=provisional)
@@ -359,18 +418,7 @@ if __name__ == "__main__":
                 if isinstance(theirs, dict):
                     theirs.pop("meta", None)
                 ok &= compare(f"web/public/engine/{name}", mine, theirs, tol=tol)
+        if (eng / "meal_grid.json").exists():
+            ok &= check_meal_grid(json.loads((eng / "meal_grid.json").read_text()))
         print("CROSSCHECK", "PASS" if ok else "FAIL")
         sys.exit(0 if ok else 1)
-    # self-checks that mirror tests/test_phenoage.m
-    o = phenoage(V[0]["values"], 34, "M", N)
-    assert abs(o["phenoage"] - o["phenoage_direct"]) < 1e-9, "affine != direct"
-    ref = N["reference"]["M"]["b40_49"]; r = phenoage(ref, 45, "M", N)
-    assert all(abs(r["waterfall"][a]) < 1e-12 for a in ANALYTES)
-    assert phenoage({**V[0]["values"], "crp": 0.02}, 34, "M", N)["phenoage"] == phenoage({**V[0]["values"], "crp": 0.1}, 34, "M", N)["phenoage"]
-    assert phenoage({**V[0]["values"], "glucose": 300 / MGDL_PER_MMOL}, 34, "M", N)["flags"]["critical_analytes"] == ["glucose"]
-    assert phenoage(V[0]["values"], 34, "M", N, fasting=None)["imputed"] == ["glucose"]
-    h = hunt_fitness_age(45, "M", 95, 62, (47.2 - (100.27 - 0.296 * 45 - 0.369 * 95 - 0.155 * 62)) / 0.226)
-    assert abs(h["fitness_age"] - 45) < 0.5, h
-    print("self-checks passed")
-    if provisional:
-        export(N, ROOT / "web" / "public" / "engine", provisional=True)
