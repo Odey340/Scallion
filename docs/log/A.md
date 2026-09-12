@@ -66,3 +66,16 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 8. Cut-order status: caffeine `.sbproj` not built (closed form exported and labelled); Compiler SDK never started; surrogate delivered; App Designer polish delivered as a coded uifigure app.
 9. Live script still exits 0 after the console fix (the render itself constructs the app and calls update/validate).
 10. Judging laptop checklist: MATLAB signed in, `insulindemo` example present, `matlab/sweep/*.mat` present (committed), `python matlab/tools/crosscheck/crosscheck.py` prints PASS.
+
+## Session 6 (Fri H5, agent, 2026-09-12): contract commit
+
+1. Done: `[contract]` commit for `phenoage.json`: `k` = 0.090165 (Levine 2018 Supplement 1; 0.09165 was a typo) and `t_months` = 120 replaces `t_days`. Landed as v8 after two version-number collisions with Lane D's concurrent v6 and v7 lines (renumbered, wording unchanged): commits 866732f, ef1cca2, 748778c.
+2. Done: the v8 line lists A's additive export keys (`a`, `offset`, `affine.A`, `imputation_sd_by_age_sex`, `cohort_offset_rule`, `waterfall_rule`, `band_rule`, `labels`; `meal_grid.json` `band_rule`, `summary_rule`, `labels`, `summary.*.basal_mgdL`) and a clarification block under the waterfall rule with the exact cohort-offset, analyte-years and band formulas C's port must follow.
+3. Blocked: nothing.
+4. Human: post the v8 change in Discord so C and D pull and re-read; C's `phenoage.ts` must use `k` 0.090165 and evaluate the cohort offset at the exact age or its vector test will miss by up to a year.
+5. Next: Block 5 rehearsal only. Open `matlab/Scallion.prj`, click the `main_live_script` shortcut, run `ScallionEngineer`, drag carbs, press Validate. Bring this laptop to judging.
+6. Reminder: `registerWithOS.exe` elevated once before judging (README) so the desktop path is populated without the self-heal.
+7. Lane state: all five blocks delivered; exports current; `crosscheck.py` PASS; live script exit 0; video segment rendered (`media/matlab_segment.mp4`, git-ignored, handed to C).
+8. Cut-order items never started: Compiler SDK runtime path, caffeine `.sbproj` (closed form exported instead).
+9. Open cosmetic: surrogate figure right-hand title overlaps the x10^4 axis exponent.
+10. Contract: v8, no further changes planned from A.
