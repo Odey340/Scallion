@@ -166,3 +166,5 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Circle from `api.circle()`, then Camera, Coach, Spanish + large type.
 
 **Contract changes needed:** None. Note for D: C's applier skips drop_line on lines that already contain `mask_token`.
+
+**Post-rebase note (Session 11):** after rebasing onto Session 10's Circle commit, `web/` `tsc` fails on a fresh checkout until `social/` has its own `npm install` (`web/package.json` now depends on `"social": "file:../social"`, and `social/src/hash.ts` imports `js-sha256`); `expo lint` reports two `react-hooks/set-state-in-effect` errors in `circle.tsx`. Both belong to Session 10's screen, not Labs; flagging so whoever deploys knows a Vercel CLI deploy from `web/` alone will not see `../social`.
