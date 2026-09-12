@@ -1,0 +1,6 @@
+{
+  "_note": "TODO(A): contract-shaped placeholder (docs/contracts.md section 1). The API reads only the keys of `units` and `critical_ranges`. Replaced by web/public/engine/phenoage.json when A exports it.",
+  "version": 1,
+  "units": {"albumin":"g/L","creatinine":"umol/L","glucose":"mmol/L","crp":"mg/dL","lymph_pct":"%","mcv":"fL","rdw":"%","alp":"U/L","wbc":"10^9/L","age":"years"},
+  "critical_ranges": {"glucose_mgdL": [55, 250], "wbc": [2, 30], "creatinine_x_ref_high": 2}
+}
