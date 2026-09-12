@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Wordmark } from '@/components/wordmark';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { api, hasToken, type ClockOut, type CoachContext, type Lever, type Nudge } from '@/lib/api';
 import { useLocalClocks, type LocalClock } from '@/state/clock-store';
@@ -122,6 +123,15 @@ export default function HomeScreen() {
           style={styles.scrollOuter}
           contentContainerStyle={styles.scroll}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.accent} />}>
+          <View style={styles.hero}>
+            <Wordmark size="large" />
+            <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
+              Know your biological age. Know your circle. Then move both.
+            </ThemedText>
+          </View>
+
+          <View style={styles.divider} />
+
           <View style={styles.headerRow}>
             <ThemedText type="subtitle">Today</ThemedText>
             {circleAvailable && (
@@ -436,13 +446,21 @@ function LeversLedger({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%' },
+  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.five,
     gap: Spacing.four,
+  },
+  hero: { alignItems: 'center', gap: Spacing.two, paddingTop: Spacing.three },
+  tagline: { textAlign: 'center', maxWidth: 340 },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    width: '100%',
+    marginVertical: Spacing.two,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pill: {

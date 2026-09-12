@@ -1,29 +1,21 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Colors, Fonts } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 
-export function Wordmark() {
+const SIZES = {
+  small: { dot: 8, gap: 6, fontSize: 18 },
+  large: { dot: 14, gap: 10, fontSize: 34 },
+} as const;
+
+export function Wordmark({ size = 'small' }: { size?: keyof typeof SIZES }) {
+  const s = SIZES[size];
   return (
-    <View style={styles.row}>
-      <View style={styles.dot} />
-      <ThemedText style={styles.text}>Scallion</ThemedText>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.gap }}>
+      <View style={{ width: s.dot, height: s.dot, borderRadius: s.dot / 2, backgroundColor: Colors.accent }} />
+      <ThemedText style={{ fontFamily: Fonts.display, fontSize: s.fontSize, color: Colors.text, letterSpacing: 0.2 }}>
+        Scallion
+      </ThemedText>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.accent,
-  },
-  text: {
-    fontFamily: Fonts.display,
-    fontSize: 18,
-    color: Colors.text,
-    letterSpacing: 0.2,
-  },
-});

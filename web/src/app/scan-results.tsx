@@ -152,7 +152,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%' },
+  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
   empty: { justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four },
   emptyText: { textAlign: 'center' },
   scroll: {

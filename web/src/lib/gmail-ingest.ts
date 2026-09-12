@@ -3,7 +3,7 @@
  * scope — never message bodies). No backend involved in reading Gmail; the API only ever sees
  * the anonymized Events this produces (POST /events). Web-only, same reasoning as lib/salt.ts.
  */
-import type { GmailMetadataMessage } from 'social';
+import type { GmailMetadataMessage } from '@/lib/social';
 
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.metadata';

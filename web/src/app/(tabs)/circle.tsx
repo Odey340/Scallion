@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contactStrengths, parseGmailHeaders, parseWhatsApp, UnsupportedChatError, type ContactStrength, type Event } from 'social';
+import { contactStrengths, parseGmailHeaders, parseWhatsApp, UnsupportedChatError, type ContactStrength, type Event } from '@/lib/social';
 
 import { CircleDotMap } from '@/components/circle-dot-map';
 import { Field, TextField } from '@/components/form-controls';
@@ -33,8 +33,8 @@ interface SourceResult {
  * itself is computed locally from the same Events, so it still renders if the API is down.
  */
 export default function CircleScreen() {
-  const [ownerName, setOwnerName] = useState('');
-  const [gmailEmail, setGmailEmail] = useState('');
+  const [ownerName, setOwnerName] = useState(() => (IS_WEB ? (localStorage.getItem(OWNER_KEY) ?? '') : ''));
+  const [gmailEmail, setGmailEmail] = useState(() => (IS_WEB ? (localStorage.getItem(GMAIL_EMAIL_KEY) ?? '') : ''));
   const [gmailBusy, setGmailBusy] = useState(false);
   const [gmailStatus, setGmailStatus] = useState<string | null>(null);
 
@@ -46,12 +46,6 @@ export default function CircleScreen() {
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CircleSummary | null>(null);
-
-  useEffect(() => {
-    if (!IS_WEB) return;
-    setOwnerName(localStorage.getItem(OWNER_KEY) ?? '');
-    setGmailEmail(localStorage.getItem(GMAIL_EMAIL_KEY) ?? '');
-  }, []);
 
   const allEvents = useMemo(() => [...whatsappEvents, ...gmailEvents], [whatsappEvents, gmailEvents]);
   const strengths: ContactStrength[] = useMemo(() => contactStrengths(allEvents, new Date()), [allEvents]);
@@ -82,6 +76,7 @@ export default function CircleScreen() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (allEvents.length > 0) void sync(allEvents);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [whatsappEvents, gmailEvents]);
@@ -179,7 +174,7 @@ export default function CircleScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
           <ThemedText type="subtitle">Your circle</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Connect Gmail and upload WhatsApp exports — message text never leaves this device, only a one-way hash of who
@@ -330,6 +325,7 @@ function Chip({ label }: { label: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

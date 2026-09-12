@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import type { ContactStrength, StrengthTier } from 'social';
+import type { ContactStrength, StrengthTier } from '@/lib/social';
 
 const SIZE = 280;
 const CENTER = SIZE / 2;

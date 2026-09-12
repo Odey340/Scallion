@@ -262,7 +262,7 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%' },
+  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,
