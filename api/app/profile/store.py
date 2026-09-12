@@ -16,6 +16,7 @@ class ProfileStore(Protocol):
     def get(self, user_id: str) -> Profile: ...
     def set_verified(self, user_id: str, birthdate: date | None, inquiry_id: str) -> Profile: ...
     def set_lang(self, user_id: str, lang: str) -> Profile: ...
+    def set_answers(self, user_id: str, answers: dict) -> Profile: ...
 
 
 class MemoryProfileStore:
@@ -40,6 +41,13 @@ class MemoryProfileStore:
             self._rows[user_id] = p
             return p
 
+    def set_answers(self, user_id: str, answers: dict) -> Profile:
+        with self._lock:
+            p = self.get(user_id)
+            p = p.model_copy(update={"answers": {**(p.answers or {}), **answers}})
+            self._rows[user_id] = p
+            return p
+
     def clear(self) -> None:
         self._rows.clear()
 
@@ -55,11 +63,11 @@ class PgProfileStore:
     def get(self, user_id: str) -> Profile:
         with self._pool.connection() as conn:
             row = conn.execute(
-                "select verified, birthdate, lang, inquiry_id from profiles where user_id = %s", (user_id,)
+                "select verified, birthdate, lang, inquiry_id, answers from profiles where user_id = %s", (user_id,)
             ).fetchone()
         if row is None:
             return Profile(user_id=user_id)
-        return Profile(user_id=user_id, verified=row[0], birthdate=row[1], lang=row[2], inquiry_id=row[3])
+        return Profile(user_id=user_id, verified=row[0], birthdate=row[1], lang=row[2], inquiry_id=row[3], answers=row[4] or {})
 
     def set_verified(self, user_id: str, birthdate: date | None, inquiry_id: str) -> Profile:
         with self._pool.connection() as conn:
@@ -77,6 +85,17 @@ class PgProfileStore:
                 "insert into profiles (user_id, lang) values (%s, %s)"
                 " on conflict (user_id) do update set lang = excluded.lang, updated_at = now()",
                 (user_id, lang),
+            )
+        return self.get(user_id)
+
+    def set_answers(self, user_id: str, answers: dict) -> Profile:
+        import json
+
+        with self._pool.connection() as conn:
+            conn.execute(
+                "insert into profiles (user_id, answers) values (%s, %s::jsonb)"
+                " on conflict (user_id) do update set answers = profiles.answers || excluded.answers, updated_at = now()",
+                (user_id, json.dumps(answers)),
             )
         return self.get(user_id)
 

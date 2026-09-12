@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from ..auth import CurrentUser
 from ..config import Settings, get_settings
-from ..profile.schema import Me, me_from
+from ..profile.schema import AnswersIn, Me, me_from
 from ..profile.store import ProfileStore, build_store
 
 log = logging.getLogger("scallion.persona")
@@ -103,6 +103,13 @@ def _verify_url(settings: Settings, user_id: str) -> str | None:
 @router.get("/me", response_model=Me)
 def me(user: CurrentUser, store: Store, settings: Annotated[Settings, Depends(get_settings)]) -> Me:
     return me_from(store.get(user.id), datetime.now(timezone.utc).date(), _verify_url(settings, user.id))
+
+
+@router.put("/me/answers", response_model=Me)
+def set_answers(user: CurrentUser, store: Store, body: AnswersIn, settings: Annotated[Settings, Depends(get_settings)]) -> Me:
+    """Onboarding answers (merge). The medication answer gates exercise-timing advice."""
+    p = store.set_answers(user.id, body.model_dump(exclude_unset=True, exclude_none=True))
+    return me_from(p, datetime.now(timezone.utc).date(), _verify_url(settings, user.id))
 
 
 class LangIn(BaseModel):

@@ -134,3 +134,24 @@ def test_pg_profile_store_roundtrip(conn):
         assert p.verified is True and p.birthdate is None and p.inquiry_id == "inq_y"
     finally:
         conn.execute("delete from profiles where user_id=%s", (user,))
+
+
+def test_pg_answers_merge_and_clock_latest(conn):
+    from app.clock.schema import ClockIn
+    from app.clock.store import PgClockStore
+    from app.profile.store import PgProfileStore
+
+    user = str(uuid.uuid4())
+    profiles, clocks = PgProfileStore(URL), PgClockStore(URL)
+    try:
+        profiles.set_answers(user, {"sleep_h": 7, "smoker": False})
+        p = profiles.set_answers(user, {"on_glucose_meds": True})
+        assert p.answers == {"sleep_h": 7, "smoker": False, "on_glucose_meds": True}
+        clocks.insert(user, ClockIn(clock="phenoage", years=41.3, chronological_age=34, band=2.4, inputs={"rdw": 13.1}, engine_version="1"))
+        clocks.insert(user, ClockIn(clock="phenoage", years=40.9, chronological_age=34, band=2.4, inputs={"rdw": 13.0}, engine_version="1"))
+        clocks.insert(user, ClockIn(clock="fitness", years=38, inputs={"rhr": 62}))
+        latest = clocks.latest(user)
+        assert set(latest) == {"phenoage", "fitness"} and latest["phenoage"].years == pytest.approx(40.9) and latest["phenoage"].inputs == {"rdw": 13.0}
+    finally:
+        conn.execute("delete from profiles where user_id=%s", (user,))
+        conn.execute("delete from clock_history where user_id=%s", (user,))

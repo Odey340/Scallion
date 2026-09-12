@@ -7,6 +7,7 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 **v4 (Sat H9): `/extract` analytes gained `si_value`, `si_unit`, `derived`, `note` (unit normalizer); a derived `lymph_pct` row may appear.**
 **v5 (Sat H10): `/events` response gained `received`, `duplicates`; `DELETE /events` and `DELETE /events/{contact}` added for B's forget/delete-all.**
 **v6 (Sat H10): `GET /me` gained `age` (verified only) and `verify_url` (Persona hosted flow); `PUT /me/lang` added; `GET /tts?text=&lang=` added.**
+**v7 (Sat H11): `POST /clock` + `GET /clock/latest` (C records the clock it computed); `PUT /me/answers` (onboarding); `/coach/context` shape below; `POST /coach/validate` (number validator).**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -103,7 +104,10 @@ create materialized view daily_connection with (timescaledb.continuous) as
 | `GET /circle/summary` | -> `{"metrics": Metrics, "lsns": {...}, "nudges": Nudge[], "heatmap": Day[], "alerts": [...]}` |
 | `POST /vitals` | `{"source":"presage","pulse_bpm":62,"breathing_bpm":14,"stress_index":98,"captured_at":"..."}` (from the worker) -> `{"ok":true}` |
 | `GET /vitals/latest` | -> latest row |
-| `GET /coach/context` | -> `{"clock": {...}, "circle": {...}, "today": {...}, "levers": [...], "flags": {"on_glucose_meds": false, "critical": false, "verified": true, "over_65": false}}` |
+| `POST /clock` | `{"clock": "phenoage"|"fitness"|"social_risk", "years": 41.3, "chronological_age": 34, "band": 2.4, "inputs": {"albumin": 44, ..., "imputed": ["crp"]}, "engine_version": "1"}` -> the row with `computed_at`. C posts what it computed from A's export (si values by canonical key in `inputs`); the API stores, never computes. `GET /clock/latest` -> `{"phenoage": row, "fitness": row}`. |
+| `PUT /me/answers` | any subset of `{"on_glucose_meds": bool, "sleep_h": 0-24, "smoker": bool, "lonely": bool, "lives_alone": bool, "oral_contraceptive": bool, "help_family": 0-5, "help_friends": 0-5, "bedtime": "HH:MM", "coffee_mg_per_cup": mg}` (merge) -> the `/me` body, which now carries `answers`. |
+| `GET /coach/context` | -> `{"clock": {"phenoage": {...row, "delta_years": 7.3, "show": true}, "labels": phenoage.json labels}, "circle": {"available": false, ...} (TODO(B)), "today": {"vitals": latest|null, "caffeine": {"hours_before_bed", "last_coffee_by": "18:24"|null, "dose_mg", "dose_assumption", "source", "rule"}, "nudge": null, "meal": null}, "levers": [risk_years rows whose condition holds for this user], "levers_unknown": [{"exposure", "needs"}], "flags": {"on_glucose_meds", "critical", "critical_reasons": ["glucose"], "verified", "over_65", "exercise_timing_allowed", "show_age", "lang"}}`. `critical` uses phenoage.json `critical_ranges` on the latest posted `inputs`; when true the age is hidden (`show: false`). |
+| `POST /coach/validate` | `{"text": "..."}` -> `{"ok": bool, "unknown_numbers": ["12"]}`: numbers not present in this user's context (timestamps, citations and condition strings excluded; 0/1/2-decimal roundings allowed). C drops any coach reply with `ok: false`. |
 | `POST /persona/webhook` | Persona inquiry events -> sets `verified`, `birthdate` |
 | `GET /me` | -> `{"verified": bool, "over_65": bool, "lang": "en"|"es", "age": int|null, "verify_url": str|null}`. `age` only after Persona verified a government ID (selfie-only gives `verified` without `age`); `verify_url` is the hosted Persona link with `reference-id=<user id>`, null once verified. |
 | `PUT /me/lang` | `{"lang": "en"|"es"}` -> the `/me` body |

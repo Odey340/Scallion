@@ -16,7 +16,7 @@ def _load_apply():
 
 def test_files_are_numbered_without_gaps():
     files = _load_apply().migration_files()
-    assert [p.name[:4] for p in files] == ["0001", "0002", "0003", "0004", "0005", "0006"]
+    assert [p.name[:4] for p in files] == ["0001", "0002", "0003", "0004", "0005", "0006", "0007"]
 
 
 @pytest.mark.parametrize(
@@ -32,6 +32,7 @@ def test_files_are_numbered_without_gaps():
                                     "'phenoage', 'fitness', 'social_risk'"]),
         ("0005_daily_connection_realtime.sql", ["timescaledb.materialized_only = false"]),
         ("0006_profiles.sql", ["create table if not exists profiles", "verified", "birthdate", "user_id     uuid        primary key"]),
+        ("0007_profile_answers.sql", ["add column if not exists answers jsonb"]),
     ],
 )
 def test_migration_contains_contract_objects(name, needles):
