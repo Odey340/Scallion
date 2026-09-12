@@ -3,6 +3,8 @@
 !.env.example
 node_modules/
 __pycache__/
+.venv/
+.pytest_cache/
 *.pyc
 .expo/
 dist/
@@ -13,6 +15,7 @@ slprj/
 fixtures/*.pdf
 !fixtures/lab_report_redacted.pdf
 !fixtures/lab_report_es.pdf
+!fixtures/lab_report_synthetic.pdf
 media/*.mp4
 media/*.mov
 .DS_Store

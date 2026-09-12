@@ -2,7 +2,7 @@
 
 Change only by agreement: edit here, commit `[contract] ...`, post in Discord. Bump the version line.
 
-**v1 (Fri H0).**
+**v2 (Fri H2): `/extract` response gained `text`, `source_text`, `raw_name`, `missing`; `source_span` indexes into `text`.**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -92,7 +92,7 @@ create materialized view daily_connection with (timescaledb.continuous) as
 
 | Route | Body -> Response |
 |---|---|
-| `POST /extract` | multipart `file` (redacted PDF or image) -> `{"analytes":[{"name":"rdw","value":13.1,"unit":"%","ref_low":11.5,"ref_high":14.5,"source_span":[120,128]}],"fasting":null,"lang":"en"}`. Names are the canonical keys from `phenoage.json`; unknown analytes come back as `"name":"other:<raw>"`. |
+| `POST /extract` | multipart `file` (redacted PDF or image, 15 MB max) -> `{"analytes":[{"name":"rdw","value":13.1,"unit":"%","ref_low":11.5,"ref_high":14.5,"source_span":[120,128],"source_text":"RDW 13.1 % 11.5-14.5","raw_name":"RDW"}],"fasting":null,"lang":"en","text":"<text layer>","missing":["crp"]}`. Names are the canonical keys from `phenoage.json`; unknown analytes come back as `"name":"other:<raw>"`. `text` is the server-side text layer of the upload (pypdf, pages joined by `\n\f`; empty for images); `source_span` is `[start, end)` into `text` or `null`; `source_text` is the printed line verbatim, so C can highlight by quote when its pdf.js text layer differs. `missing` lists canonical keys not found. Units are as printed (the normalizer is a later step). The upload is never stored. |
 | `POST /events` | `{"events": Event[]}` -> `{"inserted": n}` |
 | `GET /circle/summary` | -> `{"metrics": Metrics, "lsns": {...}, "nudges": Nudge[], "heatmap": Day[], "alerts": [...]}` |
 | `POST /vitals` | `{"source":"presage","pulse_bpm":62,"breathing_bpm":14,"stress_index":98,"captured_at":"..."}` (from the worker) -> `{"ok":true}` |
