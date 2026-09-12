@@ -30,7 +30,7 @@
 
 - [ ] Labs result: the waterfall (chronological age -> cohort offset -> nine analyte bars -> PhenoAge) that reconciles on screen; tap an analyte for its NHANES distribution with the user's marker; "8 of 9 markers" and "complete your clock" states; what-if sliders driven by `phenoage.ts`.
 - [ ] Camera screen: shows the Presage result from `/vitals/latest` (pulse, breathing; HRV labelled exploratory); perceived age via `@vladmandic/human` in the browser with the "research predictor, +/- 6" label; fitness age from resting HR.
-- [ ] Tonight: photograph the plate -> carbs from D's Gemini call -> two `CurveBand`s from `meal_grid.json` (eat now vs plus a walk), the walk label with Buffey 2022; the caffeine last-coffee line from `caffeine.json`. Medication flag replaces the walk advice with "discuss timing with your clinician".
+- [x] Scan (was "Tonight" — screen is meal-agnostic now, contract v11): photo or typed meal -> carbs (Gemini, now built by C since D's route never landed) -> two `CurveBand`s from `meal_grid.json` (eat now vs plus a walk), the walk label with Buffey 2022; the caffeine last-coffee line from `caffeine.json`. Medication flag replaces the walk advice with "discuss timing with your clinician".
 - [ ] Large-type mode (one number, one sentence, one button) and Spanish strings for every screen; locale switch by device, manual toggle in onboarding.
 - **Gate H19:** one real lab report and one real inbox end to end on a phone.
 
