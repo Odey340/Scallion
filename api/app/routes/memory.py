@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import CurrentUser
 from ..checkins.schema import CheckinIn, CheckinOut, MealIn, ShareIn
+from ..checkins.backboard import Memory, build_memory
 from ..checkins.store import CheckinStore, build_store
 from ..config import Settings, get_settings
 from . import persona as persona_route
@@ -22,10 +23,32 @@ def get_store() -> CheckinStore:
 Store = Annotated[CheckinStore, Depends(get_store)]
 
 
+class _ProfileIds:
+    def get(self, user_id: str) -> str | None:
+        return persona_route.get_store().get(user_id).backboard_assistant_id
+
+    def set(self, user_id: str, assistant_id: str) -> None:
+        persona_route.get_store().set_backboard(user_id, assistant_id)
+
+
+@lru_cache
+def get_memory() -> Memory:
+    return build_memory(get_settings(), _ProfileIds())
+
+
+def _mirror(user_id: str, row: CheckinOut) -> None:
+    bits = [f"{row.kind}: {row.text}" if row.text else f"{row.kind}"]
+    if row.data:
+        bits.append(", ".join(f"{k}={v}" for k, v in row.data.items() if k != "seed"))
+    get_memory().remember(user_id, " | ".join(b for b in bits if b), {"kind": row.kind, "ts": row.ts.isoformat(), "id": row.id})
+
+
 @router.post("/coach/checkin", response_model=CheckinOut)
 def post_checkin(user: CurrentUser, store: Store, body: CheckinIn) -> CheckinOut:
-    """Store a check-in, nudge, reply or plan line. The coach's memory."""
-    return store.insert(user.id, body)
+    """Store a check-in, nudge, reply or plan line. The coach's memory (table + Backboard mirror)."""
+    row = store.insert(user.id, body)
+    _mirror(user.id, row)
+    return row
 
 
 @router.get("/coach/checkins", response_model=list[CheckinOut])
@@ -37,6 +60,7 @@ def list_checkins(user: CurrentUser, store: Store, limit: Annotated[int, Query(g
 def log_meal(user: CurrentUser, store: Store, body: MealIn) -> dict:
     """log_meal tool: the plate decision is recomputed by C from meal_grid.json; the API only records."""
     row = store.insert(user.id, CheckinIn(kind="meal", text=body.note, data={"carbs_g": body.carbs_g}))
+    _mirror(user.id, row)
     return {"ok": True, "carbs_g": body.carbs_g, "ts": row.ts.isoformat()}
 
 
@@ -47,7 +71,20 @@ def share_with_circle(user: CurrentUser, store: Store, body: ShareIn) -> dict:
     if not profile.verified:
         raise HTTPException(status_code=403, detail="not verified: complete Persona verification before sharing")
     row = store.insert(user.id, CheckinIn(kind="share", text=body.text, data={"target_contact": body.target_contact}))
+    _mirror(user.id, row)
     return {"ok": True, "target_contact": body.target_contact, "ts": row.ts.isoformat()}
+
+
+@router.get("/coach/recall")
+def recall(user: CurrentUser, q: Annotated[str, Query(min_length=1, max_length=300)], limit: Annotated[int, Query(ge=1, le=20)] = 5) -> dict:
+    """Semantic recall over this user's check-ins via Backboard ('same plan as yesterday?').
+    Returns memory text only; the coach narrates from it and the validator still gates numbers."""
+    mem = get_memory()
+    try:
+        hits = mem.recall(user.id, q, limit)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"memory recall failed: {e.__class__.__name__}") from e
+    return {"memory": mem.name, "query": q, "hits": hits}
 
 
 @router.get("/coach/session")

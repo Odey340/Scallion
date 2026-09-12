@@ -14,6 +14,7 @@ class Profile(BaseModel):
     lang: Literal["en", "es"] = "en"
     inquiry_id: str | None = None
     answers: dict[str, Any] = {}
+    backboard_assistant_id: str | None = None
 
 
 def age_on(birthdate: date, today: date) -> int:

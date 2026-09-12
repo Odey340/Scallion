@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     persona_template_id: str = ""
     persona_environment_id: str = ""
 
+    # Backboard (coach memory). Empty = the checkins table is the only memory (cut order fallback).
+    backboard_api_key: str = ""
+
     # Tiger Data (TimescaleDB). Empty = in-memory stores (tests, offline demo fallback).
     tiger_database_url: str = ""
 
