@@ -23,6 +23,7 @@ export interface PaiOption {
 }
 
 export interface HuntData {
+  version?: number;
   vo2max: Record<Sex, Partial<Vo2maxCoefficients>>;
   fitness_age_lookup: Record<Sex, [age: number, vo2max: number][]>;
   pai_options?: PaiOption[];

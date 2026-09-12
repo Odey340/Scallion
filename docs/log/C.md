@@ -106,3 +106,17 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 **Next:** Home (clock from `phenoage.ts` when labs exist, else fitness age; levers from `risk_years.json`), then Labs upload/review/waterfall, Circle from `api.circle()`. `engine/README.md` status updated for all six exports.
 
 **Contract changes needed:** None.
+
+## Session 8 (2026-09-12): Home screen
+
+**Done:** `src/app/(tabs)/index.tsx` replaces the placeholder. Data: `api.coachContext()` when a token exists (D's `/coach/context` is exactly the Home payload: clock rows with `show`, circle alerts, `today.nudge`, `today.caffeine`, `levers`, `levers_unknown`, `flags`), otherwise a no-login mode. Clock card: PhenoAge if a labs clock exists, else fitness age; API rows first, then what this device computed (`src/state/clock-store.ts`, localStorage-backed on web so the QR judge's `/start` result survives a tap to Home); big tabular number, +/- band, "N years younger/older than your calendar age", "8 of 9 markers" with the imputed list and a Complete-your-clock link, "Estimate, not diagnosis"; `flags.critical` or `clock.show === false` swaps the number for "See a clinician first" and a link to the report. Nudge card from `today.nudge` (text, own-rhythm explanation, hash note, Open-your-circle button); state pill Active/Distancing/Steady from `circle.alerts`; last-coffee line from `today.caffeine` with its dose assumption and source. Levers ledger: active rows as chips (exposure, +years, source, HR, "if sustained"), unknown rows as muted chips saying what they wait on ("the loneliness question", "a fitness age (ten seconds)") with a link to the right screen; with no session the whole `risk_years.json` ledger is shown muted as "not assessed yet". Every number is an API-stored clock row (posted by C), a `risk_years.json` row, or B/D's circle summary. `/start` now writes the clock store and, when a token exists, `POST /clock` (best-effort, inputs carry vo2max so the low-fitness lever can resolve). `HuntData` gained optional `version`.
+
+**Verified in a real browser** against the deployed API with the demo token baked into a local export served on :8081 (an allowed CORS origin): signed-in Home shows Active, the 38-day nudge, last coffee 18:24, and the three unknown levers; `/start` (41/M/90/58/moderate) -> Home shows "Fitness age 46 +/- 15, 5 years older", and `GET /clock/latest` on the box now has that fitness row. No-token mode verified too (CTA card, unassessed ledger). `tsc`, lint, 26 tests, `expo export` all clean.
+
+**Gotcha worth remembering:** Metro caches `EXPO_PUBLIC_*` inlining across exports. After building once with `EXPO_PUBLIC_DEMO_TOKEN` in the environment, a later plain `expo export` still carried the token until `--clear`. `dist/` is git-ignored so nothing reached the repo; token-bearing builds were made in the scratchpad and deleted. Always `--clear` when env vars change, and never build with the token inside the repo tree.
+
+**Not done:** no 20 s recording (no screen capture from this session; a human should record Home + /start on a phone). Nudge feedback buttons (Block 4) and the daily 1 pm card are not on Home yet. The "+/- 15 years" fitness band is still the honest SEE-derived number flagged in Session 1.
+
+**Next:** Labs (upload -> review -> waterfall, `phenoage.ts` + `POST /clock` so Home flips to PhenoAge), then Circle, Camera, Coach.
+
+**Contract changes needed:** None.

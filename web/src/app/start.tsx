@@ -13,6 +13,8 @@ import {
   type HuntData,
   type Sex,
 } from '@/engine/fitness-age';
+import { api, hasToken } from '@/lib/api';
+import { setLocalClock } from '@/state/clock-store';
 
 /**
  * QR landing: fitness age in ten seconds, no login. docs/lanes/C.md Block 1.
@@ -65,9 +67,28 @@ export default function StartScreen() {
     }
 
     try {
-      setResult(
-        computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: paiOptions[paiIndex].pai }, hunt)
-      );
+      const computed = computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: paiOptions[paiIndex].pai }, hunt);
+      setResult(computed);
+      // Home shows this clock until labs replace it (clock-store); the API row lets the coach speak about it.
+      setLocalClock({
+        clock: 'fitness',
+        years: computed.fitnessAge,
+        chronologicalAge: ageNum,
+        band: computed.band,
+        computedAt: new Date().toISOString(),
+      });
+      if (hasToken()) {
+        api
+          .postClock({
+            clock: 'fitness',
+            years: computed.fitnessAge,
+            chronological_age: ageNum,
+            band: computed.band,
+            inputs: { vo2max: computed.vo2max, waist_cm: waistNum, rhr: rhrNum, pai: paiOptions[paiIndex].pai, sex },
+            engine_version: String(hunt.version ?? 1),
+          })
+          .catch(() => undefined); // best-effort: the number on screen does not depend on the API
+      }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not compute a fitness age.');
     }
