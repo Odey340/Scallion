@@ -1,31 +1,36 @@
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CurveBand } from '@/components/curve-band';
 import { Field, NumberInput, SegmentButton, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { lastCoffeeHoursBeforeBed, subtractHours, type CaffeineData } from '@/engine/caffeine';
 import { computeMealCurves, type MealComputation, type MealGrid } from '@/engine/meal';
+import { setTonightResult, type GeminiEstimate, type TonightResult } from '@/state/tonight-store';
 
-const VARIANT_LABEL: Record<string, string> = {
-  normal: 'fasting glucose in the normal range',
-  low_si: 'fasting glucose in the impaired range',
-  t2d: 'fasting glucose in the type 2 diabetic range',
-};
+const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 
 /**
- * Tonight's plate: two glucose CurveBands (eat now / plus a walk) from A's meal_grid.json,
- * plus the caffeine last-coffee line from caffeine.json. docs/lanes/C.md Block 3.
- * TODO(D): "photograph the plate -> carbs" needs D's Gemini extraction endpoint, not yet in
- * docs/contracts.md. Carbs are typed manually until that lands.
+ * A meal, any meal — not just dinner. Photo -> Gemini carbs estimate (or type it in) ->
+ * two glucose CurveBands from A's meal_grid.json, plus the caffeine last-coffee line.
+ * The full breakdown lives on the results page; this screen only gathers inputs.
  */
 export default function TonightScreen() {
+  const router = useRouter();
+
   const [grid, setGrid] = useState<MealGrid | null>(null);
   const [caffeine, setCaffeine] = useState<CaffeineData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [mealType, setMealType] = useState<string | null>(null);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [gemini, setGemini] = useState<GeminiEstimate | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [carbsG, setCarbsG] = useState('');
   const [fastingMgdl, setFastingMgdl] = useState('');
@@ -34,8 +39,6 @@ export default function TonightScreen() {
   const [caffeineMg, setCaffeineMg] = useState('');
   const [bedtime, setBedtime] = useState('');
 
-  const [meal, setMeal] = useState<MealComputation | null>(null);
-  const [coffeeResult, setCoffeeResult] = useState<{ hoursBefore: number; byClockTime: string | null } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,10 +59,52 @@ export default function TonightScreen() {
       .catch(() => setLoadError('Could not load the meal or caffeine model.'));
   }, []);
 
+  const pickImage = async (source: 'camera' | 'library') => {
+    setPhotoError(null);
+    const permission =
+      source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setPhotoError('Permission was not granted.');
+      return;
+    }
+
+    const result = await (source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync)({
+      mediaTypes: ['images'],
+      base64: true,
+      quality: 0.5,
+    });
+    if (result.canceled || !result.assets?.[0]?.base64) return;
+
+    const asset = result.assets[0];
+    setImageUri(asset.uri);
+    setGemini(null);
+    await analyzePhoto(asset.base64!, asset.mimeType ?? 'image/jpeg');
+  };
+
+  const analyzePhoto = async (base64: string, mimeType: string) => {
+    setAnalyzing(true);
+    setPhotoError(null);
+    try {
+      const res = await fetch('/api/estimate-carbs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data: GeminiEstimate = await res.json();
+      setGemini(data);
+      setCarbsG(String(Math.round(data.carbs_g)));
+    } catch {
+      setPhotoError('Could not analyze the photo — enter carbs manually below.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleSubmit = () => {
     setFormError(null);
-    setMeal(null);
-    setCoffeeResult(null);
 
     if (!grid || !caffeine) {
       setFormError('Still loading the meal model.');
@@ -78,32 +123,41 @@ export default function TonightScreen() {
       return;
     }
 
+    let meal: MealComputation;
     try {
-      setMeal(computeMealCurves({ carbsG: carbsNum, fastingMgdl: fastingNum, weightKg: weightNum }, grid));
+      meal = computeMealCurves({ carbsG: carbsNum, fastingMgdl: fastingNum, weightKg: weightNum }, grid);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not compute tonight’s curve.');
+      setFormError(err instanceof Error ? err.message : 'Could not compute a curve for this meal.');
       return;
     }
 
+    let coffee: TonightResult['coffee'] = null;
     if (caffeineMg && bedtime) {
       const doseNum = Number(caffeineMg);
       if (Number.isFinite(doseNum)) {
         const hoursBefore = lastCoffeeHoursBeforeBed(doseNum, { smoker: false, oralContraceptive: false }, caffeine);
-        setCoffeeResult({
-          hoursBefore,
-          byClockTime: hoursBefore > 0 ? subtractHours(bedtime, hoursBefore) : null,
-        });
+        coffee = { hoursBefore, byClockTime: hoursBefore > 0 ? subtractHours(bedtime, hoursBefore) : null };
       }
     }
+
+    setTonightResult({
+      meal,
+      mealType: mealType ?? 'Meal',
+      onMeds: onMeds === true,
+      carbsSource: gemini ? 'photo' : 'manual',
+      gemini,
+      coffee,
+    });
+    router.push('/tonight-results');
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <ThemedText type="subtitle">Tonight</ThemedText>
+          <ThemedText type="subtitle">Your meal</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
-            Estimate, not diagnosis. A typical curve for your fasting glucose and weight.
+            Breakfast, lunch, dinner, or a snack — estimate, not diagnosis.
           </ThemedText>
 
           {loadError && (
@@ -112,12 +166,54 @@ export default function TonightScreen() {
             </ThemedText>
           )}
 
+          <Field label="What meal is this?">
+            <View style={styles.wrap}>
+              {MEAL_TYPES.map((type) => (
+                <SegmentButton key={type} label={type} active={mealType === type} onPress={() => setMealType(type)} />
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Photo of the plate (optional)">
+            <View style={styles.row}>
+              <Pressable style={styles.photoButton} onPress={() => pickImage('camera')}>
+                <ThemedText type="small" themeColor="accentText">
+                  Take photo
+                </ThemedText>
+              </Pressable>
+              <Pressable style={styles.photoButton} onPress={() => pickImage('library')}>
+                <ThemedText type="small" themeColor="accentText">
+                  Choose photo
+                </ThemedText>
+              </Pressable>
+            </View>
+          </Field>
+
+          {imageUri && <Image source={{ uri: imageUri }} style={styles.thumbnail} />}
+          {analyzing && (
+            <View style={styles.row}>
+              <ActivityIndicator color={Colors.accent} />
+              <ThemedText type="small" themeColor="textSecondary">
+                Analyzing photo…
+              </ThemedText>
+            </View>
+          )}
+          {gemini && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {gemini.food_description} ({gemini.confidence} confidence)
+            </ThemedText>
+          )}
+          {photoError && (
+            <ThemedText type="small" themeColor="silence">
+              {photoError}
+            </ThemedText>
+          )}
+
           <Field label="Carbs on the plate (g)">
             <NumberInput value={carbsG} onChangeText={setCarbsG} placeholder="60" />
           </Field>
           <ThemedText type="small" themeColor="textMuted">
-            TODO(D): photo-based carb estimation needs Gemini extraction, not yet in the API contract. Type it in for
-            now.
+            Pre-filled from your photo when available — always editable.
           </ThemedText>
 
           <Field label="Fasting glucose (mg/dL)">
@@ -151,86 +247,12 @@ export default function TonightScreen() {
 
           <Pressable style={styles.submit} onPress={handleSubmit}>
             <ThemedText type="smallBold" themeColor="accentText">
-              See tonight’s plate
+              See results
             </ThemedText>
           </Pressable>
-
-          {meal && grid && (
-            <>
-              <ThemedView type="surface" style={styles.card}>
-                <ThemedText type="smallBold">Eat now</ThemedText>
-                <CurveBand series={meal.eatNow.curve} tMin={meal.tMin} basalMgdl={meal.basalMgdl} />
-                <SummaryRow summary={meal.eatNow.summary} />
-              </ThemedView>
-
-              {onMeds ? (
-                <ThemedView type="surface" style={styles.card}>
-                  <ThemedText type="smallBold">{grid.labels.medication}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Walk-timing advice is hidden because you take medicine that affects blood sugar.
-                  </ThemedText>
-                </ThemedView>
-              ) : (
-                <ThemedView type="surface" style={styles.card}>
-                  <ThemedText type="smallBold">{grid.labels.walk}</ThemedText>
-                  <CurveBand
-                    series={meal.withWalk.curve}
-                    tMin={meal.tMin}
-                    basalMgdl={meal.basalMgdl}
-                    walkWindow={{
-                      startMin: grid.walk_calibration.walk_start_min,
-                      endMin: grid.walk_calibration.walk_end_min,
-                    }}
-                  />
-                  <SummaryRow summary={meal.withWalk.summary} />
-                  <ThemedText type="small" themeColor="textMuted">
-                    Source: {grid.walk_calibration.source}
-                  </ThemedText>
-                </ThemedView>
-              )}
-
-              <ThemedText type="small" themeColor="textMuted">
-                {grid.labels.curve} ({VARIANT_LABEL[meal.variant]}, source: {grid.variant_rule.source}).
-              </ThemedText>
-            </>
-          )}
-
-          {coffeeResult && (
-            <ThemedView type="surface" style={[styles.card, CardShadow]}>
-              <ThemedText type="smallBold">Last coffee</ThemedText>
-              {coffeeResult.byClockTime ? (
-                <ThemedText type="default">Have your last coffee by {coffeeResult.byClockTime} tonight.</ThemedText>
-              ) : (
-                <ThemedText type="default">You&apos;re already under the bedtime caffeine threshold.</ThemedText>
-              )}
-            </ThemedView>
-          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
-  );
-}
-
-function SummaryRow({ summary }: { summary: MealComputation['eatNow']['summary'] }) {
-  return (
-    <View style={styles.summaryRow}>
-      <Stat label="Peak" value={`${Math.round(summary.peak_mgdL)} mg/dL`} />
-      <Stat label="At" value={`${summary.t_peak_min}m`} />
-      <Stat label="Back to baseline" value={`${summary.t_baseline_min}m`} />
-    </View>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <ThemedText type="numeric" style={styles.statValue}>
-        {value}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textMuted">
-        {label}
-      </ThemedText>
-    </View>
   );
 }
 
@@ -244,7 +266,22 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.five,
     gap: Spacing.three,
   },
-  row: { flexDirection: 'row', gap: Spacing.two },
+  row: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  photoButton: {
+    flex: 1,
+    backgroundColor: Colors.accent,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+  },
+  thumbnail: {
+    width: 120,
+    height: 120,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   submit: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.medium,
@@ -252,18 +289,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.two,
   },
-  card: {
-    borderRadius: Radius.medium,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.four,
-    gap: Spacing.two,
-    marginTop: Spacing.two,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  stat: { alignItems: 'center', gap: Spacing.half },
-  statValue: { fontSize: 18, lineHeight: 22 },
 });

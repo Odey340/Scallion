@@ -42,6 +42,27 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 
 **Contract changes needed:** None. Worth a `[contract]` note from D eventually: a photo-to-carbs route for Tonight isn't specified anywhere.
 
+## Session 4 (2026-09-12): Lane C takes over the Tonight photo -> carbs step; results page; wordmark
+
+**Human directive:** explicitly take over D's planned Gemini plate-photo work (was blocked on an undocumented contract route) and expand Tonight beyond dinner-only. Provided a Gemini API key in chat.
+
+**Done:**
+- `web/api/estimate-carbs.ts`: a Vercel serverless function (Node, `@vercel/node` types) that calls Gemini's `generateContent` REST endpoint server-side with `responseMimeType: application/json` for reliable structured output. **The key lives only in Vercel's env vars** (`GEMINI_API_KEY`, set via `vercel env add` for production + preview, type Secret, never printed back) — never in a committed file, never `EXPO_PUBLIC_*`, so it cannot reach the client bundle. Verified after build: `grep` for the key across `dist/` finds nothing.
+- `expo-image-picker` added; `/tonight` now has Take Photo / Choose Photo buttons, sends the base64 image to `/api/estimate-carbs`, pre-fills the (still editable) carbs field from the response, shows Gemini's food description and confidence. Falls back cleanly to manual entry on any failure.
+- Reframed Tonight's copy from dinner-specific to meal-agnostic ("Your meal", a Breakfast/Lunch/Dinner/Snack selector) — kept the `/tonight` URL unchanged (it's named in `docs/contracts.md` §5; renaming a route is a contract change, renaming copy is not).
+- `src/engine/wellbeing.ts`: a new 0-100 "meal wellbeing score" — **Lane C's own composite heuristic**, not a MATLAB export or validated clinical index, and labelled as such everywhere it appears. Built from three factors already computed from A's `meal_grid.json` curve (peak excess over basal, incremental AUC, time back to baseline), weighted 40/40/20. Thresholds were not guessed: computed the empirical min/p10/p50/p90/max of peak-excess (13-286 mg/dL) and AUC (1850-39700) across all 72 walk=0 grid cells in Node first, then set the "good"/"poor" ends of each scoring ramp from that real spread.
+- Submit now navigates to a new full-page results route (`src/app/tonight-results.tsx`, added to the root Stack) instead of showing results inline — a small module-level pub-sub store (`src/state/tonight-store.ts`) carries the computed result across the navigation instead of serializing curve arrays through URL params. Results page: a headline section (SVG `ScoreRing` percentage, tier sentence, walk-improvement callout, caffeine line) with the existing CurveBand charts and stats moved below a divider for scroll-down detail, per the human's ask that the first screen be simple and the graphs be secondary.
+- Added a persistent "Scallion" wordmark (`src/components/wordmark.tsx`) as the header title across both the root Stack and the tabs navigator, so it appears on every screen without touching each screen file individually.
+- Caught and fixed two real bugs while building: (1) two submit/back buttons were wired with `onTouchEnd` on a plain `View`, which does not fire from a mouse click on web — switched to `Pressable`/`onPress`; (2) JSX text/attribute strings written with `’`-style escapes don't get interpreted in literal JSX text (only in real JS string contexts) — checked every occurrence landed as a real character, not a literal backslash sequence.
+- `tsc --noEmit` and lint clean across the app code and the new serverless function; rebuilt export; confirmed via `grep` that the Gemini key isn't in the built client bundle.
+
+**Blocked / not verified:** Claude-in-Chrome's browser extension stayed disconnected all session (multiple reconnect attempts failed) — **no live visual check of the new UI happened**, and the Gemini round-trip has only been sanity-checked via direct `curl` against the deployed function, not through the actual photo-picker UI. Asked the human to check `scallion.us/tonight` and `/tonight-results` visually.
+
+**Next:** Visual QA once the browser extension reconnects (or human confirms). `PUT /me/answers`-backed caffeine inputs (currently typed locally) once C builds the auth/onboarding flow. Consider whether the wellbeing-score methodology should get a second opinion from whoever is driving product/A, since it's a new user-facing number invented this session, not sourced from a paper the way everything else in the app is.
+
+**Contract changes needed:** None technically (this is all Lane C's own surface), but flagging for the team: the photo-to-carbs step that was implicitly Lane D's per `CLAUDE.md`'s lane table is now built and owned by Lane C. Worth a note in Discord so D doesn't duplicate it.
+
+
 
 
 

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { Wordmark } from '@/components/wordmark';
 import { Colors, Fonts } from '@/constants/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -18,7 +19,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        headerShown: false,
+        headerShown: true,
+        headerTitle: () => <Wordmark />,
+        headerStyle: { backgroundColor: Colors.surface },
+        headerShadowVisible: false,
+        headerTintColor: Colors.text,
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {

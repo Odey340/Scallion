@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+import { Wordmark } from '@/components/wordmark';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,12 +34,18 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerShown: false,
+          headerShown: true,
+          headerTitle: () => <Wordmark />,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerShadowVisible: false,
+          headerTintColor: Colors.text,
+          headerBackTitle: '',
           contentStyle: { backgroundColor: Colors.background },
         }}>
         <Stack.Screen name="start" />
         <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="tonight-results" />
       </Stack>
     </ThemeProvider>
   );
