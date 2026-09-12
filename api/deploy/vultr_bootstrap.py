@@ -3,10 +3,10 @@
     python api/deploy/vultr_bootstrap.py [--ip 104.238.145.198] [--apply]
 
 Finds the instance by IP, builds cloud-init user-data (deploy key from ~/.ssh/scallion_vultr.pub
-plus every SSH key on the Vultr account, Docker, ufw), and PATCHes the instance with
-os_id=Ubuntu 24.04 + user_data. THAT REINSTALLS THE INSTANCE (wipes its disk); fine for a box that
-has nothing on it yet. Without --apply it only prints what it would do. Afterwards it waits for
-SSH with the deploy key and runs deploy.sh.
+plus every SSH key on the Vultr account, Docker, ufw), stores it on the instance (PATCH user_data)
+and calls POST /instances/{id}/reinstall. THAT REINSTALLS THE INSTANCE (wipes its disk); fine for
+a box that has nothing on it yet. Without --apply it only prints what it would do. Afterwards it
+forgets the old SSH host key, waits for SSH with the deploy key and runs deploy.sh.
 
 Needs VULTR_API_KEY in the repo-root .env and this machine's public IP on the key's allow-list
 (Vultr > Account > API > Access Control).
@@ -22,8 +22,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-UBUNTU_2404 = 2284
 API = "https://api.vultr.com/v2"
+HOSTNAME = "api.scallion.us"
 
 
 def env(key: str) -> str:
@@ -41,7 +41,8 @@ def call(token: str, method: str, path: str, body: dict | None = None) -> dict:
             raw = r.read()
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
-        raise SystemExit(f"Vultr {method} {path} -> {e.code}: {e.read().decode()[:300]}")
+        print(f"Vultr {method} {path} -> {e.code}: {e.read().decode()[:300]}")
+        raise SystemExit(1)
 
 
 def main(argv: list[str]) -> int:
@@ -51,7 +52,8 @@ def main(argv: list[str]) -> int:
     if not token:
         print("VULTR_API_KEY missing in .env")
         return 2
-    pub = (Path.home() / ".ssh" / "scallion_vultr.pub").read_text().strip()
+    key_path = Path.home() / ".ssh" / "scallion_vultr"
+    pub = (key_path.with_suffix(".pub")).read_text().strip()
 
     inst = next((i for i in call(token, "GET", "/instances").get("instances", []) if i["main_ip"] == ip), None)
     if not inst:
@@ -64,31 +66,39 @@ def main(argv: list[str]) -> int:
     user_data = template.replace("__SSH_AUTHORIZED_KEYS__", "\n".join(f"  - {k}" for k in keys))
     print(f"cloud-init: {len(keys)} ssh key(s), {len(user_data)} bytes")
     if not apply:
-        print("dry run: add --apply to reinstall the instance with this user-data")
+        print("dry run: add --apply to store this user-data and reinstall the instance")
         return 0
 
-    call(token, "PATCH", f"/instances/{inst['id']}", {"os_id": UBUNTU_2404, "user_data": base64.b64encode(user_data.encode()).decode()})
+    call(token, "PATCH", f"/instances/{inst['id']}", {"user_data": base64.b64encode(user_data.encode()).decode(), "label": HOSTNAME})
+    print("user_data stored; requesting reinstall")
+    call(token, "POST", f"/instances/{inst['id']}/reinstall", {"hostname": HOSTNAME})
     print("reinstall requested; waiting for the instance to come back")
+    time.sleep(20)
     for _ in range(60):
-        time.sleep(10)
         cur = call(token, "GET", f"/instances/{inst['id']}")["instance"]
         print(f"  {cur['status']}/{cur['server_status']}/{cur['power_status']}")
         if cur["status"] == "active" and cur["server_status"] == "ok" and cur["power_status"] == "running":
             break
-    print("waiting for SSH with the deploy key (cloud-init runs Docker install on first boot)")
-    ssh = ["ssh", "-i", str(Path.home() / ".ssh" / "scallion_vultr"), "-o", "StrictHostKeyChecking=accept-new",
-           "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", f"root@{ip}"]
+        time.sleep(10)
+
+    subprocess.run(["ssh-keygen", "-R", ip], capture_output=True)  # the reinstall minted a new host key
+    print("waiting for SSH with the deploy key (cloud-init installs Docker on first boot)")
+    ssh = ["ssh", "-i", str(key_path), "-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", f"root@{ip}"]
     for _ in range(60):
         time.sleep(10)
         r = subprocess.run(ssh + ["test -f /srv/scallion/.cloud-init-done && docker --version"], capture_output=True, text=True)
         if r.returncode == 0:
             print("  ", r.stdout.strip())
             break
-        print("  not ready:", (r.stderr or r.stdout).strip()[:80])
+        print("  not ready:", (r.stderr or r.stdout).strip().splitlines()[-1][:100] if (r.stderr or r.stdout).strip() else "no answer")
     else:
         print("gave up waiting for SSH; run deploy.sh by hand once the box answers")
         return 1
-    return subprocess.call(["bash", str(HERE / "deploy.sh"), f"root@{ip}"])
+    script = HERE / "deploy.sh"
+    posix = script.as_posix()
+    if script.drive:  # Git Bash on Windows wants /c/Users/... not C:/Users/...
+        posix = "/" + script.drive[0].lower() + posix[2:]
+    return subprocess.call(["bash", posix, f"root@{ip}"])
 
 
 if __name__ == "__main__":

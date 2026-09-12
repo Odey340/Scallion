@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     image: scallion-api:latest
     restart: unless-stopped
-    env_file: ../.env
+    env_file: ../../.env  # /srv/scallion/.env, copied by deploy.sh
     environment:
       DEV_AUTH_BYPASS: "0"
       GEMINI_FAKE: "0"
