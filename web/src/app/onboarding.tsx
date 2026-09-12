@@ -6,15 +6,9 @@ import { Field, SegmentButton, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { api, setToken, type Me } from '@/lib/api';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { apiFetch, useSession } from '@/state/auth-store';
-
-interface Me {
-  verified: boolean;
-  over_65: boolean;
-  age: number | null;
-  verify_url: string | null;
-}
+import { useSession } from '@/state/auth-store';
 
 const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
 
@@ -33,8 +27,8 @@ export default function OnboardingScreen() {
   const [authBusy, setAuthBusy] = useState(false);
 
   const [onMeds, setOnMeds] = useState<boolean | null>(null);
-  const [helpFamily, setHelpFamily] = useState<number | null>(null);
-  const [helpFriends, setHelpFriends] = useState<number | null>(null);
+  const [helpFamily, setHelpFamily] = useState<(typeof HELP_SCALE)[number] | null>(null);
+  const [helpFriends, setHelpFriends] = useState<(typeof HELP_SCALE)[number] | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const [me, setMe] = useState<Me | null>(null);
@@ -44,15 +38,14 @@ export default function OnboardingScreen() {
     if (!session) return;
     setMeError(null);
     try {
-      const res = await apiFetch('/me', session);
-      if (!res.ok) throw new Error(String(res.status));
-      setMe(await res.json());
+      setMe(await api.me());
     } catch {
       setMeError('Could not reach the API.');
     }
   };
 
   useEffect(() => {
+    setToken(session?.access_token ?? null);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,15 +86,11 @@ export default function OnboardingScreen() {
     if (!session) return;
     setSaveStatus(null);
     try {
-      const res = await apiFetch('/me/answers', session, {
-        method: 'PUT',
-        body: JSON.stringify({
-          on_glucose_meds: onMeds ?? undefined,
-          help_family: helpFamily ?? undefined,
-          help_friends: helpFriends ?? undefined,
-        }),
+      await api.setAnswers({
+        on_glucose_meds: onMeds ?? undefined,
+        help_family: helpFamily ?? undefined,
+        help_friends: helpFriends ?? undefined,
       });
-      if (!res.ok) throw new Error(String(res.status));
       setSaveStatus('Saved.');
       refreshMe();
     } catch {
