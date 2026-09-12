@@ -1,0 +1,25 @@
+{
+  "name": "imessage-analyzer-exporter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "export": "tsc && node dist/index.js",
+    "analyze": "tsc && node dist/analyze.js",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.20.2",
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.7"
+  }
+}
