@@ -16,4 +16,5 @@ def health(settings: Annotated[Settings, Depends(get_settings)]) -> dict:
         "gemini": "fake" if settings.gemini_fake else "live",
         "auth": "bypass" if settings.dev_auth_bypass else "jwt",
         "db": "tiger" if settings.tiger_database_url else "memory",
+        "tts": "fake" if settings.elevenlabs_fake else ("live" if settings.elevenlabs_api_key else "off"),
     }

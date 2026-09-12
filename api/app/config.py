@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     web_origin: str = "http://localhost:8081"
     max_upload_mb: int = 15
 
+    # ElevenLabs (GET /tts and, later, the coach). Fake = silent MP3 for tests and offline demos.
+    elevenlabs_api_key: str = ""
+    elevenlabs_voice_id: str = ""
+    elevenlabs_fake: bool = False
+
     # Tiger Data (TimescaleDB). Empty = in-memory stores (tests, offline demo fallback).
     tiger_database_url: str = ""
 
