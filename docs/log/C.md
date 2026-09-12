@@ -94,3 +94,15 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 **Next (in lane order):** `phenoage.ts` + vectors test (unblocks Home, Labs result, coach `POST /clock`); Home; Labs upload/review/waterfall; Circle from `api.circle()` (D's stand-in); Camera; Coach; Spanish + large type; recordings and the video.
 
 **Contract changes needed:** None.
+
+## Session 7 (2026-09-12): phenoage.ts + the vectors test
+
+**Done:** `web/src/engine/phenoage.ts`, a line-for-line port of A's `matlab/engine/phenoage.m` (read `phenoage.m`, `phenoage_constants.m`, `age_band.m`, `test_phenoage.m` and `tools/crosscheck/crosscheck.py` first). Every constant is read from `phenoage.json`: coefficients, intercept, `k`, `affine.A` (derived from `a`/`offset`/`gamma`/`t_months` only if the export ever lacks it), CRP floor/acute, per-band `reference_by_age_sex` and `imputation_sd_by_age_sex`, CV table, critical ranges, labels. Implements the v8 rules exactly: cohort offset at the user's exact age (not the band-midpoint table), analyte years `coef * (term(x) - term(ref)) / k`, band = 1 SD from CV (measured) or population SD (imputed), non-fasting/unknown glucose imputed, critical ranges null the age with "See a clinician first" (waterfall and band still returned for the review screen). Exposes `computePhenoAge(values, age, sex, data, opts)`, `ageBand`, `waterfallSum`, `ANALYTES`, typed result. The only hard-coded number is the glucose mg/dL-per-mmol/L unit factor for the critical check (a unit, not a coefficient; same 18.016 as A).
+
+**Test:** `web/src/engine/phenoage.test.ts` (vitest added as a devDependency, `npm test`). Loads `public/engine/phenoage.json` and `../matlab/tests/vectors.json` directly. 26 tests: all four vectors within the contract's 0.05 y on phenoage, band and every waterfall bar (actual worst deviation 4.9e-5 y, i.e. the vectors' own 4-dp rounding); waterfall sums to phenoage within 1e-9; affine route equals the mortality-score route within 1e-9; imputed list, markers_used, xb, mortality_10y match; age bands; reference person gives zero bars; imputation widens the band; null/NaN count as missing; non-fasting imputes glucose; CRP floor; CRP acute flag; glucose/WBC/creatinine critical gates (report ref-high and default); imputed analytes never trip a gate. `tsc`, `expo lint`, `expo export -p web` all still clean; the test file is not in the bundle.
+
+**Blocked:** Nothing.
+
+**Next:** Home (clock from `phenoage.ts` when labs exist, else fitness age; levers from `risk_years.json`), then Labs upload/review/waterfall, Circle from `api.circle()`. `engine/README.md` status updated for all six exports.
+
+**Contract changes needed:** None.
