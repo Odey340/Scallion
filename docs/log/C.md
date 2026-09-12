@@ -131,3 +131,23 @@ Concurrent with sessions 6-8 above (a parallel Lane C session/teammate) — disc
 **Next:** Walk through the actual OTP sign-in flow end to end now that Supabase keys are live (send code, receive email, verify, confirm `/me`/`/me/answers` work with a real session). Then Persona verification end to end. Also pick up the concurrent session's "Next" queue above (Labs upload/review/waterfall, Circle, Camera, Coach) — whichever of us continues Lane C next should read both trails, not just the latest.
 
 **Contract changes needed:** None.
+
+## Session 10 (2026-09-12): Circle screen — Gmail/WhatsApp ingest, dot map, reach-out recommendations
+
+Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumbered from my own "Session 5" to avoid colliding with theirs, same pattern session 9 used. Their `/scan` rename, onboarding/auth, and Home screen don't touch `circle.tsx` (confirmed: `git log 401bf67..origin/main -- 'web/src/app/(tabs)/circle.tsx'` is empty — it was still the placeholder upstream), so no real conflict there, just the log file.
+
+**Human directive:** revive lane B's ingest work (sitting uncommitted in a sibling checkout — see `docs/log/B.md` session 1) and build the actual Circle screen around it: connect Gmail, upload WhatsApp exports, show a personal-circle dot map with strong/weak connections, and recommend who to reach out to.
+
+**Done:**
+- Replaced the `PlaceholderScreen` at `web/src/app/(tabs)/circle.tsx` with the real screen. Two ingest cards (Gmail email + Connect button; WhatsApp name + `expo-document-picker` multi-file `.txt` upload), both parsing client-side via the newly-ported `social/` package and hashing with a per-browser device salt (`web/src/lib/salt.ts`, localStorage-only, mirrors the old checkout's `salt.ts`).
+- `web/src/lib/gmail-ingest.ts`: ported the old checkout's Google Identity Services token-client flow (`requestGmailAccessToken`, `fetchRecentMessages`) essentially unchanged — browser-only OAuth, `gmail.metadata` scope, no backend involved in reading Gmail.
+- On any successful ingest, POSTs the accumulated `Event[]` to `POST /events` (D's typed client, `web/src/lib/api.ts`) and fetches `GET /circle/summary` for `metrics`/`lsns`/`nudges`/`alerts`. The "reach out to revive" list is D's `nudges` (overdue-contact recurrence, already built server-side) rendered with the honest LSNS/risk-years labels from `CLAUDE.md` rule 3 (never "life lost").
+- `web/src/components/circle-dot-map.tsx`: an SVG dot map (you at the center, everyone else on one of three rings by tier) fed by lane B's new `contactStrengths()` — computed locally from the same Events already being POSTed, so it renders even if the server call fails (falls back to a locally-computed "most overdue contact" line in that case, clearly labeled as local-only).
+- Verified: `tsc --noEmit` clean; 42/42 `social/` tests still pass; screen renders correctly in a real browser (both cards, "More sources" chips); clicking Connect Gmail with no client ID configured shows the intended inline message ("No Google OAuth client configured — set EXPO_PUBLIC_GOOGLE_CLIENT_ID in web/.env.local") instead of crashing, matching the old checkout's UX. Did not drive the WhatsApp file-picker button itself through browser automation — `expo-document-picker` opens a native OS file chooser that automation tooling is explicitly instructed not to click through; correctness of the parse path is covered instead by the 42 passing `social/` tests (including this exact fixture file) plus the clean typecheck.
+- `web/.env.example` added (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_GOOGLE_CLIENT_ID`).
+
+**Blocked:** no Google OAuth Client ID configured yet (same blocker as lane B's log) — Gmail connect is untested live. Full ingest -> POST /events -> GET /circle/summary loop untested against a running API in this session (would need `GEMINI_FAKE=1 DEV_AUTH_BYPASS=1 uv run uvicorn app.main:app --reload` from `api/`, not started this session).
+
+**Next:** get a Client ID and do the live Gmail smoke test. Run the API locally and do a real WhatsApp-fixture -> dot-map -> nudges end-to-end pass (human-driven, since the file picker needs a real click). Consider surfacing `summary.heatmap` (52-week calendar) below the dot map — currently unused by this screen even though the API returns it.
+
+**Contract changes needed:** none. `contactStrengths` (lane B, session 1) is additive and not yet in `docs/contracts.md` §2.

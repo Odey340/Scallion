@@ -44,3 +44,4 @@ example
 
 .vercel
 .env*
+!.env.example
