@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(REPO_DIR / ".env", API_DIR / ".env"), extra="ignore")
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"  # 2.5-flash returns 404 "no longer available to new users" (Sat H8)
     gemini_fake: bool = False
 
     supabase_jwt_secret: str = ""
