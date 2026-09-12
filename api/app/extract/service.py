@@ -1,6 +1,7 @@
 """bytes -> text layer -> model -> canonical names -> spans -> units normalised -> ExtractResponse. Nothing touches disk."""
 from .canonical import canonical_keys, canonicalize
 from .gemini import Extractor
+from .complete import complete_your_clock
 from .normalize import normalize
 from .schema import Analyte, ExtractResponse
 from .spans import find_span
@@ -32,4 +33,5 @@ def run_extract(data: bytes, mime: str, extractor: Extractor) -> ExtractResponse
         )
 
     missing = [k for k in canonical_keys() if k not in seen]
-    return normalize(ExtractResponse(analytes=analytes, fasting=raw.fasting, lang=raw.lang, text=text, missing=missing))
+    resp = normalize(ExtractResponse(analytes=analytes, fasting=raw.fasting, lang=raw.lang, text=text, missing=missing))
+    return resp.model_copy(update={"complete": complete_your_clock(resp)})

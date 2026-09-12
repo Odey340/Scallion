@@ -1,6 +1,6 @@
 """Pydantic models. GeminiExtraction is the strict response schema sent to the model;
 ExtractResponse is what the API returns (docs/contracts.md section 3, v2)."""
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -42,3 +42,5 @@ class ExtractResponse(BaseModel):
     lang: Literal["en", "es", "other"]
     text: str
     missing: list[str]
+    # v9: 'complete your clock' (what to order, re-test date, fasting action); reference data, not engine.
+    complete: dict[str, Any] | None = None

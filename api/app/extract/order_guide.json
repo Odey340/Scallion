@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "note": "Reference data for the 'complete your clock' card: which direct-to-consumer panel covers each missing PhenoAge analyte. Prices are list-price ranges seen for Houston in September 2026 and are labelled reference, not engine; they never enter the clock or the coach context.",
+  "panels": {
+    "cbc_diff": {"name": "CBC with differential", "covers": ["wbc", "lymph_pct", "mcv", "rdw"], "dtc_usd": [29, 49], "fasting": false},
+    "cmp": {"name": "Comprehensive metabolic panel (CMP)", "covers": ["glucose", "creatinine", "albumin", "alp"], "dtc_usd": [29, 59], "fasting": true},
+    "hscrp": {"name": "hs-CRP (high-sensitivity C-reactive protein)", "covers": ["crp"], "dtc_usd": [35, 69], "fasting": false}
+  },
+  "where": ["Quest (questhealth.com, walk-in Houston sites)", "Labcorp OnDemand", "Ulta Lab Tests"],
+  "retest_days": 90,
+  "retest_rule": "assumption: repeat in about three months, or after a sustained change in sleep, activity or medication; sooner if a clinician says so",
+  "fasting_hours": "8-12 h water-only fast before a glucose draw"
+}
