@@ -4,6 +4,7 @@ Change only by agreement: edit here, commit `[contract] ...`, post in Discord. B
 
 **v2 (Fri H2): `/extract` response gained `text`, `source_text`, `raw_name`, `missing`; `source_span` indexes into `text`.**
 **v3 (Sat): section 7, client-side redaction rules at `api/redaction_rules.json` (D produces, C applies before upload).**
+**v4 (Sat H9): `/extract` analytes gained `si_value`, `si_unit`, `derived`, `note` (unit normalizer); a derived `lymph_pct` row may appear.**
 
 ## 1. Engine exports (A produces, C consumes): `web/public/engine/`
 
@@ -93,7 +94,7 @@ create materialized view daily_connection with (timescaledb.continuous) as
 
 | Route | Body -> Response |
 |---|---|
-| `POST /extract` | multipart `file` (redacted PDF or image, 15 MB max) -> `{"analytes":[{"name":"rdw","value":13.1,"unit":"%","ref_low":11.5,"ref_high":14.5,"source_span":[120,128],"source_text":"RDW 13.1 % 11.5-14.5","raw_name":"RDW"}],"fasting":null,"lang":"en","text":"<text layer>","missing":["crp"]}`. Names are the canonical keys from `phenoage.json`; unknown analytes come back as `"name":"other:<raw>"`. `text` is the server-side text layer of the upload (pypdf, pages joined by `\n\f`; empty for images); `source_span` is `[start, end)` into `text` or `null`; `source_text` is the printed line verbatim, so C can highlight by quote when its pdf.js text layer differs. `missing` lists canonical keys not found. Units are as printed (the normalizer is a later step). The upload is never stored. |
+| `POST /extract` | multipart `file` (redacted PDF or image, 15 MB max) -> `{"analytes":[{"name":"rdw","value":13.1,"unit":"%","ref_low":11.5,"ref_high":14.5,"source_span":[120,128],"source_text":"RDW 13.1 % 11.5-14.5","raw_name":"RDW"}],"fasting":null,"lang":"en","text":"<text layer>","missing":["crp"]}`. Names are the canonical keys from `phenoage.json`; unknown analytes come back as `"name":"other:<raw>"`. `text` is the server-side text layer of the upload (pypdf, pages joined by `\n\f`; empty for images); `source_span` is `[start, end)` into `text` or `null`; `source_text` is the printed line verbatim, so C can highlight by quote when its pdf.js text layer differs. `missing` lists canonical keys not found. `value`/`unit` are as printed; `si_value`/`si_unit` are the same result in `phenoage.json` units (albumin g/L, creatinine umol/L, glucose mmol/L, CRP mg/dL with hs-CRP mg/L converted, ALP U/L, WBC 10^9/L), or null with `note: "unknown_unit:<printed>"` when the printed unit is not recognised. When no lymphocyte % is printed but an absolute count and WBC are, a `lymph_pct` row is added with `derived: "lymph_pct_from_absolute"` and `raw_name` `"<abs row> / <wbc row>"` (C labels it "1 of 9 derived"). Spanish analyte names map to the same canonical keys. C computes the clock from `si_value` only. The upload is never stored. |
 | `POST /events` | `{"events": Event[]}` -> `{"inserted": n}` |
 | `GET /circle/summary` | -> `{"metrics": Metrics, "lsns": {...}, "nudges": Nudge[], "heatmap": Day[], "alerts": [...]}` |
 | `POST /vitals` | `{"source":"presage","pulse_bpm":62,"breathing_bpm":14,"stress_index":98,"captured_at":"..."}` (from the worker) -> `{"ok":true}` |
