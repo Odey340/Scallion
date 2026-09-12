@@ -79,3 +79,16 @@ Append ten lines per session: done, blocked, next, contract changes needed.
 8. Cut-order items never started: Compiler SDK runtime path, caffeine `.sbproj` (closed form exported instead).
 9. Open cosmetic: surrogate figure right-hand title overlaps the x10^4 axis exponent.
 10. Contract: v8, no further changes planned from A.
+
+## Session 7 (Fri H5.5, agent, 2026-09-12): polish
+
+1. Done: surrogate validation figure fixed (commit aecf3a2): the incremental-AUC panel is plotted in thousands with axis exponents off, so nothing sits under the subplot titles. `media/surrogate_validation.png` regenerated; CV numbers unchanged (peak RMSE 1.2 mg/dL, R^2 0.9997; iAUC R^2 0.9988).
+2. Note: `surrogate/mealSurrogate.mat` is git-ignored by the root `*.mat` rule; the live script regenerates it in seconds, and the console does not need it. Left ignored on purpose.
+3. Explained the console for the team: the engineer's control panel that runs the same MATLAB code the app's numbers came from; Tonight / Clock / Validation tabs; Validation overlays a full SimBiology run on the interpolated grid curve (agreement ~1 mg/dL).
+4. Website question answered: the console cannot run in a browser (no Web App Server or Compiler license). The site already carries the engine's output via `web/public/engine/*.json`; embed `media/matlab_segment.mp4` and the console PNGs on Devpost; a MATLAB Online link is possible if `matlab/` is uploaded to MATLAB Drive.
+5. Blocked: nothing.
+6. Next: human-only items (Discord post for contract v8, elevated `registerWithOS.exe`, rehearsal, optional `.mlx` save, public-calculator check of `ref_34M` = 29.3).
+7. Contract: v8, unchanged.
+8. Lane state: complete on the agent side; all exports current, `crosscheck.py` PASS, live script exit 0.
+9. Nothing left in the cut order to decide.
+10. Judging laptop: `C:\MATLAB\R2026a` licensed, insulindemo example present, `matlab/sweep/*.mat` committed.
