@@ -11,6 +11,9 @@ services:
     environment:
       DEV_AUTH_BYPASS: "0"
       GEMINI_FAKE: "0"
+    volumes:
+      # A's exports: the API resolves REPO_DIR/web/public/engine = /srv/web/public/engine inside the image
+      - ../../web/public/engine:/srv/web/public/engine:ro
     expose:
       - "8000"
     healthcheck:
