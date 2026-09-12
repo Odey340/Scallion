@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "note": "Curated, plain-language, one paragraph per PhenoAge analyte, with one citation each. No numbers inside the text (the validator allows only context numbers); the user's value and range are attached by GET /coach/explain/{name}. Spanish is a translation, not a second source.",
+  "analytes": {
+    "albumin": {
+      "en": "Albumin is the most common protein in your blood. Your liver makes it, and it keeps fluid in your vessels and carries hormones and medicines around. Levels drift down with poor nutrition, inflammation or liver and kidney strain, and lower albumin tracks with faster ageing in the PhenoAge model, so a higher value within the normal range is the direction you want.",
+      "es": "La albúmina es la proteína más abundante de la sangre. La produce el hígado, mantiene el líquido dentro de los vasos y transporta hormonas y medicamentos. Baja con la mala nutrición, la inflamación o el esfuerzo del hígado y los riñones, y una albúmina más baja se asocia a un envejecimiento más rápido en el modelo PhenoAge, así que un valor alto dentro del rango normal es la dirección deseable.",
+      "source": "Levine ME et al. An epigenetic biomarker of aging for lifespan and healthspan. Aging (Albany NY). 2018;10(4):573-591."
+    },
+    "creatinine": {
+      "en": "Creatinine is a waste product of normal muscle work that your kidneys clear from the blood. A steady value mostly reflects how well the kidneys filter; it rises when filtering slows and also runs higher in people with more muscle. In PhenoAge a higher creatinine adds years, which is really the model reading kidney function.",
+      "es": "La creatinina es un producto de desecho del trabajo normal del músculo que los riñones eliminan de la sangre. Un valor estable refleja sobre todo qué tan bien filtran los riñones; sube cuando el filtrado se enlentece y también es más alta en personas con más masa muscular. En PhenoAge una creatinina más alta suma años, lo que en realidad es el modelo leyendo la función renal.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591; KDIGO 2012 CKD guideline."
+    },
+    "glucose": {
+      "en": "Glucose is the sugar your cells burn for energy. A fasting value shows how well insulin keeps it in range overnight. Persistently higher fasting glucose damages vessels and nerves over years and is one of the strongest single contributors in the PhenoAge model, which is why the plate decision and the after-dinner walk exist in this app.",
+      "es": "La glucosa es el azúcar que las células queman para obtener energía. El valor en ayunas muestra qué tan bien la insulina la mantiene en rango durante la noche. Una glucosa en ayunas persistentemente alta daña vasos y nervios con los años y es uno de los factores individuales más fuertes del modelo PhenoAge; por eso existen la decisión del plato y la caminata después de cenar en esta app.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591; American Diabetes Association Standards of Care 2024."
+    },
+    "crp": {
+      "en": "C-reactive protein is made by the liver when there is inflammation anywhere in the body. A high-sensitivity test picks up the low, smouldering level linked to heart and vessel risk rather than an infection. A cold or an injury can push it up for a couple of weeks, so a single high value is worth repeating; a low value is good news for the clock.",
+      "es": "La proteína C reactiva la produce el hígado cuando hay inflamación en cualquier parte del cuerpo. La prueba ultrasensible detecta el nivel bajo y persistente relacionado con el riesgo cardiovascular, no una infección. Un resfriado o una lesión pueden elevarla durante un par de semanas, así que un valor alto aislado conviene repetirlo; un valor bajo es buena noticia para el reloj.",
+      "source": "Ridker PM. C-reactive protein and the prediction of cardiovascular events. Circulation. 2003;107:363-369; Levine ME et al. 2018."
+    },
+    "lymph_pct": {
+      "en": "Lymphocyte percentage is the share of your white blood cells that are lymphocytes, the cells that remember infections and fight viruses. That share tends to fall with age as the immune system shifts toward other cell types, so a lower percentage reads as older in PhenoAge. It moves with recent illness, so it is one of the noisier markers.",
+      "es": "El porcentaje de linfocitos es la proporción de glóbulos blancos que son linfocitos, las células que recuerdan infecciones y combaten virus. Esa proporción tiende a bajar con la edad conforme el sistema inmunitario se desplaza hacia otros tipos celulares, por lo que un porcentaje más bajo se lee como mayor edad en PhenoAge. Cambia con enfermedades recientes, así que es uno de los marcadores más ruidosos.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591."
+    },
+    "mcv": {
+      "en": "Mean corpuscular volume is the average size of your red blood cells. Cells get larger with low vitamin B-twelve or folate, alcohol use and some medicines, and smaller with iron deficiency. Red cell size creeps up with age, and a higher value adds years in PhenoAge; the fix depends on the cause, which a clinician can sort out from the rest of the panel.",
+      "es": "El volumen corpuscular medio es el tamaño promedio de los glóbulos rojos. Las células se agrandan con déficit de vitamina B doce o folato, consumo de alcohol y algunos medicamentos, y se achican con la falta de hierro. El tamaño de los glóbulos rojos aumenta poco a poco con la edad y un valor más alto suma años en PhenoAge; la solución depende de la causa, que un médico puede aclarar con el resto del panel.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591."
+    },
+    "rdw": {
+      "en": "Red cell distribution width measures how uneven your red blood cells are in size. When the bone marrow is stressed by inflammation, low iron or vitamins, or chronic disease, it releases cells of mixed sizes and the width rises. It is the single heaviest marker in the PhenoAge equation and predicts mortality on its own, which is why it often tops the waterfall.",
+      "es": "La amplitud de distribución eritrocitaria mide qué tan desiguales son los glóbulos rojos en tamaño. Cuando la médula ósea está bajo estrés por inflamación, falta de hierro o vitaminas, o enfermedad crónica, libera células de tamaños mezclados y la amplitud sube. Es el marcador con más peso en la ecuación PhenoAge y predice mortalidad por sí solo, por eso suele encabezar la cascada.",
+      "source": "Patel KV et al. Red cell distribution width and mortality in older adults. J Gerontol A. 2010;65:258-265; Levine ME et al. 2018."
+    },
+    "alp": {
+      "en": "Alkaline phosphatase is an enzyme from the liver, bile ducts and bone. It rises when bile flow is blocked, when bone is turning over quickly, and in some liver conditions. A mildly higher value within the lab range still nudges the clock older in PhenoAge, though the effect per unit is small compared with the blood-count markers.",
+      "es": "La fosfatasa alcalina es una enzima del hígado, las vías biliares y el hueso. Sube cuando el flujo de bilis se bloquea, cuando el hueso se renueva rápido y en algunas enfermedades hepáticas. Un valor algo alto dentro del rango del laboratorio igual empuja el reloj hacia mayor edad en PhenoAge, aunque el efecto por unidad es pequeño comparado con los marcadores del hemograma.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591."
+    },
+    "wbc": {
+      "en": "White blood cell count is the total number of immune cells circulating. It climbs with infection, smoking, stress and chronic inflammation, and a persistently higher count even inside the normal range is linked with heart disease and earlier death. PhenoAge treats a higher count as older; a recent cold can raise it for a week or two.",
+      "es": "El recuento de leucocitos es el número total de células inmunitarias en circulación. Sube con infecciones, tabaquismo, estrés e inflamación crónica, y un recuento persistentemente alto, incluso dentro del rango normal, se asocia a enfermedad cardíaca y muerte más temprana. PhenoAge trata un recuento más alto como mayor edad; un resfriado reciente puede elevarlo una o dos semanas.",
+      "source": "Levine ME et al. Aging (Albany NY). 2018;10(4):573-591; Madjid M et al. Leukocyte count and coronary heart disease. J Am Coll Cardiol. 2004;44:1945-1956."
+    }
+  },
+  "disclaimer": {
+    "en": "Estimate, not diagnosis. Talk to a clinician before changing any medicine.",
+    "es": "Estimación, no diagnóstico. Hable con un médico antes de cambiar cualquier medicamento."
+  }
+}
