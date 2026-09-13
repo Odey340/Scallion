@@ -7,11 +7,13 @@
 
 ## Inspiration
 
-The Healthcare track describes longevity as a stack: cellular aging and inflammation at the base, biomarkers and biological age above that, then sleep, nutrition, exercise and stress, and at the outer edge, environment and social connection. What struck us is that almost nobody can see their own stack. Two of its numbers are already within reach and nobody shows them.
+The Healthcare track describes longevity as a stack: cellular aging and inflammation at the base, biomarkers and biological age above that, then sleep, nutrition, exercise and stress, and at the outer edge, environment and social connection. What struck us is that almost nobody can see their own stack. Three of its numbers are already within reach and nobody shows them.
 
 The first sits in a blood panel on a patient portal. Nine ordinary analytes, including CRP for inflammation, feed a published clock, PhenoAge (Levine 2018), that says whether your body is running older or younger than your birthday. Nobody hands you that number, and nobody tells you which marker is costing you the years.
 
-The second is the outermost layer, and it is invisible. How many real people do you actually exchange messages with, and is that circle quietly shrinking? Holt-Lunstad's meta-analyses put sustained isolation on the same mortality scale as the lab markers, yet no app measures it, partly because doing so honestly means never reading a message.
+The second needs no lab at all. Thirty seconds of a face in front of a camera is enough to read pulse and breathing, and a resting pulse plus a waist measurement and one activity question gives a fitness age from the HUNT study's VO2max equation. Most people have never had their cardiorespiratory fitness estimated, even though low fitness carries one of the largest hazard ratios in the whole stack.
+
+The third is the outermost layer, and it is invisible. How many real people do you actually exchange messages with, and is that circle quietly shrinking? Holt-Lunstad's meta-analyses put sustained isolation on the same mortality scale as the lab markers, yet no app measures it, partly because doing so honestly means never reading a message.
 
 Scallion puts every layer on one clock, in years, labelled honestly, and then does one concrete thing about it before dinner tonight. That is what we understood "clear, actionable guidance" to mean: not a dashboard, but a number you can explain and a step you can take today.
 
