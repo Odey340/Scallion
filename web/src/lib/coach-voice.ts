@@ -59,6 +59,34 @@ function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext
   };
 }
 
+const STALE_CHUNK_KEY = 'scallion.reloaded-for-stale-chunk';
+
+/**
+ * Loads the ElevenLabs SDK, which Metro splits into its own hashed chunk.
+ * After a redeploy an already-open tab still holds the previous entry bundle, whose chunk URL no
+ * longer exists on Vercel ("Loading module .../index-<hash>.js failed"). Reload once to pick up
+ * the fresh bundle; if it fails again, tell the user instead of looping.
+ */
+async function loadElevenLabs(): Promise<typeof import('@elevenlabs/client')> {
+  try {
+    const mod = await import('@elevenlabs/client');
+    if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(STALE_CHUNK_KEY);
+    return mod;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const staleChunk = /Loading module|dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(msg);
+    if (staleChunk && typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+      if (!sessionStorage.getItem(STALE_CHUNK_KEY)) {
+        sessionStorage.setItem(STALE_CHUNK_KEY, '1');
+        window.location.reload();
+        return new Promise(() => undefined); // the page is going away
+      }
+      throw new Error('The app was updated since this page loaded. Refresh the page and try the coach again.');
+    }
+    throw e;
+  }
+}
+
 export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Promise<VoiceSession> {
   if (!voiceSupported) throw new Error('Voice coach runs in the web app.');
   handlers.onStatus('connecting');
@@ -70,7 +98,7 @@ export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Pr
   const getContext = () => (contextPromise ??= api.coachContext());
 
   // Loaded lazily: the SDK touches window/AudioContext at import time.
-  const { Conversation } = await import('@elevenlabs/client');
+  const { Conversation } = await loadElevenLabs();
   const conversation = await Conversation.startSession({
     signedUrl: session.signed_url,
     connectionType: 'websocket',
