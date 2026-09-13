@@ -412,3 +412,25 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Phase 5 (Labs as a guided process — though session 20's concurrent split-view rebuild of `labs.tsx` already covers a good chunk of this; re-read that code first before assuming what's left) — ask the human first.
 
 **Contract changes needed:** None — all three new functions are pure, client-side, derived from data already in `meal_grid.json`.
+
+## Session 23 (2026-09-13): header wordmark links Home; Phase 5 — "How this is calculated" on Labs, missing-data note upgraded
+
+**Human ask:** make the "Scallion" wordmark in the header tap back to Home, then proceed with Phase 5.
+
+**Wordmark is now a link.** `components/wordmark.tsx` split into an inner `Mark` (pure display) and the exported `Wordmark`, which wraps it in `Link href="/"` + `Pressable` (`accessibilityRole="link"`) by default. Used as `headerTitle` in both `_layout.tsx` (root Stack: Start/Onboarding/Scan-results/Labs-results) and `(tabs)/_layout.tsx` (all six tabs), so every screen in the app now returns Home from the header with no per-screen change needed. The one existing non-header usage — Home's own first-visit welcome — passes `linkToHome={false}`, since a home-link on the home screen does nothing useful. Verified live: clicked the header wordmark from `/scan`, landed on `/`.
+
+**Phase 5 audit first, per CLAUDE.md's "never start a task that belongs to another lane, re-read first":** re-read the current `labs.tsx` + new `labs-results-panel.tsx` in full before assuming what was left. A concurrent session had already built most of the mega-prompt's Labs spec: a real split-view (upload/type/sample choice card, redacted page with tap-to-select highlights, `ReviewTable`'s per-row Found/Derived/Missing-with-reason states, a tap-through NHANES `Distribution` panel per analyte showing report range vs. model reference vs. population percentile vs. contribution, and a "Complete your clock" panel with real reference-lab pricing). Confirmed this live (sample report → full 9-marker waterfall → NHANES comparison, all real). So this session's actual gap was narrower than the phase name suggests:
+
+1. **New `components/disclosure.tsx`** (`Disclosure`, `SourceNote`) — a generic tap-to-expand component (mega-prompt section 54's ask), collapsed by default, `+`/`−` indicator, `aria-expanded`.
+2. **"How this is calculated" added to the PhenoAge waterfall card** (`labs-results-panel.tsx`, shared by both the Labs tab and `/labs-results` — one change, two routes): plain-language paragraph on what the bars mean and why they reconcile exactly, then the actual band-uncertainty mechanism, then real citations pulled from the loaded JSON, not invented — `data.source` ("Levine 2018, Aging 10:573..."), `nhanes.source` ("NHANES 2017-March 2020..."), and the exact per-analyte units from `data.units`. Verified live (Labs -> sample report -> compute -> expanded the disclosure -> all three source lines rendered as written).
+3. **The missing-markers message upgraded** from a plain sentence to a small titled card ("N of 9 markers found" + which ones + what happens), matching the mega-prompt's Found/Missing framing more directly — this only affects the post-extraction path (`labs.extract.missing`); pure typed-entry already shows every row's own state individually via `ReviewTable`; confirmed the note correctly does *not* appear there (verified live).
+
+**Deliberately not touched:** the split layout, `ReviewTable`, `Distribution`, and `Waterfall` components — all already solid and exactly what the spec asked for; rewriting them would have been risk with no benefit (spec's own rule 1: don't destroy working functionality to make it look different).
+
+**Verified:** `tsc` clean, 77/77 tests (no new ones needed — both changes are presentational, reading already-tested data), lint clean except the pre-existing `animated.tsx` false positive, `expo export` clean. **Live-browser-verified this time** (the Claude-in-Chrome extension reconnected mid-session): wordmark-to-Home from a non-Home tab, the sample report end to end through compute, the expanded disclosure's exact text, and the typed-entry path correctly omitting the missing-note card.
+
+**Blocked:** Nothing.
+
+**Next:** Phase 6 (Circle) — ask the human first, per the one-phase-at-a-time agreement. Worth a similar audit-first pass: check what a concurrent session may have already built there too.
+
+**Contract changes needed:** None.

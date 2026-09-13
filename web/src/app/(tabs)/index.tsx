@@ -227,7 +227,7 @@ export default function HomeScreen() {
 function Welcome() {
   return (
     <View style={styles.welcome}>
-      <Wordmark size="large" />
+      <Wordmark size="large" linkToHome={false} />
       <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
         Know your biological age. Know your circle. Then move both.
       </ThemedText>

@@ -376,10 +376,16 @@ export default function LabsScreen() {
                 <View style={[styles.column, isWide && styles.leftColumnWide]}>
                   <FadeInUp delay={70} style={styles.leftColumnGap}>
                     {labs.extract && labs.extract.missing.length > 0 && (
-                      <ThemedText type="small" themeColor="textSecondary">
-                        Not on this report: {labs.extract.missing.map((k) => k.replace('_', ' ')).join(', ')}. They will be
-                        imputed from age-sex norms ({9 - labs.extract.missing.length} of 9 markers).
-                      </ThemedText>
+                      <ThemedView type="surfaceRaised" style={styles.note}>
+                        <ThemedText type="smallBold">
+                          {9 - labs.extract.missing.length} of 9 markers found
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {labs.extract.missing.map((k) => k.replace('_', ' ')).join(', ')} {labs.extract.missing.length === 1 ? 'is' : 'are'} not on
+                          this report. Scallion can estimate {labs.extract.missing.length === 1 ? 'it' : 'them'} from the age-sex reference
+                          instead, which widens the uncertainty band below — or add a value yourself in the table.
+                        </ThemedText>
+                      </ThemedView>
                     )}
 
                     <ReviewTable

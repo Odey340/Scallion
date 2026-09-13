@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AnimatedNumber, FadeInUp } from '@/components/animated';
+import { Disclosure } from '@/components/disclosure';
 import { Distribution, type Percentiles } from '@/components/distribution';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -119,6 +120,31 @@ export function LabsResultsPanel({
           <ThemedText type="small" themeColor="textMuted">
             Cohort offset: what the age-sex reference person scores at your exact age, minus your age.
           </ThemedText>
+
+          <Disclosure title="How this is calculated">
+            <ThemedText type="small" themeColor="textSecondary">
+              PhenoAge combines nine blood markers with your age using coefficients published by Levine et al. Each
+              bar above is one marker&apos;s contribution relative to the reference value for someone your age and
+              sex — they add up to the number at the top exactly, not approximately.
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              The ± band comes from lab measurement variability for markers you provided, or the spread across the
+              reference population for markers filled in from norms — combined in quadrature, so more imputed
+              markers widen the band.
+            </ThemedText>
+            <View style={styles.sourceList}>
+              <ThemedText type="small" themeColor="textMuted">
+                Model · {data.source ?? 'Levine et al. 2018'}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                Reference cohort · {nhanes?.source ?? 'NHANES, age- and sex-matched'}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                Each marker converted to {ANALYTES.map((a) => `${ANALYTE_LABELS[a]} (${data.units[a]})`).join(', ')} before
+                scoring.
+              </ThemedText>
+            </View>
+          </Disclosure>
         </ThemedView>
       </FadeInUp>
 
@@ -197,4 +223,5 @@ const styles = StyleSheet.create({
   clockRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
   bigNumber: { fontSize: 44, lineHeight: 48 },
   clockMeta: { paddingBottom: Spacing.two, gap: Spacing.half, flex: 1 },
+  sourceList: { gap: Spacing.half },
 });

@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { Link } from 'expo-router';
+import { Pressable, View } from 'react-native';
 
 import { Colors, Fonts } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
@@ -8,7 +9,8 @@ const SIZES = {
   large: { dot: 20, gap: 14, fontSize: 52 },
 } as const;
 
-export function Wordmark({ size = 'small' }: { size?: keyof typeof SIZES }) {
+/** The mark itself; `Wordmark` below wraps this in a link to Home for every header use. */
+function Mark({ size = 'small' }: { size?: keyof typeof SIZES }) {
   const s = SIZES[size];
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.gap }}>
@@ -17,5 +19,17 @@ export function Wordmark({ size = 'small' }: { size?: keyof typeof SIZES }) {
         Scallion
       </ThemedText>
     </View>
+  );
+}
+
+/** Tapping the wordmark returns Home from anywhere, like every screen's own title usually would. */
+export function Wordmark({ size = 'small', linkToHome = true }: { size?: keyof typeof SIZES; linkToHome?: boolean }) {
+  if (!linkToHome) return <Mark size={size} />;
+  return (
+    <Link href="/" asChild>
+      <Pressable accessibilityRole="link" accessibilityLabel="Scallion, go to Home" hitSlop={8}>
+        <Mark size={size} />
+      </Pressable>
+    </Link>
   );
 }
