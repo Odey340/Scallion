@@ -5,10 +5,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors, Fonts, MaxChartWidth, Spacing } from '@/constants/theme';
 import type { MealCurveSeries } from '@/engine/meal';
 
-const VIEW_WIDTH = 320;
+// The drawing space. The SVG scales uniformly to its container (never stretched), so the plot
+// keeps this aspect ratio on a phone and on a laptop alike: the same proportions as the MATLAB
+// figures the grid came from.
+const VIEW_WIDTH = 360;
 const VIEW_HEIGHT = 200;
 const PAD_LEFT = 34;
-const PAD_RIGHT = 8;
+const PAD_RIGHT = 10;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 24;
 
@@ -17,13 +20,11 @@ export function CurveBand({
   tMin,
   basalMgdl,
   walkWindow,
-  height = 200,
 }: {
   series: MealCurveSeries;
   tMin: number[];
   basalMgdl: number;
   walkWindow?: { startMin: number; endMin: number };
-  height?: number;
 }) {
   const plotW = VIEW_WIDTH - PAD_LEFT - PAD_RIGHT;
   const plotH = VIEW_HEIGHT - PAD_TOP - PAD_BOTTOM;
@@ -51,72 +52,75 @@ export function CurveBand({
   const yTicks = [minY, (minY + maxY) / 2, maxY];
 
   return (
-    <View style={{ width: '100%', maxWidth: MaxChartWidth, alignSelf: 'center' }}>
-      <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="none">
-        {walkWindow && (
-          <Polygon
-            points={`${x(walkWindow.startMin)},${PAD_TOP} ${x(walkWindow.endMin)},${PAD_TOP} ${x(
-              walkWindow.endMin
-            )},${PAD_TOP + plotH} ${x(walkWindow.startMin)},${PAD_TOP + plotH}`}
-            fill={Colors.connection}
-            fillOpacity={0.08}
-          />
-        )}
+    <View style={styles.frame}>
+      <View style={styles.plot}>
+        <Svg width="100%" height="100%" viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
+          {walkWindow && (
+            <Polygon
+              points={`${x(walkWindow.startMin)},${PAD_TOP} ${x(walkWindow.endMin)},${PAD_TOP} ${x(
+                walkWindow.endMin
+              )},${PAD_TOP + plotH} ${x(walkWindow.startMin)},${PAD_TOP + plotH}`}
+              fill={Colors.connection}
+              fillOpacity={0.08}
+            />
+          )}
 
-        {yTicks.map((v) => (
+          {yTicks.map((v) => (
+            <Line
+              key={v}
+              x1={PAD_LEFT}
+              x2={VIEW_WIDTH - PAD_RIGHT}
+              y1={y(v)}
+              y2={y(v)}
+              stroke={Colors.border}
+              strokeWidth={1}
+            />
+          ))}
+
           <Line
-            key={v}
             x1={PAD_LEFT}
             x2={VIEW_WIDTH - PAD_RIGHT}
-            y1={y(v)}
-            y2={y(v)}
-            stroke={Colors.border}
+            y1={y(basalMgdl)}
+            y2={y(basalMgdl)}
+            stroke={Colors.textMuted}
             strokeWidth={1}
+            strokeDasharray="4,3"
           />
-        ))}
 
-        <Line
-          x1={PAD_LEFT}
-          x2={VIEW_WIDTH - PAD_RIGHT}
-          y1={y(basalMgdl)}
-          y2={y(basalMgdl)}
-          stroke={Colors.textMuted}
-          strokeWidth={1}
-          strokeDasharray="4,3"
-        />
+          <Polygon points={bandPoints} fill={Colors.accent} fillOpacity={0.15} />
+          <Polyline points={linePoints} fill="none" stroke={Colors.accent} strokeWidth={2.5} />
 
-        <Polygon points={bandPoints} fill={Colors.accent} fillOpacity={0.15} />
-        <Polyline points={linePoints} fill="none" stroke={Colors.accent} strokeWidth={2.5} />
+          {yTicks.map((v) => (
+            <SvgText
+              key={v}
+              x={PAD_LEFT - 6}
+              y={y(v) + 3}
+              fontSize={9}
+              fontFamily={Fonts.body}
+              fill={Colors.textMuted}
+              textAnchor="end">
+              {Math.round(v)}
+            </SvgText>
+          ))}
 
-        {yTicks.map((v) => (
-          <SvgText
-            key={v}
-            x={PAD_LEFT - 6}
-            y={y(v) + 3}
-            fontSize={9}
-            fontFamily={Fonts.body}
-            fill={Colors.textMuted}
-            textAnchor="end">
-            {Math.round(v)}
-          </SvgText>
-        ))}
-
-        {xTicks.map((t) => (
-          <SvgText
-            key={t}
-            x={x(t)}
-            y={VIEW_HEIGHT - 6}
-            fontSize={9}
-            fontFamily={Fonts.body}
-            fill={Colors.textMuted}
-            textAnchor="middle">
-            {t}m
-          </SvgText>
-        ))}
-      </Svg>
+          {xTicks.map((t) => (
+            <SvgText
+              key={t}
+              x={x(t)}
+              y={VIEW_HEIGHT - 6}
+              fontSize={9}
+              fontFamily={Fonts.body}
+              fill={Colors.textMuted}
+              textAnchor="middle">
+              {t}m
+            </SvgText>
+          ))}
+        </Svg>
+      </View>
       <View style={styles.legend}>
         <LegendItem swatch={styles.legendLine}>Typical — the model&apos;s median estimate</LegendItem>
         <LegendItem swatch={styles.legendBand}>Model range — across a plausible insulin-sensitivity spread, not a measured confidence interval</LegendItem>
+        <LegendItem swatch={styles.legendBasal}>Fasting baseline</LegendItem>
       </View>
     </View>
   );
@@ -134,10 +138,13 @@ function LegendItem({ swatch, children }: { swatch: object; children: string }) 
 }
 
 const styles = StyleSheet.create({
-  legend: { gap: Spacing.half, marginTop: Spacing.one },
+  frame: { width: '100%', maxWidth: MaxChartWidth, alignSelf: 'center', gap: Spacing.two },
+  plot: { width: '100%', aspectRatio: VIEW_WIDTH / VIEW_HEIGHT },
+  legend: { gap: Spacing.half },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   legendSwatch: { width: 14, height: 3, borderRadius: 1.5 },
   legendLine: { backgroundColor: Colors.accent, height: 2.5 },
   legendBand: { backgroundColor: Colors.accent, opacity: 0.3, height: 8 },
+  legendBasal: { backgroundColor: Colors.textMuted, height: 1, opacity: 0.8 },
   legendText: { flex: 1, flexShrink: 1 },
 });

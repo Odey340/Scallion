@@ -6,11 +6,11 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { api } from '@/lib/api';
 
 /**
- * "Read aloud" for a card: one sentence through D's `GET /tts` (ElevenLabs, en/es), played in
- * the browser. The text is composed by the screen from numbers already on it, so nothing new is
+ * "Read aloud" for a card: one sentence through D's `GET /tts` (ElevenLabs), played in the
+ * browser. The text is composed by the screen from numbers already on it, so nothing new is
  * narrated. Web only (native playback is behind the cut order); the button hides itself elsewhere.
  */
-export function ReadAloud({ text, lang = 'en' }: { text: string; lang?: 'en' | 'es' }) {
+export function ReadAloud({ text }: { text: string }) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle');
   const audio = useRef<HTMLAudioElement | null>(null);
   const url = useRef<string | null>(null);
@@ -34,7 +34,7 @@ export function ReadAloud({ text, lang = 'en' }: { text: string; lang?: 'en' | '
     setState('loading');
     try {
       if (url.current) URL.revokeObjectURL(url.current);
-      url.current = await api.tts(text.slice(0, 300), lang);
+      url.current = await api.tts(text.slice(0, 300));
       const el = new Audio(url.current);
       audio.current = el;
       el.onended = () => setState('idle');

@@ -256,7 +256,7 @@ export default function CircleScreen() {
         const [full, name] = header;
         const events = parseWhatsApp(block.slice(full.length), 'You', salt);
         waEvents.push(...events);
-        waResults.push({ source: 'whatsapp', label: `${name} (demo)`, status: 'ok', message: '', eventCount: events.length });
+        waResults.push({ source: 'whatsapp', label: `${name} (sample)`, status: 'ok', message: '', eventCount: events.length });
         names[hashContact(name, salt)] = name;
       }
 
@@ -283,7 +283,7 @@ export default function CircleScreen() {
       setWhatsappEvents(waEvents);
       setGmailEvents(gmEvents);
       setDemoNames(names);
-      setResults([...waResults, { source: 'gmail', label: 'you@example.com (demo)', status: 'ok', message: '', eventCount: gmEvents.length }]);
+      setResults([...waResults, { source: 'gmail', label: 'you@example.com (sample)', status: 'ok', message: '', eventCount: gmEvents.length }]);
     } catch (err) {
       setSampleError(err instanceof Error ? err.message : 'Could not load the sample circle.');
     } finally {
@@ -329,8 +329,8 @@ export default function CircleScreen() {
         <View style={[styles.card, CardShadow, styles.sampleCard]}>
           <SectionHeader icon="sparkles-outline" label="No account handy?" />
           <ThemedText type="small" themeColor="textSecondary">
-            Load a synthetic circle — twelve fake contacts across months of fake messages — to see the map and advice
-            without connecting anything real.
+            Load a sample circle to see the map, the metrics and the reach-out advice before connecting your own
+            inbox or chats.
           </ThemedText>
           <AnimatedPressable style={styles.sampleButton} onPress={() => void handleTrySample()} disabled={sampleBusy}>
             {sampleBusy ? (
@@ -400,19 +400,6 @@ export default function CircleScreen() {
               {whatsappError}
             </ThemedText>
           )}
-        </View>
-      </FadeInUp>
-
-      <FadeInUp delay={210}>
-        <View style={[styles.card, CardShadow]}>
-          <SectionHeader icon="add-circle-outline" label="More sources" />
-          <View style={styles.wrap}>
-            <Chip icon="phone-portrait-outline" label="SMS (Android)" />
-            <Chip icon="chatbubble-ellipses-outline" label="iMessage (Mac)" />
-          </View>
-          <ThemedText type="small" themeColor="textMuted">
-            Same pipeline, not wired up yet.
-          </ThemedText>
         </View>
       </FadeInUp>
 
@@ -724,17 +711,6 @@ function TrendStat({ label, current, previous }: { label: string; current: numbe
   );
 }
 
-function Chip({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
-  return (
-    <View style={styles.chip}>
-      <Ionicons name={icon} size={13} color={Colors.textMuted} />
-      <ThemedText type="small" themeColor="textMuted">
-        {label}
-      </ThemedText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
@@ -808,15 +784,6 @@ const styles = StyleSheet.create({
   },
   buttonContent: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    backgroundColor: Colors.surfaceRaised,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-  },
   metricsRow: { flexDirection: 'row', gap: Spacing.four, justifyContent: 'center' },
   metric: { alignItems: 'center' },
   mapCaption: { textAlign: 'center' },

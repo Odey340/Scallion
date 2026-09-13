@@ -19,7 +19,7 @@ Scallion puts every layer on one clock, in years, labelled honestly, and then do
 
 ## What it does
 
-**Cells and biomarkers: the labs you already have.** Pick the PDF from any portal. The browser renders it with pdf.js, runs 17 redaction rules over the text layer (name, date of birth, record number, address, physician, contact details), and only the redacted text leaves the device. Gemini extracts the printed rows into a strict schema with the exact source line for each value. A unit normalizer converts to the paper's units, flags anything it cannot read instead of guessing, maps Spanish analyte names, and derives lymphocyte percentage from an absolute count when a lab omits it. The PhenoAge clock runs in the browser from MATLAB-exported coefficients. A waterfall shows the cohort offset and each analyte's cost in years, so a raised CRP or RDW is a bar you can point at, with NHANES percentiles for context. An imputed analyte is labelled "8 of 9 markers" and widens the uncertainty band. Any critical-range value hides the age and says "see a clinician first". A "complete your clock" card lists what to order for missing markers and when to re-test.
+**Cells and biomarkers: the labs you already have.** Pick the PDF from any portal. The browser renders it with pdf.js, runs 17 redaction rules over the text layer (name, date of birth, record number, address, physician, contact details), and only the redacted text leaves the device. Gemini extracts the printed rows into a strict schema with the exact source line for each value. A unit normalizer converts to the paper's units, flags anything it cannot read instead of guessing, and derives lymphocyte percentage from an absolute count when a lab omits it. The PhenoAge clock runs in the browser from MATLAB-exported coefficients. A waterfall shows the cohort offset and each analyte's cost in years, so a raised CRP or RDW is a bar you can point at, with NHANES percentiles for context. An imputed analyte is labelled "8 of 9 markers" and widens the uncertainty band. Any critical-range value hides the age and says "see a clinician first". A "complete your clock" card lists what to order for missing markers and when to re-test.
 
 **Diagnostics without a lab: thirty seconds at a camera.** Press Start on the phone; the demo laptop's webcam, driven by the Presage SmartSpectra SDK, reads pulse and breathing with no wearable. A fitness age comes from the HUNT VO2max equation, and the QR landing page gives that same fitness age from four questions in ten seconds. If a capture fails, the laptop tells the phone why (webcam in use, no face found) instead of a generic timeout.
 
@@ -29,7 +29,7 @@ Scallion puts every layer on one clock, in years, labelled honestly, and then do
 
 **One clock across the layers.** Isolation, loneliness, living alone, short sleep, smoking and low fitness are each converted to risk-equivalent years from published hazard ratios via the Gompertz mortality doubling time (years = 8 × log2 HR), labelled "if sustained, population estimate", never "life lost". Home shows one result, what is driving it, and one action. Every lever names its source paper.
 
-**Understanding and coaching.** Tap any analyte for a plain-language explanation in English or Spanish, with one citation and no digits it did not get from the engine. Every result has a "How this is calculated" disclosure. A voice coach (ElevenLabs Agents) answers questions with six tools that read your data, logs meals and check-ins, and remembers across days through Backboard, so "did I walk after dinner yesterday" gets a real answer.
+**Understanding and coaching.** Tap any analyte for a plain-language explanation with one citation and no digits it did not get from the engine. Every result has a "How this is calculated" disclosure. A voice coach (ElevenLabs Agents) answers questions with six tools that read your data, logs meals and check-ins, and remembers across days through Backboard, so "did I walk after dinner yesterday" gets a real answer.
 
 **Every number is checked.** The coach may only say numbers that exist in the engine's output. A validator rejects any sentence containing a number not present in the user's context, and the app drops it before it is spoken.
 
@@ -43,7 +43,7 @@ Four lanes, one contract file. Each teammate owned a directory and a Claude Code
 
 **Social engine.** A dependency-free TypeScript package: WhatsApp parsers for iOS and Android export formats, Gmail metadata-scope mapping with outgoing fan-out per recipient, contact hashing with a per-user salt, length buckets, per-contact strength tiers, and an iMessage exporter that turns a Mac's chat.db into the same hashed events.
 
-**Product.** Expo with expo-router, TypeScript strict, web export on Vercel at scallion.us. A TypeScript port of the PhenoAge clock that reproduces the MATLAB reference vectors, in-browser redaction ported from the API's rules, the review screen with source-line highlights, the waterfall, the circle map, the 30-second capture flow, meal curves interpolated from the sweep, the ElevenLabs session with client tools, Supabase email sign-in, and Spanish text throughout.
+**Product.** Expo with expo-router, TypeScript strict, web export on Vercel at scallion.us. A TypeScript port of the PhenoAge clock that reproduces the MATLAB reference vectors, in-browser redaction ported from the API's rules, the review screen with source-line highlights, the waterfall, the circle map, the 30-second capture flow, meal curves interpolated from the sweep, the ElevenLabs session with client tools, and Supabase email sign-in.
 
 **Platform.** FastAPI on a Vultr box behind Caddy at api.scallion.us. Tiger Data hypertables for contact events, vitals, and clock history, with a continuous aggregate for daily connection. Gemini 3.6 Flash extraction with a strict response schema and a cache fallback keyed by upload hash. Persona hosted verification with server-minted one-time links and a signed webhook. An ElevenLabs agent created from code with six client tools. Backboard as coach memory with one assistant per user. A Node worker for the Presage SDK that polls an arm endpoint so pressing Start on the phone triggers a capture on the laptop.
 
@@ -89,7 +89,7 @@ Four lanes, one contract file. Each teammate owned a directory and a Claude Code
 - **More fitness inputs.** Apple Health, Fitbit, and Garmin resting heart rate and VO2max alongside the camera reading.
 - **Live inbox connect.** The Gmail metadata-scope flow is built and tested against fixtures; it needs a verified Google OAuth client. Then SMS backups and iMessage inside the app, and a second inbox.
 - **Family and friend tagging** to complete the LSNS-6 rather than proxying it.
-- **Spanish voice** to match the Spanish text, and a clinician handoff: a one-page export a patient can bring to an appointment.
+- **Clinician handoff.** A one-page export a patient can bring to an appointment, and more languages once the coach's validator covers them.
 - **Native builds** with on-device redaction on Android and iOS, beyond the web export.
 
 ## Built with
@@ -103,8 +103,8 @@ Choose one track (Healthcare) and tick every challenge below that we can show a 
 - **Healthcare track.** All of the above. The four layers the track names map to four screens: Labs (cells and biomarkers), Camera (diagnostics), Scan and Home levers (lifestyle), Circle (social connection), with the coach as the "goal-setting and coaching" and "educational insights" directions.
 - **MathWorks: Best Use of MathWorks.** MATLAB R2026a, SimBiology, Statistics and Machine Learning Toolbox, Simulink. The in-silico model is SimBiology's `insulindemo` (Cobelli/Dalla Man glucose-insulin meal model) configured for body weight, three insulin-sensitivity variants and a calibrated walk; a 144-cell sweep, a Gaussian-process surrogate with 5-fold cross-validation, a coded uifigure console with a Validation tab, a MATLAB project and a live script that runs tests and writes every number the app displays as JSON. PhenoAge, NHANES norms, HUNT fitness age, risk years and caffeine PK are all MATLAB. The coding agent drove MATLAB through batch runs.
 - **Persona: Prove you're human.** Persona hosted flow, one-time inquiry links minted server-side, HMAC-signed webhook. Verification sets `verified` and a birthdate; the over-65 large-type mode adapts from the verified birthdate instead of demanding a typed age (the handbook's "age-aware" direction), and the coach's share-with-circle tool refuses to act until the person is verified (the "agent that can only act for you once you've proven you're you" direction). Sandbox, no real IDs.
-- **ElevenLabs: Best Project Built with ElevenLabs (sponsor) and MLH Best Use of ElevenLabs.** ElevenLabs Agents plus the multilingual TTS API. A "Scallion coach" agent created from code with six client tools (get_clock, get_circle, explain_analyte, get_today_plan, log_meal, share_with_circle), started from a server-minted signed URL so the key never reaches the browser, hold-to-talk with captions, English default and a Spanish preset. Every caption passes the number validator before it is shown. `GET /tts` reads one sentence aloud in EN or ES for the text fallback.
-- **MLH: Best Use of Gemini.** Gemini 3.6 Flash via the Gemini API. Lab-report extraction with a strict response schema (printed value, unit, reference range, source line, fasting flag, language), Spanish-format reports, and photo-to-carbs estimation on the Scan screen. Gemini extracts and narrates; it never produces a displayed number.
+- **ElevenLabs: Best Project Built with ElevenLabs (sponsor) and MLH Best Use of ElevenLabs.** ElevenLabs Agents plus the multilingual TTS API. A "Scallion coach" agent created from code with six client tools (get_clock, get_circle, explain_analyte, get_today_plan, log_meal, share_with_circle), started from a server-minted signed URL so the key never reaches the browser, hold-to-talk with captions. Every caption passes the number validator before it is shown. `GET /tts` reads one sentence aloud for the text fallback.
+- **MLH: Best Use of Gemini.** Gemini 3.6 Flash via the Gemini API. Lab-report extraction with a strict response schema (printed value, unit, reference range, source line, fasting flag), and photo-to-carbs estimation on the Scan screen. Gemini extracts and narrates; it never produces a displayed number.
 - **MLH: Best Use of Presage.** Presage SmartSpectra Node SDK. A headless worker on the demo laptop's webcam reads pulse, breathing and a Baevsky stress index over a 30-second capture, takes the confident median, and posts to the API; an arm/watch handshake lets a phone press Start and receive the reading or the reason it failed. Real captures of 68.5, 72.6 and 74 bpm.
 - **MLH: Best Use of Tiger Data.** Tiger Cloud (TimescaleDB). Hypertables for `contact_events`, `vitals` and `clock_history`, a `daily_connection` continuous aggregate with real-time aggregation for the 52-week heatmap, a dedup index that makes event upload idempotent, plus `profiles` and `checkins` tables. Only metadata is stored, never message content.
 - **MLH: Best Use of Backboard.** Backboard API. One assistant per user, created lazily; every check-in, meal and share is mirrored as a memory; `GET /coach/recall?q=` does semantic recall so the coach can answer "did I walk after dinner yesterday" across days.
@@ -114,6 +114,19 @@ Choose one track (Healthcare) and tick every challenge below that we can show a 
 - **Notability: Trust the Process.** Tick only if the team has Notability notes or wireframes from the weekend to show; there is no evidence in the repo.
 
 Skipped on purpose: Capital One Nessie, Solana, Lovable, Goldman Sachs (challenge details never published).
+
+## Figures for the gallery (all rendered by MATLAB, in `media/`)
+
+Upload in this order; the caption is the alt text.
+
+1. `phenoage_waterfall.png`. PhenoAge waterfall for the reference vector: age, cohort offset and nine analyte bars add up exactly to the clock, with the one-SD band.
+2. `insulindemo_78g_variants.png`. SimBiology `insulindemo` (Cobelli/Dalla Man) at a 78 g meal, base model against its five variants: the in-silico model the plate decision runs on.
+3. `walk_calibration.png`. Walk calibration: a 30-minute walk starting 15 minutes after eating cuts the reference peak by 15 percent, inside Buffey 2022's 10-20 percent window.
+4. `meal_sweep.png`. The 144-cell sweep at 70 kg: peak glucose against carbohydrate by insulin-sensitivity variant, with and without the walk.
+5. `surrogate_validation.png`. Gaussian-process surrogate against the full simulation under 5-fold cross-validation: peak RMSE 1.2 mg/dL, R² 0.9997.
+6. `app_console_tonight.png`. The MATLAB engineer's console, Tonight tab: the interpolated curve band, the walk, and the caffeine decay line.
+7. `app_console_validation.png`. Console Validation tab: the grid curve the app uses overlaid on a full SimBiology run at the exact inputs, max error 1.0 mg/dL.
+8. `app_console_clock.png`. Console Clock tab: the same waterfall the Labs screen shows, drawn by the MATLAB function that exported the coefficients.
 
 ## Links to fill in Sunday
 

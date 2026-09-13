@@ -24,16 +24,14 @@ import { useSession } from '@/state/auth-store';
  * texts. Check-ins go to POST /coach/checkin (the coach's memory, Backboard behind it).
  */
 
-type Lang = 'en' | 'es';
-
 /** What the coach can do, as questions. Tapping one sends it as a typed turn (or starts the conversation with it). */
-const SUGGESTIONS: { en: string; es: string }[] = [
-  { en: 'What moves my biological age?', es: '¿Qué mueve mi edad biológica?' },
-  { en: 'What should I do next to lower it?', es: '¿Qué hago ahora para bajarla?' },
-  { en: 'Who in my circle is drifting?', es: '¿Quién de mi círculo se está alejando?' },
-  { en: 'What is my one action today?', es: '¿Cuál es mi acción de hoy?' },
-  { en: 'Explain my glucose.', es: 'Explícame mi glucosa.' },
-  { en: 'When is my last coffee?', es: '¿Cuándo es mi último café?' },
+const SUGGESTIONS = [
+  'What moves my biological age?',
+  'What should I do next to lower it?',
+  'Who in my circle is drifting?',
+  'What is my one action today?',
+  'Explain my glucose.',
+  'When is my last coffee?',
 ];
 
 interface Caption {
@@ -56,8 +54,6 @@ export default function CoachScreen() {
   // false even for a signed-in user, so gate the sign-in card on authLoading and reload the
   // context once the session lands.
   const { session, loading: authLoading } = useSession();
-  const [lang, setLang] = useState<Lang>('en');
-  const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const [context, setContext] = useState<CoachContext | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +87,6 @@ export default function CoachScreen() {
       const c = await api.coachContext();
       setContext(c);
       setHistory(c.history);
-      setLang(c.flags.lang);
       setContextError(null);
     } catch {
       setContextError('Could not reach the coach context.');
@@ -128,13 +123,13 @@ export default function CoachScreen() {
     setCaptions([]);
     setToolCalls([]);
     try {
-      voiceSession.current = await startVoice(lang, {
+      voiceSession.current = await startVoice({
         onStatus: (s, d) => {
           setStatus(s);
           if (d) {
             setStatusDetail(
               /permission|notallowed|denied/i.test(d)
-                ? t('Microphone permission was denied. Allow the mic to talk; the cards below work without it.', 'Se denegó el micrófono. Permítelo para hablar; las tarjetas de abajo funcionan sin él.')
+                ? 'Microphone permission was denied. Allow the mic to talk; the cards below work without it.'
                 : d,
             );
           }
@@ -182,7 +177,7 @@ export default function CoachScreen() {
     setExplainKey(key);
     setExplainBusy(true);
     try {
-      setExplain(await api.explain(key, lang));
+      setExplain(await api.explain(key));
     } catch {
       setExplain(null);
     }
@@ -211,35 +206,27 @@ export default function CoachScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.scroll}>
-          <View style={styles.headerRow}>
-            <ThemedText type="subtitle">{t('Coach', 'Coach')}</ThemedText>
-            <View style={styles.row}>
-              <SegmentButton label="EN" active={lang === 'en'} onPress={() => setLang('en')} />
-              <SegmentButton label="ES" active={lang === 'es'} onPress={() => setLang('es')} />
-            </View>
-          </View>
+          <ThemedText type="subtitle">Coach</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
-            {t(
-              'The coach reads your blood-panel clock, your circle and today’s plan, explains what moves your age and what to do next. It may only say numbers that exist in your data; every reply is checked.',
-              'El coach lee tu reloj del panel de sangre, tu círculo y el plan de hoy, explica qué mueve tu edad y qué hacer ahora. Solo puede decir números que existen en tus datos; cada respuesta se verifica.',
-            )}
+            The coach reads your blood-panel clock, your circle and today’s plan, explains what moves your age and what to do
+            next. It may only say numbers that exist in your data; every reply is checked.
           </ThemedText>
 
           {authLoading && !hasToken() && (
             <ThemedText type="small" themeColor="textMuted">
-              {t('Checking your sign-in…', 'Comprobando tu sesión…')}
+              Checking your sign-in…
             </ThemedText>
           )}
           {!authLoading && !hasToken() && (
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('The coach reads your stored clock, circle and plan, so it needs you signed in.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita que inicies sesión.')}
+                The coach reads your stored clock, circle and plan, so it needs you signed in.
               </ThemedText>
               {!hasToken() && (
                 <Link href="/onboarding" asChild>
                   <Pressable style={styles.secondaryButton}>
                     <ThemedText type="smallBold" themeColor="accent">
-                      {t('Sign in', 'Iniciar sesión')}
+                      Sign in
                     </ThemedText>
                   </Pressable>
                 </Link>
@@ -250,12 +237,12 @@ export default function CoachScreen() {
           {/* Voice */}
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <View style={styles.headerRow}>
-              <ThemedText type="smallBold">{t('Talk to the coach', 'Habla con el coach')}</ThemedText>
+              <ThemedText type="smallBold">Talk to the coach</ThemedText>
               <StatusPill status={status} mode={mode} holding={holding} />
             </View>
             {!voiceSupported && (
               <ThemedText type="small" themeColor="textMuted">
-                {t('Voice runs in the web app; use the cards below here.', 'La voz funciona en la app web; usa las tarjetas de abajo.')}
+                Voice runs in the web app; use the cards below here.
               </ThemedText>
             )}
             {statusDetail && (
@@ -266,13 +253,13 @@ export default function CoachScreen() {
             {hasToken() && voiceSupported && (
               <>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {connected ? t('Tap to ask, or hold the button and speak.', 'Toca para preguntar, o mantén el botón y habla.') : t('Things you can ask (tap one to start):', 'Cosas que puedes preguntar (toca una para empezar):')}
+                  {connected ? 'Tap to ask, or hold the button and speak.' : 'Things you can ask (tap one to start):'}
                 </ThemedText>
                 <View style={styles.row}>
                   {SUGGESTIONS.map((q) => (
-                    <Pressable key={q.en} style={[styles.chip, status === 'connecting' && styles.disabled]} onPress={() => ask(q[lang])} disabled={status === 'connecting'}>
+                    <Pressable key={q} style={[styles.chip, status === 'connecting' && styles.disabled]} onPress={() => ask(q)} disabled={status === 'connecting'}>
                       <ThemedText type="small" themeColor="accent">
-                        {q[lang]}
+                        {q}
                       </ThemedText>
                     </Pressable>
                   ))}
@@ -282,7 +269,7 @@ export default function CoachScreen() {
             {status !== 'connected' && status !== 'connecting' ? (
               <Pressable style={[styles.primaryButton, (!hasToken() || !voiceSupported) && styles.disabled]} onPress={start} disabled={!hasToken() || !voiceSupported}>
                 <ThemedText type="smallBold" themeColor="accentText">
-                  {t('Start a conversation', 'Iniciar conversación')}
+                  Start a conversation
                 </ThemedText>
               </Pressable>
             ) : (
@@ -293,12 +280,12 @@ export default function CoachScreen() {
                   onPressOut={pressOut}
                   disabled={!connected}>
                   <ThemedText type="subtitle" themeColor="accentText">
-                    {status === 'connecting' ? t('Connecting…', 'Conectando…') : holding ? t('Listening…', 'Escuchando…') : t('Hold to talk', 'Mantén para hablar')}
+                    {status === 'connecting' ? 'Connecting…' : holding ? 'Listening…' : 'Hold to talk'}
                   </ThemedText>
                 </Pressable>
                 <Pressable style={styles.secondaryButton} onPress={stop}>
                   <ThemedText type="smallBold" themeColor="accent">
-                    {t('End', 'Terminar')}
+                    End
                   </ThemedText>
                 </Pressable>
               </>
@@ -309,12 +296,12 @@ export default function CoachScreen() {
                 {captions.map((c) => (
                   <View key={c.id} style={[styles.caption, c.source === 'user' ? styles.captionUser : styles.captionAi]}>
                     <ThemedText type="small" themeColor="textMuted">
-                      {c.source === 'user' ? t('You', 'Tú') : 'Coach'}
-                      {c.source === 'ai' && c.ok === null ? ` · ${t('checking numbers…', 'verificando números…')}` : ''}
+                      {c.source === 'user' ? 'You' : 'Coach'}
+                      {c.source === 'ai' && c.ok === null ? ' · checking numbers…' : ''}
                     </ThemedText>
                     {c.source === 'ai' && c.ok === false ? (
                       <ThemedText type="small" themeColor="silence">
-                        {t('Reply withheld: it contained a number not in your data', 'Respuesta retenida: contenía un número que no está en tus datos')} ({c.unknown?.join(', ')}).
+                        Reply withheld: it contained a number not in your data ({c.unknown?.join(', ')}).
                       </ThemedText>
                     ) : (
                       <ThemedText type="default">{c.text}</ThemedText>
@@ -324,17 +311,14 @@ export default function CoachScreen() {
               </View>
             )}
             {toolCalls.length > 0 && (
-              <Disclosure title={t('Technical details', 'Detalles técnicos')}>
+              <Disclosure title="Technical details">
                 <ThemedText type="small" themeColor="textMuted">
-                  {t('Tools used', 'Herramientas usadas')}: {toolCalls.join(', ')}
+                  Tools used: {toolCalls.join(', ')}
                 </ThemedText>
               </Disclosure>
             )}
             <ThemedText type="small" themeColor="textMuted">
-              {t(
-                'ElevenLabs Agents; the key stays on the server. Captions on. Estimate, not diagnosis.',
-                'ElevenLabs Agents; la clave se queda en el servidor. Subtítulos activados. Estimación, no diagnóstico.',
-              )}
+              ElevenLabs Agents; the key stays on the server. Captions on. Estimate, not diagnosis.
             </ThemedText>
           </ThemedView>
 
@@ -347,93 +331,93 @@ export default function CoachScreen() {
             </ThemedText>
           ) : context ? (
             <>
-              <Card title={t('Your clock', 'Tu reloj')}>
+              <Card title="Your clock">
                 {context.flags.critical ? (
                   <ThemedText type="default" themeColor="critical">
-                    {t('See a clinician first', 'Consulta primero a un clínico')}
+                    See a clinician first
                   </ThemedText>
                 ) : clockRows.length === 0 ? (
                   <ThemedText type="small" themeColor="textSecondary">
-                    {t('No clock yet.', 'Aún no hay reloj.')}
+                    No clock yet.
                   </ThemedText>
                 ) : (
                   clockRows.map(([name, row]) => (
                     <ThemedText key={name} type="default">
-                      {name === 'phenoage' ? t('Biological age', 'Edad biológica') : name === 'fitness' ? t('Fitness age', 'Edad física') : name}:{' '}
+                      {name === 'phenoage' ? 'Biological age' : name === 'fitness' ? 'Fitness age' : name}:{' '}
                       <ThemedText type="smallBold">{Math.round(row.years)}</ThemedText>
                       {row.band != null ? ` ${formatBand(row.band)}` : ''}
-                      {row.delta_years != null ? ` (${row.delta_years > 0 ? '+' : ''}${row.delta_years} ${t('vs calendar age', 'vs edad calendario')})` : ''}
+                      {row.delta_years != null ? ` (${row.delta_years > 0 ? '+' : ''}${row.delta_years} vs calendar age)` : ''}
                     </ThemedText>
                   ))
                 )}
-                <ReadAloud lang={lang} text={clockSentence(clockRows, context, lang)} />
+                <ReadAloud text={clockSentence(clockRows, context)} />
               </Card>
 
-              <Card title={t('Your circle', 'Tu círculo')}>
+              <Card title="Your circle">
                 {context.circle.available ? (
                   <>
                     <ThemedText type="default">
-                      {context.circle.metrics.activeTies} {t('active ties', 'vínculos activos')}, {context.circle.metrics.closeTies} {t('close', 'cercanos')}.{' '}
-                      {context.circle.nudges.length} {t('overdue', 'pendientes')}.
+                      {context.circle.metrics.activeTies} active ties, {context.circle.metrics.closeTies} close.{' '}
+                      {context.circle.nudges.length} overdue.
                     </ThemedText>
                     <ThemedText type="small" themeColor="textMuted">
                       {context.circle.lsns.label}: {context.circle.lsns.score}.
                     </ThemedText>
-                    <ReadAloud lang={lang} text={circleSentence(context, lang)} />
+                    <ReadAloud text={circleSentence(context)} />
                   </>
                 ) : (
                   <ThemedText type="small" themeColor="textSecondary">
-                    {t('No inbox connected yet.', 'Aún no hay bandeja conectada.')}
+                    No inbox connected yet.
                   </ThemedText>
                 )}
               </Card>
 
-              <Card title={t('Today’s plan', 'El plan de hoy')}>
+              <Card title="Today’s plan">
                 {context.today.nudge && <ThemedText type="default">{context.today.nudge.text}</ThemedText>}
                 {context.today.caffeine?.last_coffee_by && (
-                  <ThemedText type="default">
-                    {t('Last coffee by', 'Último café antes de las')} {context.today.caffeine.last_coffee_by}.
-                  </ThemedText>
+                  <ThemedText type="default">Last coffee by {context.today.caffeine.last_coffee_by}.</ThemedText>
                 )}
                 {context.today.meal && (
                   <ThemedText type="default">
-                    {t('Meal logged', 'Comida registrada')}: {context.today.meal.carbs_g} g {t('carbs', 'de carbohidratos')}{context.today.meal.note ? ` (${context.today.meal.note})` : ''}.
+                    Meal logged: {context.today.meal.carbs_g} g carbs{context.today.meal.note ? ` (${context.today.meal.note})` : ''}.
                   </ThemedText>
                 )}
                 {context.today.vitals && (
-                  <ThemedText type="default">
-                    {t('Latest pulse', 'Último pulso')}: {Math.round(context.today.vitals.pulse_bpm)} bpm.
-                  </ThemedText>
+                  <ThemedText type="default">Latest pulse: {Math.round(context.today.vitals.pulse_bpm)} bpm.</ThemedText>
                 )}
                 {!context.flags.exercise_timing_allowed && (
                   <ThemedText type="small" themeColor="textSecondary">
-                    {t('Exercise timing advice is off because of your medication answer; discuss timing with your clinician.', 'El consejo sobre el momento del ejercicio está desactivado por tu respuesta sobre medicación; consulta con tu clínico.')}
+                    Exercise timing advice is off because of your medication answer; discuss timing with your clinician.
                   </ThemedText>
                 )}
                 {context.last_plan && (
                   <ThemedText type="small" themeColor="textMuted">
-                    {t('Last plan', 'Último plan')}: {context.last_plan.text}
+                    Last plan: {context.last_plan.text}
                   </ThemedText>
                 )}
-                <ReadAloud lang={lang} text={planSentence(context, lang)} />
+                <ReadAloud text={planSentence(context)} />
               </Card>
 
               {context.levers.length > 0 && (
-                <Card title={t('Levers', 'Palancas')}>
+                <Card title="Levers">
                   {context.levers.map((l) => (
                     <ThemedText key={l.exposure} type="default">
                       {l.exposure.replace(/_/g, ' ')}: {l.years > 0 ? '+' : ''}
-                      {l.years} {t('years', 'años')} ({l.label}).
+                      {l.years} years ({l.label}).
                     </ThemedText>
                   ))}
-                  <ReadAloud lang={lang} text={context.levers.map((l) => `${l.exposure.replace(/_/g, ' ')}: ${l.years} ${t('risk-equivalent years if sustained, a population estimate', 'años de riesgo equivalente si se mantiene, una estimación poblacional')}`).join('. ')} />
+                  <ReadAloud
+                    text={context.levers
+                      .map((l) => `${l.exposure.replace(/_/g, ' ')}: ${l.years} risk-equivalent years if sustained, a population estimate`)
+                      .join('. ')}
+                  />
                 </Card>
               )}
             </>
           ) : null}
 
           {/* Explain an analyte */}
-          <Card title={t('Explain a blood marker', 'Explicar un marcador')}>
+          <Card title="Explain a blood marker">
             <View style={styles.row}>
               {ANALYTES.map((k) => (
                 <SegmentButton key={k} label={ANALYTE_LABELS[k]} active={explainKey === k} onPress={() => pickExplain(k)} />
@@ -446,31 +430,31 @@ export default function CoachScreen() {
                 <ThemedText type="default">{explain.text}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {explain.value !== null
-                    ? `${t('Your value', 'Tu valor')}: ${explain.value} ${explain.unit ?? ''}${explain.imputed ? ` (${t('imputed', 'imputado')})` : ''}.`
-                    : t('No value of yours on file yet.', 'Aún no hay un valor tuyo.')}
+                    ? `Your value: ${explain.value} ${explain.unit ?? ''}${explain.imputed ? ' (imputed)' : ''}.`
+                    : 'No value of yours on file yet.'}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textMuted">
                   {explain.source}. {explain.disclaimer}
                 </ThemedText>
-                <ReadAloud lang={lang} text={explain.text} />
+                <ReadAloud text={explain.text} />
               </>
             ) : explainKey && !hasToken() ? (
               <ThemedText type="small" themeColor="textSecondary">
-                {t('Sign in to read the explanations.', 'Inicia sesión para leer las explicaciones.')}
+                Sign in to read the explanations.
               </ThemedText>
             ) : null}
           </Card>
 
           {/* Memory */}
           {hasToken() && (
-            <Card title={t('Check in', 'Registro del día')}>
+            <Card title="Check in">
               <ThemedText type="small" themeColor="textSecondary">
-                {t('One line about today. The coach remembers it tomorrow.', 'Una línea sobre hoy. El coach lo recordará mañana.')}
+                One line about today. The coach remembers it tomorrow.
               </ThemedText>
-              <TextField value={checkinText} onChangeText={setCheckinText} placeholder={t('Walked after dinner, coffee at two.', 'Caminé después de cenar, café a las dos.')} />
+              <TextField value={checkinText} onChangeText={setCheckinText} placeholder="Walked after dinner, coffee at two." />
               <Pressable style={[styles.primaryButton, (checkinBusy || !checkinText.trim()) && styles.disabled]} onPress={sendCheckin} disabled={checkinBusy || !checkinText.trim()}>
                 <ThemedText type="smallBold" themeColor="accentText">
-                  {checkinBusy ? t('Saving…', 'Guardando…') : t('Save', 'Guardar')}
+                  {checkinBusy ? 'Saving…' : 'Save'}
                 </ThemedText>
               </Pressable>
               {history.slice(0, 5).map((h) => (
@@ -487,32 +471,28 @@ export default function CoachScreen() {
   );
 }
 
-function clockSentence(rows: [string, ClockRow][], context: CoachContext, lang: Lang): string {
-  if (context.flags.critical) return lang === 'es' ? 'Un valor de laboratorio está fuera de rango. Consulta primero a un clínico.' : 'One lab value is out of range. See a clinician first.';
-  if (rows.length === 0) return lang === 'es' ? 'Aún no tienes un reloj.' : 'You have no clock yet.';
+function clockSentence(rows: [string, ClockRow][], context: CoachContext): string {
+  if (context.flags.critical) return 'One lab value is out of range. See a clinician first.';
+  if (rows.length === 0) return 'You have no clock yet.';
   return rows
     .map(([name, r]) => {
-      const label = name === 'phenoage' ? (lang === 'es' ? 'edad biológica' : 'biological age') : lang === 'es' ? 'edad física' : 'fitness age';
-      return lang === 'es'
-        ? `Tu ${label} estimada es ${Math.round(r.years)}, más o menos ${Math.round(r.band ?? 0)}. Es una estimación, no un diagnóstico.`
-        : `Your estimated ${label} is ${Math.round(r.years)}, plus or minus ${Math.round(r.band ?? 0)}. An estimate, not a diagnosis.`;
+      const label = name === 'phenoage' ? 'biological age' : 'fitness age';
+      return `Your estimated ${label} is ${Math.round(r.years)}, plus or minus ${Math.round(r.band ?? 0)}. An estimate, not a diagnosis.`;
     })
     .join(' ');
 }
 
-function circleSentence(context: CoachContext, lang: Lang): string {
-  if (!context.circle.available) return lang === 'es' ? 'Aún no hay bandeja conectada.' : 'No inbox connected yet.';
+function circleSentence(context: CoachContext): string {
+  if (!context.circle.available) return 'No inbox connected yet.';
   const m = context.circle.metrics;
-  return lang === 'es'
-    ? `Tienes ${m.activeTies} vínculos activos y ${m.closeTies} cercanos. ${context.circle.nudges.length} están pendientes.`
-    : `You have ${m.activeTies} active ties and ${m.closeTies} close ones. ${context.circle.nudges.length} are overdue.`;
+  return `You have ${m.activeTies} active ties and ${m.closeTies} close ones. ${context.circle.nudges.length} are overdue.`;
 }
 
-function planSentence(context: CoachContext, lang: Lang): string {
+function planSentence(context: CoachContext): string {
   const parts: string[] = [];
   if (context.today.nudge) parts.push(context.today.nudge.text);
-  if (context.today.caffeine?.last_coffee_by) parts.push(lang === 'es' ? `Último café antes de las ${context.today.caffeine.last_coffee_by}.` : `Last coffee by ${context.today.caffeine.last_coffee_by}.`);
-  if (parts.length === 0) parts.push(lang === 'es' ? 'Nada pendiente hoy.' : 'Nothing overdue today.');
+  if (context.today.caffeine?.last_coffee_by) parts.push(`Last coffee by ${context.today.caffeine.last_coffee_by}.`);
+  if (parts.length === 0) parts.push('Nothing overdue today.');
   return parts.join(' ');
 }
 

@@ -5,7 +5,9 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, FadeInUp } from '@/components/animated';
+import { Disclosure } from '@/components/disclosure';
 import { ChoiceGroup, Field, NumberInput, SegmentButton, TextField } from '@/components/form-controls';
+import { ProfileSummary } from '@/components/profile-summary';
 import { ProfileValue } from '@/components/profile-value';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -80,6 +82,8 @@ export default function ScanScreen() {
   const [bedtime, setBedtime] = useState('');
   const [editing, setEditing] = useState<Partial<Record<ScanProfileField, boolean>>>({});
   const [saveChoice, setSaveChoice] = useState<'save' | 'once' | null>(null);
+  // When every "about you" fact is saved, the three rows collapse to one summary line with Edit.
+  const [aboutYouOpen, setAboutYouOpen] = useState(false);
 
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -236,6 +240,47 @@ export default function ScanScreen() {
   const savedNote = 'From your profile';
   const cupIsPreset = CUP_PRESETS.some((p) => String(p.mg) === cupMg);
   const bedtimeIsPreset = (BEDTIME_PRESETS as readonly string[]).includes(bedtime);
+  const aboutYouSaved = (['fastingGlucoseMgdl', 'weightLb', 'on_glucose_meds'] as const).every((f) => usingSaved(f));
+  const coffeeSaved = formatField('coffee_mg_per_cup', profile) !== null || formatField('bedtime', profile) !== null;
+
+  const coffeeRows = (
+    <>
+      <ProfileValue
+        label="Your usual cup"
+        value={formatField('coffee_mg_per_cup', profile)}
+        note={savedNote}
+        editing={Boolean(editing.coffee_mg_per_cup)}
+        onEdit={() => startEdit('coffee_mg_per_cup')}
+        onRevert={profile.coffee_mg_per_cup !== undefined ? () => stopEdit('coffee_mg_per_cup') : undefined}
+        revertLabel={`Use saved (${formatField('coffee_mg_per_cup', profile)})`}>
+        <ChoiceGroup
+          options={CUP_PRESETS.map((p) => ({ value: String(p.mg), label: p.label, description: p.detail }))}
+          value={cupIsPreset ? cupMg : null}
+          onChange={setCupMg}
+        />
+        <NumberInput value={cupMg} onChangeText={setCupMg} placeholder="Or exact mg" />
+        <ThemedText type="small" themeColor="textMuted">
+          {CAFFEINE_SOURCE}
+        </ThemedText>
+      </ProfileValue>
+
+      <ProfileValue
+        label="Bedtime"
+        value={formatField('bedtime', profile)}
+        note={savedNote}
+        editing={Boolean(editing.bedtime)}
+        onEdit={() => startEdit('bedtime')}
+        onRevert={profile.bedtime ? () => stopEdit('bedtime') : undefined}
+        revertLabel={`Use saved (${formatField('bedtime', profile)})`}>
+        <ChoiceGroup
+          options={BEDTIME_PRESETS.map((t) => ({ value: t, label: formatClock(t) }))}
+          value={bedtimeIsPreset ? bedtime : null}
+          onChange={setBedtime}
+        />
+        <TextField value={bedtime} onChangeText={setBedtime} placeholder="Or exact time, e.g. 22:45" />
+      </ProfileValue>
+    </>
+  );
 
   return (
     <ThemedView style={styles.container}>
@@ -315,6 +360,18 @@ export default function ScanScreen() {
                   The model needs these for a curve typical of someone like you.
                 </ThemedText>
 
+                {aboutYouSaved && !aboutYouOpen ? (
+                  <ProfileSummary
+                    items={[
+                      { label: 'Fasting glucose', value: formatField('fastingGlucoseMgdl', profile)! },
+                      { label: 'Weight', value: formatField('weightLb', profile)! },
+                      { label: 'Blood-sugar medicine', value: formatField('on_glucose_meds', profile)! },
+                    ]}
+                    note={medsUnknown ? 'From your profile · medication not given, so walk-timing advice stays hidden' : savedNote}
+                    onEdit={() => setAboutYouOpen(true)}
+                  />
+                ) : (
+                  <>
                 <ProfileValue
                   label="Fasting glucose"
                   value={formatField('fastingGlucoseMgdl', profile)}
@@ -354,51 +411,28 @@ export default function ScanScreen() {
                     onChange={setOnMeds}
                   />
                 </ProfileValue>
+                  </>
+                )}
               </View>
             </FadeInUp>
 
             <FadeInUp delay={280}>
-              <View style={styles.section}>
-                <ThemedText type="smallBold">Tonight&apos;s coffee (optional)</ThemedText>
-                <ThemedText type="small" themeColor="textMuted">
-                  With your usual cup and bedtime, we&apos;ll add the latest time for a last coffee.
-                </ThemedText>
-
-                <ProfileValue
-                  label="Your usual cup"
-                  value={formatField('coffee_mg_per_cup', profile)}
-                  note={savedNote}
-                  editing={Boolean(editing.coffee_mg_per_cup)}
-                  onEdit={() => startEdit('coffee_mg_per_cup')}
-                  onRevert={profile.coffee_mg_per_cup !== undefined ? () => stopEdit('coffee_mg_per_cup') : undefined}
-                  revertLabel={`Use saved (${formatField('coffee_mg_per_cup', profile)})`}>
-                  <ChoiceGroup
-                    options={CUP_PRESETS.map((p) => ({ value: String(p.mg), label: p.label, description: p.detail }))}
-                    value={cupIsPreset ? cupMg : null}
-                    onChange={setCupMg}
-                  />
-                  <NumberInput value={cupMg} onChangeText={setCupMg} placeholder="Or exact mg" />
+              {coffeeSaved ? (
+                <View style={styles.section}>
+                  <ThemedText type="smallBold">Tonight&apos;s coffee (optional)</ThemedText>
                   <ThemedText type="small" themeColor="textMuted">
-                    {CAFFEINE_SOURCE}
+                    With your usual cup and bedtime, we&apos;ll add the latest time for a last coffee.
                   </ThemedText>
-                </ProfileValue>
-
-                <ProfileValue
-                  label="Bedtime"
-                  value={formatField('bedtime', profile)}
-                  note={savedNote}
-                  editing={Boolean(editing.bedtime)}
-                  onEdit={() => startEdit('bedtime')}
-                  onRevert={profile.bedtime ? () => stopEdit('bedtime') : undefined}
-                  revertLabel={`Use saved (${formatField('bedtime', profile)})`}>
-                  <ChoiceGroup
-                    options={BEDTIME_PRESETS.map((t) => ({ value: t, label: formatClock(t) }))}
-                    value={bedtimeIsPreset ? bedtime : null}
-                    onChange={setBedtime}
-                  />
-                  <TextField value={bedtime} onChangeText={setBedtime} placeholder="Or exact time, e.g. 22:45" />
-                </ProfileValue>
-              </View>
+                  {coffeeRows}
+                </View>
+              ) : (
+                <Disclosure title="Add tonight’s coffee cutoff (optional)">
+                  <ThemedText type="small" themeColor="textMuted">
+                    With your usual cup and bedtime, we&apos;ll add the latest time for a last coffee. Saved once, reused for every meal.
+                  </ThemedText>
+                  {coffeeRows}
+                </Disclosure>
+              )}
             </FadeInUp>
 
             <FadeInUp delay={350} style={{ gap: Spacing.three }}>

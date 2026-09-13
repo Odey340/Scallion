@@ -7,7 +7,7 @@ import { CurveBand } from '@/components/curve-band';
 import { ScoreRing } from '@/components/score-ring';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { CardShadow, Colors, MaxChartWidth, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { glucoseAtMinute, minutesAboveThreshold, walkEffect } from '@/engine/meal';
 import { computeWellbeingScore, wellbeingTier, WELLBEING_TIER_TEXT } from '@/engine/wellbeing';
 import { formatSigned } from '@/lib/format';
@@ -15,6 +15,12 @@ import { clearScanResult, useScanResult } from '@/state/scan-store';
 
 const TWO_HOUR_MIN = 120;
 
+/**
+ * Scan results, top to bottom: the wellbeing score first (the one number to take away), the
+ * key numbers of the modeled curve, the curve itself, the walk comparison, tonight's coffee
+ * cutoff, then the honest-label footer. Every number comes from A's meal_grid.json through
+ * engine/meal.ts, or from engine/wellbeing.ts on that curve; nothing is invented here.
+ */
 export default function ScanResultsScreen() {
   const router = useRouter();
   const result = useScanResult();
@@ -55,124 +61,116 @@ export default function ScanResultsScreen() {
           <View style={styles.scroll}>
             <FadeInUp delay={0}>
               <View style={styles.header}>
-                <ThemedText type="small" themeColor="textMuted">
-                  {mealType} · {carbsSource === 'photo' ? 'carbs estimated from your photo' : 'carbs entered manually'}
-                </ThemedText>
-                {gemini && (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {gemini.food_description}
-                  </ThemedText>
-                )}
                 <ThemedText type="small" themeColor="accent" style={styles.eyebrow}>
                   MODELED RESPONSE
                 </ThemedText>
-              </View>
-            </FadeInUp>
-
-            <FadeInUp delay={60}>
-              <View style={styles.metrics}>
-                <Metric label="Peak" value={`${Math.round(meal.eatNow.summary.peak_mgdL)}`} unit="mg/dL" />
-                <Metric label="Peak time" value={`${meal.eatNow.summary.t_peak_min}`} unit="min" />
-                <Metric label="2-hour estimate" value={`${Math.round(twoHour)}`} unit="mg/dL" />
-                <Metric label="Back near baseline" value={`${meal.eatNow.summary.t_baseline_min}`} unit="min" />
-              </View>
-              {(minutesOver140 > 0 || minutesOver200 > 0) && (
-                <ThemedText type="small" themeColor="textMuted" style={styles.modelNote}>
-                  Model estimate: {minutesOver140 > 0 ? `${minutesOver140} min above 140 mg/dL` : null}
-                  {minutesOver140 > 0 && minutesOver200 > 0 ? ', ' : ''}
-                  {minutesOver200 > 0 ? `${minutesOver200} min above 200 mg/dL` : null}. Not a measurement.
+                <ThemedText type="subtitle">{mealType}</ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  {carbsSource === 'photo' ? 'Carbs estimated from your photo' : 'Carbs entered by hand'}
+                  {gemini ? ` · ${gemini.food_description}` : ''}
                 </ThemedText>
-              )}
+              </View>
             </FadeInUp>
 
+            {/* 1. The one number to take away */}
+            <FadeInUp delay={60}>
+              <ThemedView type="surface" style={[styles.card, CardShadow, styles.hero]}>
+                <ScoreRing score={score} tier={tier} />
+                <View style={styles.heroText}>
+                  <ThemedText type="smallBold">Wellbeing score</ThemedText>
+                  <ThemedText type="default" themeColor="textSecondary">
+                    {WELLBEING_TIER_TEXT[tier]}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textMuted">
+                    Modeled glucose at the 2-hour mark ({Math.round(twoHour)} mg/dL) against the ADA oral glucose tolerance
+                    thresholds: normal below 140, impaired 140-199, diabetes range 200 and above.
+                  </ThemedText>
+                </View>
+              </ThemedView>
+            </FadeInUp>
+
+            {/* 2. Key numbers of the curve */}
             <FadeInUp delay={110}>
               <ThemedView type="surface" style={[styles.card, CardShadow]}>
-                <ThemedText type="smallBold">Eat now</ThemedText>
+                <ThemedText type="smallBold">Key numbers</ThemedText>
+                <View style={styles.metrics}>
+                  <Metric label="Peak glucose" value={`${Math.round(meal.eatNow.summary.peak_mgdL)}`} unit="mg/dL" />
+                  <Metric label="Time to peak" value={`${meal.eatNow.summary.t_peak_min}`} unit="min" />
+                  <Metric label="At 2 hours" value={`${Math.round(twoHour)}`} unit="mg/dL" />
+                  <Metric label="Back near baseline" value={`${meal.eatNow.summary.t_baseline_min}`} unit="min" />
+                </View>
+                {(minutesOver140 > 0 || minutesOver200 > 0) && (
+                  <ThemedText type="small" themeColor="textMuted">
+                    Time above thresholds: {minutesOver140 > 0 ? `${minutesOver140} min above 140 mg/dL` : null}
+                    {minutesOver140 > 0 && minutesOver200 > 0 ? ', ' : ''}
+                    {minutesOver200 > 0 ? `${minutesOver200} min above 200 mg/dL` : null}. A model estimate, not a measurement.
+                  </ThemedText>
+                )}
+              </ThemedView>
+            </FadeInUp>
+
+            {/* 3. The curve */}
+            <FadeInUp delay={160}>
+              <ThemedView type="surface" style={[styles.card, CardShadow]}>
+                <ThemedText type="smallBold">Modeled glucose curve</ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  The first four hours after eating, no walk. SimBiology glucose-insulin model, interpolated from the MATLAB sweep.
+                </ThemedText>
                 <CurveBand series={meal.eatNow.curve} tMin={meal.tMin} basalMgdl={meal.basalMgdl} />
               </ThemedView>
             </FadeInUp>
 
-            <FadeInUp delay={160}>
+            {/* 4. The walk */}
+            <FadeInUp delay={210}>
               {hideWalk ? (
                 <ThemedView type="surface" style={[styles.card, CardShadow]}>
                   <ThemedText type="smallBold">Exercise timing</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {onMeds
-                      ? 'Discuss timing with your clinician — walk-timing advice is hidden because you take medicine that affects blood sugar.'
-                      : 'Walk-timing advice is hidden because the blood-sugar medication question wasn’t answered. Answer it in your profile to see it.'}
+                      ? 'Discuss timing with your clinician. Walk-timing advice is hidden because you take medicine that affects blood sugar.'
+                      : 'Walk-timing advice is hidden because the blood-sugar medication question was not answered. Answer it in your profile to see it.'}
                   </ThemedText>
                 </ThemedView>
               ) : (
                 walk && (
                   <ThemedView type="surface" style={[styles.card, CardShadow]}>
-                    <ThemedText type="smallBold" style={styles.eyebrow}>
-                      WITH A 30-MINUTE WALK
-                    </ThemedText>
-                    <View style={styles.walkRow}>
-                      <View style={styles.walkPeaks}>
-                        <ThemedText type="small" themeColor="textMuted">
-                          Peak without walk
-                        </ThemedText>
-                        <ThemedText type="numeric" style={styles.walkStrike}>
-                          {Math.round(walk.peakWithoutMgdl)} mg/dL
-                        </ThemedText>
-                      </View>
-                      <ThemedText type="default" themeColor="textMuted">
-                        →
-                      </ThemedText>
-                      <View style={styles.walkPeaks}>
-                        <ThemedText type="small" themeColor="textMuted">
-                          Peak with walk
-                        </ThemedText>
-                        <ThemedText type="numeric" style={styles.walkNew}>
-                          {Math.round(walk.peakWithMgdl)} mg/dL
-                        </ThemedText>
-                      </View>
+                    <ThemedText type="smallBold">With a 30-minute walk</ThemedText>
+                    <View style={styles.metrics}>
+                      <Metric label="Peak without walk" value={`${Math.round(walk.peakWithoutMgdl)}`} unit="mg/dL" muted />
+                      <Metric label="Peak with walk" value={`${Math.round(walk.peakWithMgdl)}`} unit="mg/dL" tone="connection" />
                     </View>
                     <ThemedText type="smallBold" themeColor="connection">
-                      {formatSigned(-walk.absoluteMgdl, 0)} mg/dL · {formatSigned(-walk.fraction * 100, 0)}%
+                      {formatSigned(-walk.absoluteMgdl, 0)} mg/dL at the peak ({formatSigned(-walk.fraction * 100, 0)}%)
                     </ThemedText>
                     <CurveBand series={meal.withWalk.curve} tMin={meal.tMin} basalMgdl={meal.basalMgdl} walkWindow={{ startMin: 15, endMin: 45 }} />
                     <ThemedText type="small" themeColor="textMuted">
-                      Walk starting 15 min after eating, modeled from meal_grid.json&apos;s own calibration. Source: Buffey 2022.
+                      Shaded window: a walk starting 15 minutes after eating, modeled with the sweep&apos;s own calibration. Source: Buffey 2022.
                     </ThemedText>
                   </ThemedView>
                 )
               )}
             </FadeInUp>
 
-            <FadeInUp delay={210}>
-              <ThemedView type="surfaceRaised" style={styles.referenceCard}>
-                <ThemedText type="small" themeColor="textSecondary" style={styles.eyebrow}>
-                  WHERE THIS LANDS ON THE ADA SCALE
-                </ThemedText>
-                <View style={styles.referenceRow}>
-                  <ScoreRing score={score} tier={tier} />
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.referenceText}>
-                    {WELLBEING_TIER_TEXT[tier]}
+            {/* 5. Tonight */}
+            {coffee && (
+              <FadeInUp delay={260}>
+                <ThemedView type="surfaceRaised" style={styles.card}>
+                  <ThemedText type="smallBold">Tonight</ThemedText>
+                  <ThemedText type="default">
+                    {coffee.byClockTime ? `Have your last coffee by ${coffee.byClockTime}.` : 'You are already under the bedtime caffeine threshold.'}
                   </ThemedText>
-                </View>
-                {coffee && (
-                  <View style={styles.coffeeLine}>
-                    {coffee.byClockTime ? (
-                      <ThemedText type="small">Have your last coffee by {coffee.byClockTime} tonight.</ThemedText>
-                    ) : (
-                      <ThemedText type="small">You are already under the bedtime caffeine threshold.</ThemedText>
-                    )}
-                  </View>
-                )}
-              </ThemedView>
-            </FadeInUp>
+                  <ThemedText type="small" themeColor="textMuted">
+                    From your usual cup, your bedtime and the caffeine half-life curve.
+                  </ThemedText>
+                </ThemedView>
+              </FadeInUp>
+            )}
 
-            <FadeInUp delay={260}>
+            <FadeInUp delay={310} style={styles.footer}>
               <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
-                Estimate, not diagnosis. A typical curve for someone with your fasting glucose and weight (ADA
-                Standards of Care fasting cut points) — not a continuous glucose monitor reading and not your actual
-                blood sugar. The ADA-scale score compares your modeled glucose at the 2-hour mark against the same
-                thresholds used to diagnose an oral glucose tolerance test (normal &lt;140 mg/dL, impaired 140-199,
-                diabetes range &gt;=200).
+                Estimate, not diagnosis. A typical curve for someone with your fasting glucose and weight (ADA Standards of
+                Care fasting cut points), not a glucose monitor reading and not your actual blood sugar.
               </ThemedText>
-
               <AnimatedPressable
                 style={styles.backButton}
                 onPress={() => {
@@ -191,18 +189,30 @@ export default function ScanResultsScreen() {
   );
 }
 
-function Metric({ label, value, unit }: { label: string; value: string; unit: string }) {
+function Metric({
+  label,
+  value,
+  unit,
+  muted,
+  tone,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  muted?: boolean;
+  tone?: 'connection';
+}) {
   return (
     <View style={styles.metric}>
-      <ThemedText type="numeric" style={styles.metricValue}>
+      <ThemedText type="small" themeColor="textMuted">
+        {label}
+      </ThemedText>
+      <ThemedText type="numeric" style={[styles.metricValue, muted && styles.metricMuted, tone === 'connection' && styles.metricGood]}>
         {value}
         <ThemedText type="small" themeColor="textMuted">
           {' '}
           {unit}
         </ThemedText>
-      </ThemedText>
-      <ThemedText type="small" themeColor="textMuted">
-        {label}
       </ThemedText>
     </View>
   );
@@ -224,39 +234,30 @@ const styles = StyleSheet.create({
   },
   header: { gap: Spacing.one },
   eyebrow: { letterSpacing: 1.2 },
-  metrics: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: Spacing.five,
-    rowGap: Spacing.three,
-  },
-  metric: { minWidth: 120, gap: Spacing.half },
-  metricValue: { fontSize: 28, lineHeight: 32 },
-  modelNote: { marginTop: -Spacing.two },
   card: {
     borderRadius: Radius.medium,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.four,
-    gap: Spacing.two,
-  },
-  walkRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  walkPeaks: { gap: Spacing.half },
-  walkStrike: { fontSize: 20, lineHeight: 24, color: Colors.textMuted },
-  walkNew: { fontSize: 20, lineHeight: 24, color: Colors.connection },
-  referenceCard: {
-    borderRadius: Radius.medium,
-    padding: Spacing.four,
     gap: Spacing.three,
   },
-  referenceRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  referenceText: { flex: 1, flexShrink: 1 },
-  coffeeLine: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: Spacing.three,
+  hero: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.four },
+  heroText: { flex: 1, minWidth: 220, gap: Spacing.two },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three },
+  metric: {
+    flexGrow: 1,
+    flexBasis: '40%',
+    minWidth: 130,
+    gap: Spacing.half,
+    padding: Spacing.three,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.surfaceRaised,
   },
-  disclaimer: { textAlign: 'center', maxWidth: MaxChartWidth, alignSelf: 'center' },
+  metricValue: { fontSize: 28, lineHeight: 34 },
+  metricMuted: { color: Colors.textMuted },
+  metricGood: { color: Colors.connection },
+  footer: { gap: Spacing.three },
+  disclaimer: { textAlign: 'center' },
   backButton: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.medium,

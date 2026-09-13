@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
+import { ProfileSummary } from '@/components/profile-summary';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -101,6 +102,11 @@ export default function CameraScreen() {
   const [sex, setSex] = useState<Sex>(profile.sex ?? inputs?.sex ?? 'M');
   const [waistText, setWaistText] = useState(profile.waistCm ? String(profile.waistCm) : inputs ? String(inputs.waistCm) : '');
   const [paiKey, setPaiKey] = useState<string | null>(profile.paiKey ?? inputs?.paiKey ?? null);
+  // Age, sex, waist and activity are asked once (Start, Profile, or here) and then shown as a
+  // one-line summary with Edit, never as a second copy of the same form.
+  const [editingInputs, setEditingInputs] = useState(false);
+  const profileComplete = profile.age !== undefined && profile.sex !== undefined && profile.waistCm !== undefined && Boolean(profile.paiKey);
+  const useSaved = profileComplete && !editingInputs;
   const [fitness, setFitness] = useState<FitnessAgeResult | null>(null);
   const [fitnessError, setFitnessError] = useState<string | null>(null);
 
@@ -265,18 +271,19 @@ export default function CameraScreen() {
   const computeFitness = () => {
     setFitnessError(null);
     if (!hunt || !shown) return;
-    const age = Number(ageText);
-    const waist = Number(waistText);
-    const pai = paiOptions.find((o) => o.key === paiKey);
+    const age = useSaved ? profile.age! : Number(ageText);
+    const waist = useSaved ? profile.waistCm! : Number(waistText);
+    const sexUsed = useSaved ? profile.sex! : sex;
+    const pai = paiOptions.find((o) => o.key === (useSaved ? profile.paiKey : paiKey));
     if (!Number.isFinite(age) || !Number.isFinite(waist) || !pai || age <= 0 || waist <= 0) {
       setFitnessError('Age, waist and an activity level are needed (the HUNT model uses all four).');
       return;
     }
     try {
-      const r = computeFitnessAge({ age, sex, waistCm: waist, rhr: shown.pulse_bpm, pai: pai.pai }, hunt);
+      const r = computeFitnessAge({ age, sex: sexUsed, waistCm: waist, rhr: shown.pulse_bpm, pai: pai.pai }, hunt);
       setFitness(r);
-      setFitnessInputs({ age, sex, waistCm: waist, pai: pai.pai, paiKey: pai.key });
-      updateProfile({ age, sex, waistCm: waist, restingHr: shown.pulse_bpm, paiKey: pai.key });
+      setFitnessInputs({ age, sex: sexUsed, waistCm: waist, pai: pai.pai, paiKey: pai.key });
+      updateProfile({ age, sex: sexUsed, waistCm: waist, restingHr: shown.pulse_bpm, paiKey: pai.key });
       setLocalClock({ clock: 'fitness', years: r.fitnessAge, chronologicalAge: age, band: r.band, computedAt: new Date().toISOString() });
       if (hasToken()) {
         api
@@ -285,7 +292,7 @@ export default function CameraScreen() {
             years: r.fitnessAge,
             chronological_age: age,
             band: r.band,
-            inputs: { vo2max: r.vo2max, waist_cm: waist, rhr: shown.pulse_bpm, rhr_source: shown.source, pai: pai.pai, sex },
+            inputs: { vo2max: r.vo2max, waist_cm: waist, rhr: shown.pulse_bpm, rhr_source: shown.source, pai: pai.pai, sex: sexUsed },
             engine_version: String(hunt.version ?? 1),
           })
           .catch(() => undefined);
@@ -454,7 +461,7 @@ export default function CameraScreen() {
               <ThemedText type="smallBold">Fitness age from this pulse</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 Uses {Math.round(shown.pulse_bpm)} bpm as your resting heart rate in the HUNT VO2max model, with your age, waist and
-                activity{inputs ? ' from /start' : ''}.
+                activity.
               </ThemedText>
               {fitness ? (
                 <>
@@ -485,36 +492,50 @@ export default function CameraScreen() {
                 </>
               ) : (
                 <>
-                  {!inputs && (
-                    <View style={styles.formRow}>
-                      <View style={styles.formCol}>
-                        <Field label="Age (years)">
-                          <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
-                        </Field>
+                  {useSaved ? (
+                    <ProfileSummary
+                      items={[
+                        { label: 'Age', value: `${profile.age} years` },
+                        { label: 'Sex', value: profile.sex === 'M' ? 'Male' : 'Female' },
+                        { label: 'Waist', value: `${profile.waistCm} cm` },
+                        { label: 'Activity', value: paiOptions.find((o) => o.key === profile.paiKey)?.label ?? 'set' },
+                      ]}
+                      onEdit={() => {
+                        setAgeText(String(profile.age));
+                        setSex(profile.sex ?? 'M');
+                        setWaistText(String(profile.waistCm));
+                        setPaiKey(profile.paiKey ?? null);
+                        setEditingInputs(true);
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <View style={styles.formRow}>
+                        <View style={styles.formCol}>
+                          <Field label="Age (years)">
+                            <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
+                          </Field>
+                        </View>
+                        <View style={styles.formCol}>
+                          <Field label="Waist (cm)">
+                            <NumberInput value={waistText} onChangeText={setWaistText} placeholder="85" />
+                          </Field>
+                        </View>
                       </View>
-                      <View style={styles.formCol}>
-                        <Field label="Waist (cm)">
-                          <NumberInput value={waistText} onChangeText={setWaistText} placeholder="85" />
-                        </Field>
-                      </View>
-                    </View>
-                  )}
-                  {!inputs && (
-                    <Field label="Sex">
-                      <View style={styles.row}>
-                        <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
-                        <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
-                      </View>
-                    </Field>
-                  )}
-                  {!inputs && (
-                    <Field label="How often do you exercise hard enough to raise your heart rate?">
-                      <View style={styles.row}>
-                        {paiOptions.map((o) => (
-                          <SegmentButton key={o.key} label={o.label} active={paiKey === o.key} onPress={() => setPaiKey(o.key)} />
-                        ))}
-                      </View>
-                    </Field>
+                      <Field label="Sex">
+                        <View style={styles.row}>
+                          <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
+                          <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
+                        </View>
+                      </Field>
+                      <Field label="How often do you exercise hard enough to raise your heart rate?">
+                        <View style={styles.row}>
+                          {paiOptions.map((o) => (
+                            <SegmentButton key={o.key} label={o.label} active={paiKey === o.key} onPress={() => setPaiKey(o.key)} />
+                          ))}
+                        </View>
+                      </Field>
+                    </>
                   )}
                   {fitnessError && (
                     <ThemedText type="small" themeColor="silence">

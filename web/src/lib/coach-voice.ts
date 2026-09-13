@@ -82,7 +82,7 @@ async function ageDrivers(context: CoachContext): Promise<{ drivers: Driver[]; m
   }
 }
 
-function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext: () => Promise<CoachContext>) {
+function buildClientTools(handlers: VoiceHandlers, getContext: () => Promise<CoachContext>) {
   const call = async <T>(name: string, params: unknown, fn: () => Promise<T>): Promise<string> => {
     handlers.onToolCall(name, params);
     try {
@@ -104,8 +104,8 @@ function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext
           status: 'no_clock_yet',
           what_is_missing: 'No biological age or fitness age has been computed for this account.',
           how_to_get_one: {
-            biological_age: lang === 'es' ? 'Sube un panel de sangre en la pestaña Labs, o prueba el informe de muestra.' : 'Upload a blood panel on the Labs tab, or tap "Try the sample report" there.',
-            fitness_age: lang === 'es' ? 'Usa la pestaña Cámara: treinta segundos frente a la cámara.' : 'Use the Camera tab: thirty seconds facing the camera.',
+            biological_age: 'Upload a blood panel on the Labs tab, or tap "Try the sample report" there.',
+            fitness_age: 'Use the Camera tab: thirty seconds facing the camera.',
           },
           critical: false,
         };
@@ -127,12 +127,12 @@ function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext
         return {
           status: 'no_inbox_connected',
           what_is_missing: 'No messaging metadata yet, so there are no ties, no drifting contacts and no isolation proxy.',
-          how_to_connect: lang === 'es' ? 'En la pestaña Círculo: conecta Gmail o sube una exportación de WhatsApp. Solo se usan metadatos, nunca el contenido.' : 'On the Circle tab: connect Gmail or upload a WhatsApp export. Only metadata is used, never message content.',
+          how_to_connect: 'On the Circle tab: connect Gmail or upload a WhatsApp export. Only metadata is used, never message content.',
         };
       }
       return c.circle;
     }),
-    explain_analyte: (p: { name: CanonicalKey }) => call('explain_analyte', p, () => api.explain(p.name, lang)),
+    explain_analyte: (p: { name: CanonicalKey }) => call('explain_analyte', p, () => api.explain(p.name)),
     get_today_plan: (p: unknown) => call('get_today_plan', p, async () => {
       const c = await getContext();
       const missing: string[] = [];
@@ -179,7 +179,7 @@ async function loadElevenLabs(): Promise<typeof import('@elevenlabs/client')> {
   }
 }
 
-export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Promise<VoiceSession> {
+export async function startVoice(handlers: VoiceHandlers): Promise<VoiceSession> {
   if (!voiceSupported) throw new Error('Voice coach runs in the web app.');
   handlers.onStatus('connecting');
   const session = await api.session(); // 503 -> ApiError when no agent is configured
@@ -194,7 +194,7 @@ export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Pr
   const conversation = await Conversation.startSession({
     signedUrl: session.signed_url,
     connectionType: 'websocket',
-    clientTools: buildClientTools(lang, handlers, getContext),
+    clientTools: buildClientTools(handlers, getContext),
     onConnect: () => handlers.onStatus('connected'),
     onDisconnect: () => handlers.onStatus('disconnected'),
     onError: (message: string) => handlers.onStatus('error', message),

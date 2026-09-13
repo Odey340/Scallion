@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
 import { LabsResultsPanel, type NhanesPercentiles } from '@/components/labs-results-panel';
+import { ProfileSummary } from '@/components/profile-summary';
 import { ALT_UNITS, ReviewTable } from '@/components/review-table';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -50,6 +51,10 @@ export default function LabsScreen() {
   const [selected, setSelected] = useState<AnalyteKey | null>(null);
   const [ageText, setAgeText] = useState(labs.age ? String(labs.age) : profile.age ? String(profile.age) : '');
   const [altUnits, setAltUnits] = useState<Partial<Record<AnalyteKey, boolean>>>({});
+  // Age and sex come from the profile when it has them (Start, Camera, Profile): one summary line
+  // with Edit instead of asking a third time.
+  const [editingWho, setEditingWho] = useState(false);
+  const savedWho = profile.age !== undefined && profile.sex !== undefined && !editingWho;
 
   // Seed age/sex from the local profile (Start/Camera/Onboarding) before the real-account prefill below runs.
   useEffect(() => {
@@ -212,12 +217,13 @@ export default function LabsScreen() {
       setError('Still loading the PhenoAge model.');
       return;
     }
-    const age = Number(ageText);
+    const age = savedWho ? profile.age! : Number(ageText);
+    const sex = savedWho ? profile.sex! : labs.sex;
     if (!Number.isFinite(age) || age <= 0) {
       setError('Enter your age.');
       return;
     }
-    if (!labs.sex) {
+    if (!sex) {
       setError('Choose your sex (the norms are by age band and sex).');
       return;
     }
@@ -226,9 +232,9 @@ export default function LabsScreen() {
       setError('At least five of the nine values are needed for an honest estimate.');
       return;
     }
-    const result = computePhenoAge(labs.values, age, labs.sex, data, { fasting: labs.fasting, creatinineRefHigh: labs.creatinineRefHigh });
-    setLabs({ age, result });
-    updateProfile({ age, sex: labs.sex });
+    const result = computePhenoAge(labs.values, age, sex, data, { fasting: labs.fasting, creatinineRefHigh: labs.creatinineRefHigh });
+    setLabs({ age, sex, result });
+    updateProfile({ age, sex });
     if (result.phenoage !== null) {
       setLocalClock({
         clock: 'phenoage',
@@ -247,7 +253,7 @@ export default function LabsScreen() {
             years: result.phenoage,
             chronological_age: age,
             band: result.band,
-            inputs: { ...result.inputs, imputed: result.imputed, fasting: labs.fasting, sex: labs.sex },
+            inputs: { ...result.inputs, imputed: result.imputed, fasting: labs.fasting, sex },
             engine_version: String(data.version),
           })
           .catch(() => undefined);
@@ -434,15 +440,32 @@ export default function LabsScreen() {
                       </ThemedView>
                     )}
 
-                    <Field label="Age (years)">
-                      <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
-                    </Field>
-                    <Field label="Sex (the norms are by age band and sex)">
-                      <View style={styles.row}>
-                        <SegmentButton label="Male" active={labs.sex === 'M'} onPress={() => setLabs({ sex: 'M' as Sex })} />
-                        <SegmentButton label="Female" active={labs.sex === 'F'} onPress={() => setLabs({ sex: 'F' as Sex })} />
-                      </View>
-                    </Field>
+                    {savedWho ? (
+                      <ProfileSummary
+                        items={[
+                          { label: 'Age', value: `${profile.age} years` },
+                          { label: 'Sex', value: profile.sex === 'M' ? 'Male' : 'Female' },
+                        ]}
+                        note="From your profile · the norms are by age band and sex"
+                        onEdit={() => {
+                          setAgeText(String(profile.age));
+                          setLabs({ sex: profile.sex });
+                          setEditingWho(true);
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <Field label="Age (years)">
+                          <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
+                        </Field>
+                        <Field label="Sex (the norms are by age band and sex)">
+                          <View style={styles.row}>
+                            <SegmentButton label="Male" active={labs.sex === 'M'} onPress={() => setLabs({ sex: 'M' as Sex })} />
+                            <SegmentButton label="Female" active={labs.sex === 'F'} onPress={() => setLabs({ sex: 'F' as Sex })} />
+                          </View>
+                        </Field>
+                      </>
+                    )}
 
                     {error && (
                       <ThemedText type="small" themeColor="silence">

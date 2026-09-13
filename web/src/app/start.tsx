@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
+import { ProfileSummary } from '@/components/profile-summary';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -129,21 +130,21 @@ export default function StartScreen() {
 
           {usingProfile ? (
             <FadeInUp delay={70} style={{ gap: Spacing.three }}>
-              <ThemedView type="surfaceRaised" style={styles.profileCard}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  Using your saved profile
-                </ThemedText>
-                <ProfileRow label="Age" value={`${age} years`} />
-                <ProfileRow label="Sex" value={sex === 'M' ? 'Male' : 'Female'} />
-                <ProfileRow label="Waist" value={`${waistCm} cm`} />
-                <ProfileRow label="Resting heart rate" value={rhr ? `${rhr} bpm` : 'not set'} />
-                <ProfileRow label="Activity" value={paiIndex !== null ? paiOptions[paiIndex].label : 'not set'} />
-                <AnimatedPressable style={styles.secondaryButton} onPress={() => setUsingProfile(false)}>
-                  <ThemedText type="smallBold" themeColor="accent">
-                    Update
-                  </ThemedText>
-                </AnimatedPressable>
-              </ThemedView>
+              <ProfileSummary
+                items={[
+                  { label: 'Age', value: `${age} years` },
+                  { label: 'Sex', value: sex === 'M' ? 'Male' : 'Female' },
+                  { label: 'Waist', value: `${waistCm} cm` },
+                  { label: 'Activity', value: paiIndex !== null ? paiOptions[paiIndex].label : 'not set' },
+                  ...(rhr ? [{ label: 'Resting heart rate', value: `${rhr} bpm` }] : []),
+                ]}
+                onEdit={() => setUsingProfile(false)}
+              />
+              {!rhr && (
+                <Field label="Resting heart rate (bpm)">
+                  <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
+                </Field>
+              )}
               {formError && (
                 <ThemedText type="small" themeColor="silence">
                   {formError}
@@ -225,17 +226,6 @@ export default function StartScreen() {
   );
 }
 
-function ProfileRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.profileRow}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      <ThemedText type="smallBold">{value}</ThemedText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
@@ -255,25 +245,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     alignItems: 'center',
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.medium,
-    paddingVertical: Spacing.two,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.two,
-  },
-  profileCard: {
-    borderRadius: Radius.medium,
-    padding: Spacing.four,
-    gap: Spacing.two,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   resultCard: {
     borderRadius: Radius.medium,
