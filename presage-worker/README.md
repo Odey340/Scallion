@@ -14,8 +14,11 @@ node index.mjs --seconds 30 --device 0 --verbose
 ```
 
 Environment (read from the repo-root `.env`): `PRESAGE_API_KEY` (physiology.presagetech.com),
-`SCALLION_API_URL` (default `http://localhost:8000`), `SCALLION_API_TOKEN` (a Supabase JWT; not needed
-when the API runs with `DEV_AUTH_BYPASS=1`).
+`SCALLION_API_URL` (default `http://localhost:8000`), `SCALLION_API_TOKEN` (one or more Supabase JWTs,
+comma-separated; not needed when the API runs with `DEV_AUTH_BYPASS=1`). The reading is POSTed once per
+token, and the terminal prints which user each token is for and how long it stays valid. The camera
+screen only reads its own user's `/vitals/latest`, so the token list must cover the account the phone
+is signed in to (the shared demo account, plus the presenter's own).
 
 Payload (`test/fixtures/payload.json` is the reference the API test posts):
 

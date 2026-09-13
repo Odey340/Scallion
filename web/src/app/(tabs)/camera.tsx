@@ -27,15 +27,19 @@ import { updateProfile, useProfile } from '@/state/profile-store';
  */
 
 const CAPTURE_SECONDS = 30;
-const SETTLE_SECONDS = 25; // the worker posts after its own settle; keep polling a little longer
+// The worker (camera lock + face + 30 s + stop + POST) takes 45-60 s from launch, and the presenter
+// may only launch it after pressing Start here, so keep polling well past the countdown.
+const SETTLE_SECONDS = 75;
 const POLL_MS = 3000;
 
 type Phase = 'idle' | 'capturing' | 'settling' | 'done' | 'timeout';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  // Subscribing re-renders this screen when the session (and so hasToken()) changes.
-  useSession();
+  // Subscribing re-renders this screen when the session (and so hasToken()) changes. The account
+  // matters: the worker must POST under the same user, or /vitals/latest never shows the row.
+  const { session } = useSession();
+  const account = session?.user?.email ?? (hasToken() ? 'the shared demo account' : null);
   const inputs = useFitnessInputs();
   const profile = useProfile();
 
@@ -193,10 +197,15 @@ export default function CameraScreen() {
                     Camera permission was denied. Allow it in your browser or system settings to see the preview.
                   </ThemedText>
                 )}
+                {account && (
+                  <ThemedText type="small" themeColor="textMuted">
+                    Readings arrive for {account}; the laptop worker must post under the same account (SCALLION_API_TOKEN).
+                  </ThemedText>
+                )}
                 {phase === 'timeout' && (
                   <ThemedText type="small" themeColor="silence">
-                    No reading arrived. On the demo laptop run the worker (`node index.mjs`, or `--replay` for the recorded
-                    capture) and start again.
+                    No reading arrived{account ? ` for ${account}` : ''}. On the demo laptop run the worker (`node index.mjs`, or
+                    `--replay` for the recorded capture), check its terminal says it posted as this account, and start again.
                   </ThemedText>
                 )}
                 <Pressable style={styles.primaryButton} onPress={start}>

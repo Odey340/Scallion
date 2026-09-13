@@ -5,6 +5,7 @@
 import { loadEnv } from './src/env.mjs';
 import { summarize, NoReading } from './src/summarize.mjs';
 import { postVitals } from './src/post.mjs';
+import { parseTokens, describeToken } from './src/token.mjs';
 
 loadEnv();
 
@@ -26,7 +27,14 @@ if (!apiKey && !replay) {
   process.exit(2);
 }
 const apiUrl = process.env.SCALLION_API_URL || 'http://localhost:8000';
-const token = process.env.SCALLION_API_TOKEN || '';
+// One POST per token: the reading has to land on the account the phone is signed in to, and the
+// camera screen only reads its own user's /vitals/latest (Sun H31: worker posted to the presenter's
+// account while the phone was on the shared demo account -> "No reading arrived").
+const tokens = parseTokens(process.env.SCALLION_API_TOKEN);
+if (!dryRun) {
+  if (tokens.length === 0) console.error(`[presage] no SCALLION_API_TOKEN: posting to ${apiUrl} unauthenticated (DEV_AUTH_BYPASS only)`);
+  for (const t of tokens) console.error(`[presage] will post as ${describeToken(t)}`);
+}
 
 let samples, raw, capturedAt, durationMs;
 if (replay) {
@@ -65,7 +73,17 @@ console.log(JSON.stringify(payload));
 if (dryRun) {
   console.error('[presage] --dry-run: not posting');
 } else {
-  const res = await postVitals(payload, { apiUrl, token });
-  console.error(`[presage] POST ${apiUrl}/vitals -> ${JSON.stringify(res)}`);
+  let posted = 0;
+  for (const token of tokens.length ? tokens : ['']) {
+    try {
+      const res = await postVitals(payload, { apiUrl, token });
+      posted += 1;
+      console.error(`[presage] POST ${apiUrl}/vitals as ${token ? describeToken(token) : 'anonymous'} -> ${JSON.stringify(res)}`);
+    } catch (e) {
+      console.error(`[presage] POST failed as ${token ? describeToken(token) : 'anonymous'}: ${e.message}`);
+    }
+  }
+  if (posted === 0) process.exit(1);
+  console.error(`[presage] posted to ${posted} account(s); press Start on the phone within 60 s`);
 }
 process.exit(0); // the SDK's native camera handles keep the loop alive after destroy()
