@@ -26,12 +26,15 @@ import { useSession } from '@/state/auth-store';
 
 type Lang = 'en' | 'es';
 
-/** Illustrative examples of what the agent can talk about — spoken into "Hold to talk", not
- * tappable-to-answer, so they never risk implying a canned reply the agent didn't actually give. */
-const SUGGESTED_PROMPTS: Record<Lang, string[]> = {
-  en: ['Why is my biological age higher?', 'What should I do today?', 'Explain my RDW', 'What happened to my circle?'],
-  es: ['¿Por qué mi edad biológica es más alta?', '¿Qué debo hacer hoy?', 'Explica mi RDW', '¿Qué pasó con mi círculo?'],
-};
+/** What the coach can do, as questions. Tapping one sends it as a typed turn (or starts the conversation with it). */
+const SUGGESTIONS: { en: string; es: string }[] = [
+  { en: 'What moves my biological age?', es: '¿Qué mueve mi edad biológica?' },
+  { en: 'What should I do next to lower it?', es: '¿Qué hago ahora para bajarla?' },
+  { en: 'Who in my circle is drifting?', es: '¿Quién de mi círculo se está alejando?' },
+  { en: 'What is my one action today?', es: '¿Cuál es mi acción de hoy?' },
+  { en: 'Explain my glucose.', es: 'Explícame mi glucosa.' },
+  { en: 'When is my last coffee?', es: '¿Cuándo es mi último café?' },
+];
 
 interface Caption {
   id: number;
@@ -65,6 +68,7 @@ export default function CoachScreen() {
   const [toolCalls, setToolCalls] = useState<string[]>([]);
   const [holding, setHolding] = useState(false);
   const session = useRef<Awaited<ReturnType<typeof startVoice>> | null>(null);
+  const pendingQuestion = useRef<string | null>(null);
   const nextId = useRef(1);
 
   // text mode
@@ -132,6 +136,10 @@ export default function CoachScreen() {
         onMessage: addCaption,
         onToolCall: (name) => setToolCalls((t) => [...t, name]),
       });
+      if (pendingQuestion.current) {
+        session.current.sendText(pendingQuestion.current);
+        pendingQuestion.current = null;
+      }
     } catch (e) {
       setStatus('error');
       setStatusDetail(e instanceof ApiError && e.status === 503 ? 'No coach agent is configured on the API.' : e instanceof Error ? e.message : 'Could not start the voice coach.');
@@ -143,6 +151,15 @@ export default function CoachScreen() {
     session.current = null;
     setStatus('idle');
     setHolding(false);
+  };
+
+  const ask = (text: string) => {
+    if (session.current && status === 'connected') {
+      session.current.sendText(text);
+    } else if (status !== 'connecting') {
+      pendingQuestion.current = text;
+      start();
+    }
   };
 
   const pressIn = () => {
@@ -196,8 +213,8 @@ export default function CoachScreen() {
           </View>
           <ThemedText type="default" themeColor="textSecondary">
             {t(
-              'Ask about your clock, your circle, or today’s one action. The coach may only say numbers that exist in your data; every reply is checked.',
-              'Pregunta por tu reloj, tu círculo o la acción de hoy. El coach solo puede decir números que existen en tus datos; cada respuesta se verifica.',
+              'The coach reads your blood-panel clock, your circle and today’s plan, explains what moves your age and what to do next. It may only say numbers that exist in your data; every reply is checked.',
+              'El coach lee tu reloj del panel de sangre, tu círculo y el plan de hoy, explica qué mueve tu edad y qué hacer ahora. Solo puede decir números que existen en tus datos; cada respuesta se verifica.',
             )}
           </ThemedText>
 
@@ -234,21 +251,21 @@ export default function CoachScreen() {
                 {statusDetail}
               </ThemedText>
             )}
-            {status !== 'connected' && status !== 'connecting' && (
-              <View style={styles.promptsWrap}>
-                <ThemedText type="small" themeColor="textMuted">
-                  {t('Try asking:', 'Prueba a preguntar:')}
+            {hasToken() && voiceSupported && (
+              <>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {connected ? t('Tap to ask, or hold the button and speak.', 'Toca para preguntar, o mantén el botón y habla.') : t('Things you can ask (tap one to start):', 'Cosas que puedes preguntar (toca una para empezar):')}
                 </ThemedText>
                 <View style={styles.row}>
-                  {SUGGESTED_PROMPTS[lang].map((p) => (
-                    <View key={p} style={styles.promptChip}>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {p}
+                  {SUGGESTIONS.map((q) => (
+                    <Pressable key={q.en} style={[styles.chip, status === 'connecting' && styles.disabled]} onPress={() => ask(q[lang])} disabled={status === 'connecting'}>
+                      <ThemedText type="small" themeColor="accent">
+                        {q[lang]}
                       </ThemedText>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
-              </View>
+              </>
             )}
             {status !== 'connected' && status !== 'connecting' ? (
               <Pressable style={[styles.primaryButton, (!hasToken() || !voiceSupported) && styles.disabled]} onPress={start} disabled={!hasToken() || !voiceSupported}>
@@ -558,15 +575,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   talkButtonActive: { backgroundColor: Colors.connection },
-  promptsWrap: { gap: Spacing.two },
-  promptChip: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    backgroundColor: Colors.surfaceRaised,
-  },
   disabled: { opacity: 0.5 },
   captions: { gap: Spacing.two, marginTop: Spacing.two },
   caption: { borderRadius: Radius.medium, padding: Spacing.three, gap: Spacing.half },
@@ -582,4 +590,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
   },
   pillDot: { width: 8, height: 8, borderRadius: 4 },
+  chip: {
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    borderRadius: Radius.pill,
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+  },
 });

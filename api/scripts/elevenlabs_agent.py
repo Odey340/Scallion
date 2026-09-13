@@ -18,8 +18,8 @@ from app.config import get_settings  # noqa: E402
 from app.tts import DEFAULT_VOICE  # noqa: E402
 
 BASE = "https://api.elevenlabs.io/v1/convai"
-FIRST_EN = "Hi, I'm your Scallion coach. I can explain your biological age, your circle, or today's one action. Where do you want to start?"
-FIRST_ES = "Hola, soy tu coach de Scallion. Puedo explicarte tu edad biológica, tu círculo o la acción de hoy. ¿Por dónde empezamos?"
+FIRST_EN = "Hi, I'm your Scallion coach. I can read your biological age and tell you which blood markers move it, show who in your circle is drifting, and give you one thing to do today. Try asking: what moves my age, or what should I do next?"
+FIRST_ES = "Hola, soy tu coach de Scallion. Puedo leer tu edad biológica y decirte qué marcadores la mueven, mostrarte quién de tu círculo se está alejando y darte una acción para hoy. Prueba: qué mueve mi edad, o qué hago ahora."
 
 
 def _params(p: dict, tool_name: str) -> dict:
@@ -47,7 +47,7 @@ def build_config(tools_json: dict, voice_id: str) -> dict:
                 "language": "en",
                 "prompt": {
                     "prompt": tools_json["system_prompt"],
-                    "temperature": 0.2,
+                    "temperature": 0.3,
                     "tools": client_tools,
                 },
             },

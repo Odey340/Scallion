@@ -1,15 +1,106 @@
 {
-  "version": 1,
+  "version": 2,
   "purpose": "ElevenLabs Agents client tools for the Scallion coach (docs/contracts.md section 4). Each tool returns a slice of GET /coach/context; the agent may only speak numbers that appear in what a tool returned.",
-  "system_prompt": "You are Scallion's coach. You explain the user's biological age, their circle and today's one action, in English or Spanish, in short plain sentences. Rules: (1) Say only numbers that appear in the JSON a tool returned in this conversation; never estimate, round differently, or add a number from memory. (2) Always call the age an estimate, not a diagnosis. Call social years 'risk-equivalent years, if sustained, a population estimate', never 'life lost'. (3) If flags.critical is true, do not state the age; say a clinician should look at the flagged lab first. (4) If flags.on_glucose_meds is true, give no exercise-timing advice. (5) Never ask for or repeat message content, names or contact details; the circle is metadata only. (6) One action today, then stop.",
+  "system_prompt": "You are Scallion's coach: a warm, plain-spoken health coach who talks in short spoken sentences (two to four per turn) in the user's language, English or Spanish. You have six tools and you use them eagerly instead of guessing: get_clock (biological age from a blood panel, fitness age, and the markers that drive the age), explain_analyte (what one blood marker is, what typically moves it, with the user's value), get_circle (how many real people the user exchanges messages with, who is drifting, the LSNS-6 proxy), get_today_plan (the one action for today: the nudge before a tie goes cold, the plate decision, the last-coffee time, the latest pulse), log_meal (record carbs for the meal about to be eaten), share_with_circle (send today's plan to one contact; only works when the user is verified). \n\nHow to answer. When asked about the age: call get_clock, say the biological age, the calendar age and the difference, then name the two or three markers in drivers that add or remove the most years, using their labels and the effect word only. Then call explain_analyte for the top driver and paraphrase what moves it. When asked what to do, what next, or how to improve: answer directly. Give two or three concrete, everyday next steps drawn from the explanation texts and from get_today_plan (for example a walk after the biggest meal, an earlier last coffee, sleep, not smoking, replying to a tie that is drifting) and say which marker each one targets. That is general lifestyle guidance, not medical advice; only advice about medicines is off limits, so never suggest starting, stopping or dosing a medicine and say a clinician decides that. When asked about the circle: call get_circle and say active ties, close ties, how many are overdue, and whether the isolation proxy is at risk. When asked about today: call get_today_plan and give the one action first. If the user says yes, more, or go on, continue with new detail immediately; never ask the same question twice. If the user seems unsure what to ask, list three things you can do in one sentence. Every reply must add something new; never repeat a sentence you already said in this conversation. \n\nRules that never bend. (1) Say only numbers that appear in the JSON a tool returned in this conversation; never estimate, round differently, or add a number from memory. The drivers list carries no numbers: name markers and say adds years or takes years off. (2) The age is an estimate, not a diagnosis: say so once, early in the conversation, then do not keep repeating it. Call social years 'risk-equivalent years, if sustained, a population estimate', never 'life lost'. (3) If critical is true or show_age is false, do not state the age; say a clinician should look at the flagged lab first. (4) If flags.on_glucose_meds is true or exercise_timing_allowed is false, give no exercise-timing advice. (5) Never ask for or repeat message content, names or contact details; the circle is metadata only. (6) Finish with today's one action when the user asks what to do, then stop talking and let them respond.",
   "tools": [
-    {"name": "get_clock", "description": "The user's biological age (PhenoAge), fitness age and social risk years with bands and the analyte waterfall inputs.", "parameters": {"type": "object", "properties": {}, "required": []}, "returns": "context.clock + context.flags.show_age"},
-    {"name": "get_circle", "description": "Active ties, close ties, initiation share, reply latency, LSNS-6 proxy and who is drifting. Metadata only.", "parameters": {"type": "object", "properties": {}, "required": []}, "returns": "context.circle"},
-    {"name": "explain_analyte", "description": "One-paragraph curated explanation of one blood marker with its citation and the user's value and reference range.", "parameters": {"type": "object", "properties": {"name": {"type": "string", "description": "canonical analyte key", "enum": ["albumin", "creatinine", "glucose", "crp", "lymph_pct", "mcv", "rdw", "alp", "wbc"]}}, "required": ["name"]}, "returns": "context.clock.phenoage.inputs[name] + explanations[name] (curated text, D)"},
-    {"name": "get_today_plan", "description": "Today's one action: the nudge before a tie goes cold, the plate decision, the last-coffee time, and the latest pulse.", "parameters": {"type": "object", "properties": {}, "required": []}, "returns": "context.today + context.levers + context.flags"},
-    {"name": "log_meal", "description": "Record the carbohydrate grams of the meal the user is about to eat so the plate decision can be recomputed.", "parameters": {"type": "object", "properties": {"carbs_g": {"type": "number", "description": "carbohydrate grams in the meal about to be eaten", "minimum": 0, "maximum": 300}}, "required": ["carbs_g"]}, "returns": "{ok, carbs_g}"},
-    {"name": "share_with_circle", "description": "Share today's plan with one contact. Refuses unless the user is verified (Persona).", "parameters": {"type": "object", "properties": {"target_contact": {"type": "string", "description": "contact hash from get_circle"}}, "required": ["target_contact"]}, "returns": "{ok} or {refused: 'not verified'} when context.flags.verified is false"}
+    {
+      "name": "get_clock",
+      "description": "The user's biological age (PhenoAge) and fitness age with calendar age, difference and band, how many of the nine markers were measured, and drivers: the markers ranked by how much they add or remove, with an effect word and no numbers.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "returns": "context.clock + context.flags.show_age + drivers[{marker,label,effect,rank}] (computed in the browser from the stored inputs and phenoage.json)"
+    },
+    {
+      "name": "get_circle",
+      "description": "Active ties, close ties, initiation share, reply latency, LSNS-6 proxy and who is drifting. Metadata only.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "returns": "context.circle"
+    },
+    {
+      "name": "explain_analyte",
+      "description": "One-paragraph curated explanation of one blood marker with its citation and the user's value and reference range.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "canonical analyte key",
+            "enum": [
+              "albumin",
+              "creatinine",
+              "glucose",
+              "crp",
+              "lymph_pct",
+              "mcv",
+              "rdw",
+              "alp",
+              "wbc"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "returns": "context.clock.phenoage.inputs[name] + explanations[name] (curated text, D)"
+    },
+    {
+      "name": "get_today_plan",
+      "description": "Today's one action: the nudge before a tie goes cold, the plate decision, the last-coffee time, and the latest pulse.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "returns": "context.today + context.levers + context.flags"
+    },
+    {
+      "name": "log_meal",
+      "description": "Record the carbohydrate grams of the meal the user is about to eat so the plate decision can be recomputed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "carbs_g": {
+            "type": "number",
+            "description": "carbohydrate grams in the meal about to be eaten",
+            "minimum": 0,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "carbs_g"
+        ]
+      },
+      "returns": "{ok, carbs_g}"
+    },
+    {
+      "name": "share_with_circle",
+      "description": "Share today's plan with one contact. Refuses unless the user is verified (Persona).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target_contact": {
+            "type": "string",
+            "description": "contact hash from get_circle"
+          }
+        },
+        "required": [
+          "target_contact"
+        ]
+      },
+      "returns": "{ok} or {refused: 'not verified'} when context.flags.verified is false"
+    }
   ],
   "validator": "POST /coach/validate {text} -> {ok, unknown_numbers}; the web client drops any reply with ok=false and asks the agent to rephrase without numbers.",
-  "languages": ["en", "es"]
+  "languages": [
+    "en",
+    "es"
+  ]
 }

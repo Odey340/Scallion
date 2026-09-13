@@ -11,6 +11,8 @@
  */
 import { Platform } from 'react-native';
 
+import { ANALYTE_LABELS } from '@/components/waterfall';
+import { ANALYTES, computePhenoAge, type AnalyteKey, type PhenoAgeData, type PhenoAgeValues } from '@/engine/phenoage';
 import { api, type CanonicalKey, type CoachContext } from '@/lib/api';
 
 export type VoiceStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -25,10 +27,60 @@ export interface VoiceHandlers {
 
 interface VoiceSession {
   setMicMuted: (muted: boolean) => void;
+  /** Send a typed question as if spoken (the suggestion chips). */
+  sendText: (text: string) => void;
   endSession: () => Promise<void>;
 }
 
 export const voiceSupported = Platform.OS === 'web';
+
+/**
+ * Which markers move the age, for the coach to name. Recomputed in the browser from the inputs
+ * the clock was posted with (rule 1: the same phenoage.ts and phenoage.json as the Labs screen).
+ * Deliberately carries no numbers: the API context does not hold the waterfall, so any years
+ * spoken from it would be withheld by the validator. The agent says "adds years" / "takes years off".
+ */
+let phenoDataPromise: Promise<PhenoAgeData | null> | null = null;
+function phenoData(): Promise<PhenoAgeData | null> {
+  return (phenoDataPromise ??= fetch('/engine/phenoage.json')
+    .then((r) => (r.ok ? (r.json() as Promise<PhenoAgeData>) : null))
+    .catch(() => null));
+}
+
+interface Driver {
+  marker: AnalyteKey;
+  label: string;
+  effect: 'adds years' | 'takes years off' | 'about neutral';
+  rank: number;
+  imputed: boolean;
+}
+
+async function ageDrivers(context: CoachContext): Promise<{ drivers: Driver[]; markers_used: string } | null> {
+  const row = context.clock.phenoage as { inputs?: Record<string, unknown>; chronological_age?: number | null } | undefined;
+  const inputs = row?.inputs;
+  const age = row?.chronological_age;
+  const data = await phenoData();
+  if (!inputs || typeof age !== 'number' || !data) return null;
+  const sex = inputs.sex === 'F' ? 'F' : inputs.sex === 'M' ? 'M' : null;
+  if (!sex) return null;
+  const values = {} as PhenoAgeValues;
+  for (const a of ANALYTES) values[a] = typeof inputs[a] === 'number' ? (inputs[a] as number) : null;
+  try {
+    const r = computePhenoAge(values, age, sex, data, { fasting: inputs.fasting !== false });
+    const drivers = ANALYTES.map((a) => ({ marker: a, years: r.waterfall[a], imputed: r.imputed.includes(a) }))
+      .sort((x, y) => Math.abs(y.years) - Math.abs(x.years))
+      .map((d, i) => ({
+        marker: d.marker,
+        label: ANALYTE_LABELS[d.marker],
+        effect: Math.abs(d.years) < 0.25 ? ('about neutral' as const) : d.years > 0 ? ('adds years' as const) : ('takes years off' as const),
+        rank: i + 1,
+        imputed: d.imputed,
+      }));
+    return { drivers, markers_used: `${r.markersUsed} of ${ANALYTES.length} markers` };
+  } catch {
+    return null;
+  }
+}
 
 function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext: () => Promise<CoachContext>) {
   const call = async <T>(name: string, params: unknown, fn: () => Promise<T>): Promise<string> => {
@@ -42,7 +94,8 @@ function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext
   return {
     get_clock: (p: unknown) => call('get_clock', p, async () => {
       const c = await getContext();
-      return { clock: c.clock, show_age: c.flags.show_age, critical: c.flags.critical };
+      const drivers = c.flags.show_age ? await ageDrivers(c) : null;
+      return { clock: c.clock, show_age: c.flags.show_age, critical: c.flags.critical, ...(drivers ?? {}) };
     }),
     get_circle: (p: unknown) => call('get_circle', p, async () => (await getContext()).circle),
     explain_analyte: (p: { name: CanonicalKey }) => call('explain_analyte', p, () => api.explain(p.name, lang)),
@@ -113,6 +166,10 @@ export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Pr
   conversation.setMicMuted(true);
   return {
     setMicMuted: (m) => conversation.setMicMuted(m),
+    sendText: (text) => {
+      handlers.onMessage('user', text);
+      conversation.sendUserMessage(text);
+    },
     endSession: () => conversation.endSession(),
   };
 }
