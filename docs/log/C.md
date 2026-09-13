@@ -456,3 +456,23 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Phase 7 (Camera and Coach polish) — ask the human first. Audit first again; D's sessions have touched both screens recently (presage-worker timing fix, ElevenLabs stale-chunk guard).
 
 **Contract changes needed:** None.
+
+## Session 25 (2026-09-13): two human-reported bugs fixed; Phase 7 — Coach polish (Camera already solid)
+
+**Bug 1, human report: Circle showed "Server error (401) — showing local numbers only" loading the sample circle.** Root cause: `sync()` unconditionally called `api.postEvents` + `api.circle()` whenever any events existed, with no `hasToken()` check — so the *expected* case of trying the sample circle signed out always 401'd and surfaced it as an error. Labs' sample report already has the right pattern (`hasToken() ? live : shipped`); applied the same idea here: `sync()` now returns early with no error when there's no token, since the local numbers ("computed on this device...") are the whole story for a signed-out visitor, same as Labs. Real 401s from an actually-expired real session would still be a genuine error worth surfacing — this only changes the never-signed-in-yet case.
+
+**Bug 2, human report: Coach not centered on desktop (wanted centered on web, unchanged on phone).** Found the exact root cause the team already diagnosed and fixed twice this session (`877dd79` for Labs/Camera, docs/log/C.md): `contentContainerStyle` had `maxWidth` set directly on the ScrollView's own content box, which caps its width but has nothing outside it to center that box within a wider viewport — so it renders flush left instead of centered. `coach.tsx` still had the old pattern (it predates that fix and wasn't touched by it). Applied the identical, already-proven fix: `contentContainerStyle` now just centers (`alignItems: 'center'`), and a new inner `View` carries the `maxWidth`/padding that used to live directly on the content container. On a phone, `width:'100%'` is already less than `MaxContentWidth` (720), so nothing changes there — verified via a 390px iframe against the built export, pixel-identical to before.
+
+**Phase 7 audit:** read the current `camera.tsx` fully. Already well-executed and directly matching the redesign brief's own Camera guidance (sections 83-84): result card leads with pulse/breathing/quality, HRV correctly secondary and labelled exploratory, honest capture-guidance copy, fitness age with real sources cited, profile-prefilled inputs. No changes made — nothing to fix without risk-for-no-benefit.
+
+**Coach: two real, scoped gaps found and fixed.**
+1. **"Tools used: get_clock, get_circle" was shown as a plain, permanent line** — raw internal function names, exactly the kind of implementation detail the redesign brief calls out to hide. Wrapped in the same `Disclosure` component from Phase 5/6 ("Technical details"), collapsed by default.
+2. **Added "Try asking:" suggestion chips** before "Start a conversation"/"Hold to talk", in both languages. These are deliberately inert (not tappable-to-answer) — they're conversation-starter examples of what the voice agent can talk about, not a second, unverified answer path alongside the real one (every real reply still goes through `/coach/validate` as before). This avoids the failure mode of a "quick prompt" button that looks like it produces an instant answer but actually fabricates one outside the number-validation pipeline.
+
+**Verified:** `tsc` clean, 77/77 tests (no new ones — presentational plus one auth-gating branch already covered by the existing `hasToken()` pattern used elsewhere), lint clean except the pre-existing `animated.tsx` false positive, `expo export` clean. Live-browser-verified: Coach centered at desktop width (measured left/right margins within scrollbar-width of each other) and pixel-unchanged at 390px; suggested-prompt chips render correctly in the built export.
+
+**Blocked:** Nothing.
+
+**Next:** Phase 8 (visual consistency and accessibility pass across all screens) — ask the human first, per the established one-phase-at-a-time agreement.
+
+**Contract changes needed:** None.

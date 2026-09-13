@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Disclosure } from '@/components/disclosure';
 import { SegmentButton, TextField } from '@/components/form-controls';
 import { ReadAloud } from '@/components/read-aloud';
 import { ThemedText } from '@/components/themed-text';
@@ -23,6 +24,13 @@ import { useSession } from '@/state/auth-store';
  */
 
 type Lang = 'en' | 'es';
+
+/** Illustrative examples of what the agent can talk about — spoken into "Hold to talk", not
+ * tappable-to-answer, so they never risk implying a canned reply the agent didn't actually give. */
+const SUGGESTED_PROMPTS: Record<Lang, string[]> = {
+  en: ['Why is my biological age higher?', 'What should I do today?', 'Explain my RDW', 'What happened to my circle?'],
+  es: ['¿Por qué mi edad biológica es más alta?', '¿Qué debo hacer hoy?', 'Explica mi RDW', '¿Qué pasó con mi círculo?'],
+};
 
 interface Caption {
   id: number;
@@ -176,7 +184,8 @@ export default function CoachScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.scroll}>
           <View style={styles.headerRow}>
             <ThemedText type="subtitle">{t('Coach', 'Coach')}</ThemedText>
             <View style={styles.row}>
@@ -224,6 +233,22 @@ export default function CoachScreen() {
                 {statusDetail}
               </ThemedText>
             )}
+            {status !== 'connected' && status !== 'connecting' && (
+              <View style={styles.promptsWrap}>
+                <ThemedText type="small" themeColor="textMuted">
+                  {t('Try asking:', 'Prueba a preguntar:')}
+                </ThemedText>
+                <View style={styles.row}>
+                  {SUGGESTED_PROMPTS[lang].map((p) => (
+                    <View key={p} style={styles.promptChip}>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {p}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
             {status !== 'connected' && status !== 'connecting' ? (
               <Pressable style={[styles.primaryButton, (!hasToken() || !voiceSupported) && styles.disabled]} onPress={start} disabled={!hasToken() || !voiceSupported}>
                 <ThemedText type="smallBold" themeColor="accentText">
@@ -269,9 +294,11 @@ export default function CoachScreen() {
               </View>
             )}
             {toolCalls.length > 0 && (
-              <ThemedText type="small" themeColor="textMuted">
-                {t('Tools used', 'Herramientas usadas')}: {toolCalls.join(', ')}
-              </ThemedText>
+              <Disclosure title={t('Technical details', 'Detalles técnicos')}>
+                <ThemedText type="small" themeColor="textMuted">
+                  {t('Tools used', 'Herramientas usadas')}: {toolCalls.join(', ')}
+                </ThemedText>
+              </Disclosure>
             )}
             <ThemedText type="small" themeColor="textMuted">
               {t(
@@ -423,6 +450,7 @@ export default function CoachScreen() {
               ))}
             </Card>
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -485,6 +513,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
   scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,
@@ -524,6 +553,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   talkButtonActive: { backgroundColor: Colors.connection },
+  promptsWrap: { gap: Spacing.two },
+  promptChip: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    backgroundColor: Colors.surfaceRaised,
+  },
   disabled: { opacity: 0.5 },
   captions: { gap: Spacing.two, marginTop: Spacing.two },
   caption: { borderRadius: Radius.medium, padding: Spacing.three, gap: Spacing.half },

@@ -23,7 +23,7 @@ import { Field, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, Radius, Spacing } from '@/constants/theme';
-import { api, ApiError, type CircleSummary } from '@/lib/api';
+import { api, ApiError, hasToken, type CircleSummary } from '@/lib/api';
 import { fetchRecentMessages, requestGmailAccessToken } from '@/lib/gmail-ingest';
 import { clearDeviceSalt, getOrCreateDeviceSalt } from '@/lib/salt';
 
@@ -116,6 +116,15 @@ export default function CircleScreen() {
 
   const sync = useCallback(async (events: Event[]) => {
     if (events.length === 0) return;
+    // Posting events and reading a summary both need a real account (or the shared demo token) —
+    // without one, every attempt would 401. That's expected, not a failure, so it's not an error:
+    // the local numbers ("computed on this device" below) are the whole story for a signed-out
+    // visitor, same as Labs' sample report works without a sign-in.
+    if (!hasToken()) {
+      setSummary(null);
+      setSyncError(null);
+      return;
+    }
     setSyncing(true);
     setSyncError(null);
     try {
