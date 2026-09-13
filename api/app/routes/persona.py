@@ -15,6 +15,7 @@ from datetime import date, datetime, timezone
 from functools import lru_cache
 from typing import Annotated, Literal
 
+import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 
@@ -91,9 +92,48 @@ async def persona_webhook(
     return {"ok": True, "applied": True, "event": name, "birthdate_present": birthdate is not None}
 
 
+PERSONA_API = "https://api.withpersona.com/api/v1"
+PERSONA_VERSION = "2023-01-05"
+LINK_TTL_S = 60 * 60
+_links: dict[str, tuple[float, str]] = {}  # user id -> (minted at, one-time link)
+
+
+def mint_one_time_link(settings: Settings, user_id: str, client: httpx.Client | None = None) -> str:
+    """Create a sandbox/production inquiry for this user (reference-id = user id, so the webhook can
+    match it) and return Persona's hosted one-time link. Works without an environment id; the
+    template link (below) does not for sandbox templates."""
+    headers = {"Authorization": f"Bearer {settings.persona_api_key}", "Persona-Version": PERSONA_VERSION}
+    own = client is None
+    client = client or httpx.Client(base_url=PERSONA_API, timeout=10)
+    try:
+        r = client.post(
+            "/inquiries",
+            headers=headers,
+            json={"data": {"attributes": {"inquiry-template-id": settings.persona_template_id, "reference-id": user_id}}},
+        )
+        r.raise_for_status()
+        inquiry_id = r.json()["data"]["id"]
+        r = client.post(f"/inquiries/{inquiry_id}/generate-one-time-link", headers=headers, json={"meta": {}})
+        r.raise_for_status()
+        return r.json()["meta"]["one-time-link"]
+    finally:
+        if own:
+            client.close()
+
+
 def _verify_url(settings: Settings, user_id: str) -> str | None:
     if not settings.persona_template_id:
         return None
+    if settings.persona_api_key:
+        cached = _links.get(user_id)
+        if cached and time.time() - cached[0] < LINK_TTL_S:
+            return cached[1]
+        try:
+            link = mint_one_time_link(settings, user_id)
+            _links[user_id] = (time.time(), link)
+            return link
+        except Exception as e:  # noqa: BLE001 - any Persona/API failure falls back to the template link
+            log.warning("persona one-time link failed for %s: %s", user_id, e)
     url = f"https://inquiry.withpersona.com/verify?inquiry-template-id={settings.persona_template_id}&reference-id={user_id}"
     if settings.persona_environment_id:
         url += f"&environment-id={settings.persona_environment_id}"

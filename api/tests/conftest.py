@@ -5,6 +5,7 @@ os.environ["DEV_AUTH_BYPASS"] = "1"
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["ELEVENLABS_FAKE"] = "1"
 os.environ["BACKBOARD_API_KEY"] = ""  # unit tests never touch Backboard (test_backboard uses a fake)
+os.environ["PERSONA_API_KEY"] = ""  # unit tests never mint real Persona links (test_persona uses a MockTransport)
 # Unit tests run on the in-memory vitals store; the integration test gets the real URL from TIGER_TEST_URL.
 TIGER_TEST_URL = os.environ.get("TIGER_DATABASE_URL", "")
 os.environ["TIGER_DATABASE_URL"] = ""

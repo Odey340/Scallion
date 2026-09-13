@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     persona_webhook_secret: str = ""
     persona_template_id: str = ""
     persona_environment_id: str = ""
+    # With an API key the server creates the inquiry (reference-id = user id) and mints a hosted
+    # one-time link, which needs no environment id; without it the template link is used.
+    persona_api_key: str = ""
 
     # Backboard (coach memory). Empty = the checkins table is the only memory (cut order fallback).
     backboard_api_key: str = ""

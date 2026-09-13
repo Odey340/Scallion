@@ -2,6 +2,8 @@
 import hashlib
 import hmac
 import json
+
+import httpx
 import time
 from datetime import date
 
@@ -104,3 +106,39 @@ def test_set_lang(client):
     assert client.put("/me/lang", json={"lang": "es"}).json()["lang"] == "es"
     assert client.get("/me").json()["lang"] == "es"
     assert client.put("/me/lang", json={"lang": "fr"}).status_code == 422
+
+
+def test_one_time_link_is_minted_with_an_api_key_and_matched_by_reference_id():
+    """With PERSONA_API_KEY the server creates the inquiry (reference-id = user id) and returns
+    Persona's one-time link; no environment id is needed."""
+    from app.config import Settings
+    from app.routes.persona import mint_one_time_link
+
+    seen: list[tuple[str, dict]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content or b"{}")
+        seen.append((request.url.path, body))
+        assert request.headers["authorization"] == "Bearer persona_sandbox_test"
+        if request.url.path == "/api/v1/inquiries":
+            return httpx.Response(201, json={"data": {"id": "inq_test", "attributes": {"reference-id": body["data"]["attributes"]["reference-id"]}}})
+        if request.url.path == "/api/v1/inquiries/inq_test/generate-one-time-link":
+            return httpx.Response(200, json={"meta": {"one-time-link": "https://withpersona.com/verify?code=abc"}})
+        return httpx.Response(404)
+
+    settings = Settings(persona_template_id="itmpl_test", persona_api_key="persona_sandbox_test")
+    client = httpx.Client(base_url="https://api.withpersona.com/api/v1", transport=httpx.MockTransport(handler))
+    link = mint_one_time_link(settings, "user-123", client=client)
+    assert link == "https://withpersona.com/verify?code=abc"
+    assert seen[0][1]["data"]["attributes"] == {"inquiry-template-id": "itmpl_test", "reference-id": "user-123"}
+
+
+def test_verify_url_falls_back_to_the_template_link_when_persona_is_unreachable(monkeypatch):
+    from app.config import Settings
+    from app.routes import persona as mod
+
+    monkeypatch.setattr(mod, "mint_one_time_link", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
+    mod._links.clear()
+    settings = Settings(persona_template_id="itmpl_test", persona_api_key="persona_sandbox_test", persona_environment_id="env_x")
+    url = mod._verify_url(settings, "user-123")
+    assert url == "https://inquiry.withpersona.com/verify?inquiry-template-id=itmpl_test&reference-id=user-123&environment-id=env_x"
