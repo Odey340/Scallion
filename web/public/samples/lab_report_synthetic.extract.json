@@ -1,0 +1,602 @@
+{
+ "analytes": [
+  {
+   "name": "wbc",
+   "value": 6.2,
+   "unit": "10*3/uL",
+   "ref_low": 3.4,
+   "ref_high": 10.8,
+   "source_span": [
+    306,
+    330
+   ],
+   "source_text": "WBC 6.2 10*3/uL 3.4-10.8",
+   "raw_name": "WBC",
+   "si_value": 6.2,
+   "si_unit": "10^9/L",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:RBC",
+   "value": 4.85,
+   "unit": "10*6/uL",
+   "ref_low": 4.14,
+   "ref_high": 5.8,
+   "source_span": [
+    331,
+    357
+   ],
+   "source_text": "RBC 4.85 10*6/uL 4.14-5.80",
+   "raw_name": "RBC",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Hemoglobin",
+   "value": 14.9,
+   "unit": "g/dL",
+   "ref_low": 13.0,
+   "ref_high": 17.7,
+   "source_span": [
+    358,
+    388
+   ],
+   "source_text": "Hemoglobin 14.9 g/dL 13.0-17.7",
+   "raw_name": "Hemoglobin",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Hematocrit",
+   "value": 44.1,
+   "unit": "%",
+   "ref_low": 37.5,
+   "ref_high": 51.0,
+   "source_span": [
+    389,
+    416
+   ],
+   "source_text": "Hematocrit 44.1 % 37.5-51.0",
+   "raw_name": "Hematocrit",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "mcv",
+   "value": 90.0,
+   "unit": "fL",
+   "ref_low": 79.0,
+   "ref_high": 97.0,
+   "source_span": [
+    417,
+    432
+   ],
+   "source_text": "MCV 90 fL 79-97",
+   "raw_name": "MCV",
+   "si_value": 90.0,
+   "si_unit": "fL",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:MCH",
+   "value": 30.7,
+   "unit": "pg",
+   "ref_low": 26.6,
+   "ref_high": 33.0,
+   "source_span": [
+    433,
+    454
+   ],
+   "source_text": "MCH 30.7 pg 26.6-33.0",
+   "raw_name": "MCH",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:MCHC",
+   "value": 33.8,
+   "unit": "g/dL",
+   "ref_low": 31.5,
+   "ref_high": 35.7,
+   "source_span": [
+    455,
+    479
+   ],
+   "source_text": "MCHC 33.8 g/dL 31.5-35.7",
+   "raw_name": "MCHC",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "rdw",
+   "value": 13.1,
+   "unit": "%",
+   "ref_low": 11.6,
+   "ref_high": 15.4,
+   "source_span": [
+    480,
+    500
+   ],
+   "source_text": "RDW 13.1 % 11.6-15.4",
+   "raw_name": "RDW",
+   "si_value": 13.1,
+   "si_unit": "%",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Platelets",
+   "value": 241.0,
+   "unit": "10*3/uL",
+   "ref_low": 150.0,
+   "ref_high": 450.0,
+   "source_span": [
+    501,
+    530
+   ],
+   "source_text": "Platelets 241 10*3/uL 150-450",
+   "raw_name": "Platelets",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Neutrophils",
+   "value": 58.0,
+   "unit": "%",
+   "ref_low": null,
+   "ref_high": null,
+   "source_span": [
+    531,
+    547
+   ],
+   "source_text": "Neutrophils 58 %",
+   "raw_name": "Neutrophils",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "lymph_pct",
+   "value": 30.0,
+   "unit": "%",
+   "ref_low": null,
+   "ref_high": null,
+   "source_span": [
+    548,
+    559
+   ],
+   "source_text": "Lymphs 30 %",
+   "raw_name": "Lymphs",
+   "si_value": 30.0,
+   "si_unit": "%",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Monocytes",
+   "value": 8.0,
+   "unit": "%",
+   "ref_low": null,
+   "ref_high": null,
+   "source_span": [
+    560,
+    573
+   ],
+   "source_text": "Monocytes 8 %",
+   "raw_name": "Monocytes",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Eos",
+   "value": 3.0,
+   "unit": "%",
+   "ref_low": null,
+   "ref_high": null,
+   "source_span": [
+    574,
+    581
+   ],
+   "source_text": "Eos 3 %",
+   "raw_name": "Eos",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Basos",
+   "value": 1.0,
+   "unit": "%",
+   "ref_low": null,
+   "ref_high": null,
+   "source_span": [
+    582,
+    591
+   ],
+   "source_text": "Basos 1 %",
+   "raw_name": "Basos",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Neutrophils (Absolute)",
+   "value": 3.6,
+   "unit": "10*3/uL",
+   "ref_low": 1.4,
+   "ref_high": 7.0,
+   "source_span": [
+    592,
+    634
+   ],
+   "source_text": "Neutrophils (Absolute) 3.6 10*3/uL 1.4-7.0",
+   "raw_name": "Neutrophils (Absolute)",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Lymphs (Absolute)",
+   "value": 1.9,
+   "unit": "10*3/uL",
+   "ref_low": 0.7,
+   "ref_high": 3.1,
+   "source_span": [
+    635,
+    672
+   ],
+   "source_text": "Lymphs (Absolute) 1.9 10*3/uL 0.7-3.1",
+   "raw_name": "Lymphs (Absolute)",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "glucose",
+   "value": 97.0,
+   "unit": "mg/dL",
+   "ref_low": 70.0,
+   "ref_high": 99.0,
+   "source_span": [
+    751,
+    773
+   ],
+   "source_text": "Glucose 97 mg/dL 70-99",
+   "raw_name": "Glucose",
+   "si_value": 5.384,
+   "si_unit": "mmol/L",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:BUN",
+   "value": 15.0,
+   "unit": "mg/dL",
+   "ref_low": 6.0,
+   "ref_high": 24.0,
+   "source_span": [
+    774,
+    791
+   ],
+   "source_text": "BUN 15 mg/dL 6-24",
+   "raw_name": "BUN",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "creatinine",
+   "value": 0.91,
+   "unit": "mg/dL",
+   "ref_low": 0.76,
+   "ref_high": 1.27,
+   "source_span": [
+    792,
+    823
+   ],
+   "source_text": "Creatinine 0.91 mg/dL 0.76-1.27",
+   "raw_name": "Creatinine",
+   "si_value": 80.462,
+   "si_unit": "umol/L",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:eGFR",
+   "value": 104.0,
+   "unit": "mL/min/1.73",
+   "ref_low": 59.0,
+   "ref_high": null,
+   "source_span": [
+    824,
+    848
+   ],
+   "source_text": "eGFR 104 mL/min/1.73 >59",
+   "raw_name": "eGFR",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:BUN/Creatinine Ratio",
+   "value": 16.0,
+   "unit": "",
+   "ref_low": 9.0,
+   "ref_high": 20.0,
+   "source_span": [
+    849,
+    877
+   ],
+   "source_text": "BUN/Creatinine Ratio 16 9-20",
+   "raw_name": "BUN/Creatinine Ratio",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Sodium",
+   "value": 140.0,
+   "unit": "mmol/L",
+   "ref_low": 134.0,
+   "ref_high": 144.0,
+   "source_span": [
+    878,
+    903
+   ],
+   "source_text": "Sodium 140 mmol/L 134-144",
+   "raw_name": "Sodium",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Potassium",
+   "value": 4.3,
+   "unit": "mmol/L",
+   "ref_low": 3.5,
+   "ref_high": 5.2,
+   "source_span": [
+    904,
+    932
+   ],
+   "source_text": "Potassium 4.3 mmol/L 3.5-5.2",
+   "raw_name": "Potassium",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Chloride",
+   "value": 102.0,
+   "unit": "mmol/L",
+   "ref_low": 96.0,
+   "ref_high": 106.0,
+   "source_span": [
+    933,
+    959
+   ],
+   "source_text": "Chloride 102 mmol/L 96-106",
+   "raw_name": "Chloride",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Carbon Dioxide, Total",
+   "value": 25.0,
+   "unit": "mmol/L",
+   "ref_low": 20.0,
+   "ref_high": 29.0,
+   "source_span": [
+    960,
+    997
+   ],
+   "source_text": "Carbon Dioxide, Total 25 mmol/L 20-29",
+   "raw_name": "Carbon Dioxide, Total",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Calcium",
+   "value": 9.4,
+   "unit": "mg/dL",
+   "ref_low": 8.7,
+   "ref_high": 10.2,
+   "source_span": [
+    998,
+    1024
+   ],
+   "source_text": "Calcium 9.4 mg/dL 8.7-10.2",
+   "raw_name": "Calcium",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Protein, Total",
+   "value": 7.0,
+   "unit": "g/dL",
+   "ref_low": 6.0,
+   "ref_high": 8.5,
+   "source_span": [
+    1025,
+    1056
+   ],
+   "source_text": "Protein, Total 7.0 g/dL 6.0-8.5",
+   "raw_name": "Protein, Total",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "albumin",
+   "value": 4.4,
+   "unit": "g/dL",
+   "ref_low": 3.8,
+   "ref_high": 4.9,
+   "source_span": [
+    1057,
+    1081
+   ],
+   "source_text": "Albumin 4.4 g/dL 3.8-4.9",
+   "raw_name": "Albumin",
+   "si_value": 44.0,
+   "si_unit": "g/L",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Globulin, Total",
+   "value": 2.6,
+   "unit": "g/dL",
+   "ref_low": 1.5,
+   "ref_high": 4.5,
+   "source_span": [
+    1082,
+    1114
+   ],
+   "source_text": "Globulin, Total 2.6 g/dL 1.5-4.5",
+   "raw_name": "Globulin, Total",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:Bilirubin, Total",
+   "value": 0.6,
+   "unit": "mg/dL",
+   "ref_low": 0.0,
+   "ref_high": 1.2,
+   "source_span": [
+    1115,
+    1149
+   ],
+   "source_text": "Bilirubin, Total 0.6 mg/dL 0.0-1.2",
+   "raw_name": "Bilirubin, Total",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "alp",
+   "value": 70.0,
+   "unit": "IU/L",
+   "ref_low": 44.0,
+   "ref_high": 121.0,
+   "source_span": [
+    1150,
+    1185
+   ],
+   "source_text": "Alkaline Phosphatase 70 IU/L 44-121",
+   "raw_name": "Alkaline Phosphatase",
+   "si_value": 70.0,
+   "si_unit": "U/L",
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:AST (SGOT)",
+   "value": 22.0,
+   "unit": "IU/L",
+   "ref_low": 0.0,
+   "ref_high": 40.0,
+   "source_span": [
+    1186,
+    1209
+   ],
+   "source_text": "AST (SGOT) 22 IU/L 0-40",
+   "raw_name": "AST (SGOT)",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "other:ALT (SGPT)",
+   "value": 24.0,
+   "unit": "IU/L",
+   "ref_low": 0.0,
+   "ref_high": 44.0,
+   "source_span": [
+    1210,
+    1233
+   ],
+   "source_text": "ALT (SGPT) 24 IU/L 0-44",
+   "raw_name": "ALT (SGPT)",
+   "si_value": null,
+   "si_unit": null,
+   "derived": null,
+   "note": null
+  },
+  {
+   "name": "crp",
+   "value": 0.8,
+   "unit": "mg/L",
+   "ref_low": 0.0,
+   "ref_high": 3.0,
+   "source_span": [
+    1289,
+    1336
+   ],
+   "source_text": "C-Reactive Protein, Cardiac 0.80 mg/L 0.00-3.00",
+   "raw_name": "C-Reactive Protein, Cardiac",
+   "si_value": 0.08,
+   "si_unit": "mg/dL",
+   "derived": null,
+   "note": null
+  }
+ ],
+ "fasting": true,
+ "lang": "en",
+ "text": "LABORATORY REPORT (SYNTHETIC SAMPLE, NOT A REAL PATIENT)\nPatient: [REDACTED]    DOB: [REDACTED]    MRN: [REDACTED]\nCollected: 2026-08-14 07:52    Reported: 2026-08-14 15:10    Specimen: Serum / Whole blood\nFasting: Yes\nCOMPLETE BLOOD COUNT (CBC) WITH DIFFERENTIAL\nTest\nResult\nFlag\nUnits\nReference Interval\nWBC\n6.2\n10*3/uL\n3.4-10.8\nRBC\n4.85\n10*6/uL\n4.14-5.80\nHemoglobin\n14.9\ng/dL\n13.0-17.7\nHematocrit\n44.1\n%\n37.5-51.0\nMCV\n90\nfL\n79-97\nMCH\n30.7\npg\n26.6-33.0\nMCHC\n33.8\ng/dL\n31.5-35.7\nRDW\n13.1\n%\n11.6-15.4\nPlatelets\n241\n10*3/uL\n150-450\nNeutrophils\n58\n%\nLymphs\n30\n%\nMonocytes\n8\n%\nEos\n3\n%\nBasos\n1\n%\nNeutrophils (Absolute)\n3.6\n10*3/uL\n1.4-7.0\nLymphs (Absolute)\n1.9\n10*3/uL\n0.7-3.1\nCOMPREHENSIVE METABOLIC PANEL (CMP)\nTest\nResult\nFlag\nUnits\nReference Interval\nGlucose\n97\nmg/dL\n70-99\nBUN\n15\nmg/dL\n6-24\nCreatinine\n0.91\nmg/dL\n0.76-1.27\neGFR\n104\nmL/min/1.73\n>59\nBUN/Creatinine Ratio\n16\n9-20\nSodium\n140\nmmol/L\n134-144\nPotassium\n4.3\nmmol/L\n3.5-5.2\nChloride\n102\nmmol/L\n96-106\nCarbon Dioxide, Total\n25\nmmol/L\n20-29\nCalcium\n9.4\nmg/dL\n8.7-10.2\nProtein, Total\n7.0\ng/dL\n6.0-8.5\nAlbumin\n4.4\ng/dL\n3.8-4.9\nGlobulin, Total\n2.6\ng/dL\n1.5-4.5\nBilirubin, Total\n0.6\nmg/dL\n0.0-1.2\nAlkaline Phosphatase\n70\nIU/L\n44-121\nAST (SGOT)\n22\nIU/L\n0-40\nALT (SGPT)\n24\nIU/L\n0-44\nINFLAMMATION\nTest\nResult\nFlag\nUnits\nReference Interval\nC-Reactive Protein, Cardiac\n0.80\nmg/L\n0.00-3.00\nReference ranges apply to adults. Results are for the specimen as received.\nThis document is a synthetic fixture for software testing.\n",
+ "missing": [],
+ "complete": {
+  "missing": [],
+  "derived": [],
+  "order": [],
+  "where": [
+   "Quest (questhealth.com, walk-in Houston sites)",
+   "Labcorp OnDemand",
+   "Ulta Lab Tests"
+  ],
+  "collected_date": "2026-08-14",
+  "retest_date": "2026-11-12",
+  "retest_rule": "assumption: repeat in about three months, or after a sustained change in sleep, activity or medication; sooner if a clinician says so",
+  "fasting_action": null,
+  "fasting_hours": "8-12 h water-only fast before a glucose draw",
+  "label": "reference prices, not engine output"
+ }
+}

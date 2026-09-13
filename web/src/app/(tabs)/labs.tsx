@@ -110,8 +110,12 @@ export default function LabsScreen() {
     return api.extract(blob, { preferCache: true, filename });
   };
 
-  /** Render, redact, upload, and land on review. `buf` never leaves the device unredacted. */
-  const processFile = async (buf: ArrayBuffer, name: string, mimeType: string | null) => {
+  /**
+   * Render, redact, upload, and land on review. `buf` never leaves the device unredacted.
+   * `prefetched` skips the upload: the sample report ships with the API's own cached extraction
+   * (public/samples/*.extract.json), so the demo works with no sign-in and no network.
+   */
+  const processFile = async (buf: ArrayBuffer, name: string, mimeType: string | null, prefetched?: ExtractResponse) => {
     setStep('working');
     try {
       const isPdf = (mimeType ?? '').includes('pdf') || name.toLowerCase().endsWith('.pdf');
@@ -132,7 +136,7 @@ export default function LabsScreen() {
       resetLabs();
       setLabs({ source: isPdf ? 'pdf' : 'image', fileName: name, pages, redaction });
       try {
-        const extract = await upload(blob, blob.type === 'application/pdf' ? name : 'redacted.jpg');
+        const extract = prefetched ?? (await upload(blob, blob.type === 'application/pdf' ? name : 'redacted.jpg'));
         applyExtract(extract);
       } catch (e) {
         // The page is still on screen: fall back to typing the nine values from it.
@@ -165,9 +169,11 @@ export default function LabsScreen() {
     setStep('working');
     setStatus('Fetching the sample report…');
     try {
-      const res = await fetch('/samples/lab_report_synthetic.pdf');
-      if (!res.ok) throw new Error('Sample report not available.');
-      await processFile(await res.arrayBuffer(), 'lab_report_synthetic.pdf', 'application/pdf');
+      const [pdfRes, extractRes] = await Promise.all([fetch('/samples/lab_report_synthetic.pdf'), fetch('/samples/lab_report_synthetic.extract.json')]);
+      if (!pdfRes.ok) throw new Error('Sample report not available.');
+      // Prefer the live API when signed in (exercises the real path); otherwise the shipped extraction.
+      const shipped = extractRes.ok ? ((await extractRes.json()) as ExtractResponse) : undefined;
+      await processFile(await pdfRes.arrayBuffer(), 'lab_report_synthetic.pdf', 'application/pdf', hasToken() ? undefined : shipped);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the sample report.');
       setStep('pick');
@@ -268,9 +274,9 @@ export default function LabsScreen() {
                   </AnimatedPressable>
                 </View>
                 {!hasToken() && (
-                  <ThemedText type="small" themeColor="textMuted">
-                    Uploading needs a demo account for this build (the extraction runs on our server) — a local Scallion
-                    profile alone doesn&apos;t unlock it. Typing the values works either way.
+                  <ThemedText type="small" themeColor="silence">
+                    Uploading your own report needs the demo account for this build (the extraction runs on our server); a
+                    local Scallion profile alone does not unlock it. The sample report and typed values work either way.
                   </ThemedText>
                 )}
               </ThemedView>
