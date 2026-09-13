@@ -112,7 +112,7 @@ export default function LabsScreen() {
 
   const upload = async (blob: Blob, filename: string) => {
     if (!hasToken()) {
-      throw new ApiError(401, null, 'This build needs a demo account to extract a report. Type the values below instead.');
+      throw new ApiError(401, null, 'Sign in to extract your own report, or type the values below.');
     }
     setStatus('Reading the report (Gemini extracts, never computes)…');
     // prefer the cached demo response when the API has one for this exact file; live otherwise.
@@ -285,8 +285,8 @@ export default function LabsScreen() {
                 </View>
                 {!hasToken() && (
                   <ThemedText type="small" themeColor="silence">
-                    Uploading your own report needs the demo account for this build (the extraction runs on our server); a
-                    local Scallion profile alone does not unlock it. The sample report and typed values work either way.
+                    Uploading your own report needs a sign-in (the extraction runs on our server). The sample report and
+                    typed values work without one.
                   </ThemedText>
                 )}
               </ThemedView>

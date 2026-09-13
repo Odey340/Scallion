@@ -324,7 +324,7 @@ function NudgeCard({ nudge, circleAvailable, hasSession }: { nudge: Nudge | null
           <ThemedText type="default" themeColor="textSecondary">
             {hasSession
               ? 'Connect an inbox or a chat export to see who is drifting.'
-              : 'Set up your Scallion profile, then connect an inbox or a chat export to see who is drifting.'}
+              : 'Sign in and connect an inbox or a chat export to see who is drifting.'}
           </ThemedText>
           <Link href={hasSession ? '/circle' : '/onboarding'} asChild>
             <AnimatedPressable style={styles.secondaryButton}>

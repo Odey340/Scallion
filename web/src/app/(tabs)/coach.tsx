@@ -399,7 +399,7 @@ export default function CoachScreen() {
               </>
             ) : explainKey && !hasToken() ? (
               <ThemedText type="small" themeColor="textSecondary">
-                {t('This needs a demo account for this build.', 'Esto necesita una cuenta de demostración para esta versión.')}
+                {t('Sign in to read the explanations.', 'Inicia sesión para leer las explicaciones.')}
               </ThemedText>
             ) : null}
           </Card>
