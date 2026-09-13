@@ -18,6 +18,10 @@ node index.mjs --watch --replay test/fixtures/capture_real.json   # no camera: p
 `--watch` polls `GET /vitals/arm` for every token every 2 s (contract v12). When the camera screen's
 Start arms an account, it spawns one `node index.mjs` child (the other flags pass through) that
 captures, POSTs, and exits; then it goes back to polling. Leave it running for the whole demo.
+When a capture fails the watcher tells the phone why (`PATCH /vitals/arm` note): a busy webcam
+(Media Foundation `0xC00D3704`: Teams, Zoom, or a browser tab holding the camera) ends the arm at
+once; "no face" / "face lost" get one retry while the phone still waits. Nothing else may hold the
+laptop webcam while the watcher runs; the app's camera page no longer opens a preview once armed.
 
 Environment (read from the repo-root `.env`): `PRESAGE_API_KEY` (physiology.presagetech.com),
 `SCALLION_API_URL` (default `http://localhost:8000`), `SCALLION_API_TOKEN` (one or more Supabase JWTs,

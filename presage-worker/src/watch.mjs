@@ -7,11 +7,37 @@ import { describeToken } from './token.mjs';
 
 export const MAX_ATTEMPTS_PER_ARM = 2; // one retry when a capture yields no confident reading
 
+// Why a capture child failed, from its stderr. The phone shows NOTES[reason] (PATCH /vitals/arm).
+export function classifyCaptureOutput(text) {
+  if (/0xC00D3704|Hardware MFT failed|lack of hardware resources|camera (is )?(busy|in use)/i.test(text)) return 'busy';
+  if (/never reached Running/.test(text)) return 'noface';
+  if (/no reading: only/.test(text)) return 'lostface';
+  if (/PRESAGE_API_KEY is empty/.test(text)) return 'nokey';
+  return null;
+}
+
+export const NOTES = {
+  busy: 'The laptop webcam is in use by another app (this page open in the laptop browser, Teams, Zoom). Close it and press Start again.',
+  noface: 'No face found on the laptop webcam within 2 minutes. Sit closer, face the light, and press Start again.',
+  lostface: 'Face lost during the recording. Hold still for the full minute, facing the laptop webcam.',
+  hung: 'The laptop capture hung and was stopped. Press Start again.',
+  nokey: 'PRESAGE_API_KEY is missing on the laptop (.env).',
+  failed: 'The laptop capture failed; see its terminal.',
+};
+const RETRYABLE = new Set(['noface', 'lostface']); // the presenter can fix these while the phone still waits
+
 export async function fetchArm(apiUrl, token, fetchImpl = fetch) {
   const headers = token ? { authorization: `Bearer ${token}` } : {};
   const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { headers });
   if (!res.ok) throw new Error(`GET /vitals/arm -> ${res.status}`);
   return res.json();
+}
+
+export async function postNote(apiUrl, token, note, final, fetchImpl = fetch) {
+  const headers = { 'content-type': 'application/json' };
+  if (token) headers.authorization = `Bearer ${token}`;
+  const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { method: 'PATCH', headers, body: JSON.stringify({ note, final }) });
+  if (!res.ok) throw new Error(`PATCH /vitals/arm -> ${res.status}`);
 }
 
 // Which arm (if any) needs a capture: pending and not the one already handled for that token.
@@ -57,18 +83,26 @@ export async function watchLoop({
       const n = (attempts.get(key) ?? 0) + 1;
       attempts.set(key, n);
       log(`[presage] Start pressed on the phone (${pick.token ? describeToken(pick.token) : 'anonymous'}, armed ${pick.armedAt}); capturing${n > 1 ? ` (retry ${n - 1})` : ''}`);
-      const code = await runCapture(pick);
+      const res = await runCapture(pick);
+      const code = typeof res === 'number' ? res : res.code;
+      const reason = typeof res === 'number' ? null : res.reason;
       captures += 1;
       if (code === 0) {
         handled.set(pick.token, pick.armedAt);
         log('[presage] capture posted; watching for the next Start');
-      } else if (n < MAX_ATTEMPTS_PER_ARM) {
-        // No confident reading (face lost, bad light): the phone is still polling, so try once more
-        // while the arm is pending; pickPending re-selects it on the next poll.
-        log(`[presage] capture exited ${code} (no confident reading?); retrying while the phone still waits`);
       } else {
-        handled.set(pick.token, pick.armedAt);
-        log(`[presage] capture exited ${code} again; giving up on this Start. Face the light and press Start again`);
+        // Tell the phone why (it shows the note instead of a generic timeout). Face problems get one
+        // retry while the phone still waits; a busy webcam or a hang will not fix itself, so end the
+        // arm (final) and let the presenter press Start again after closing the other camera app.
+        const again = (reason == null || RETRYABLE.has(reason)) && n < MAX_ATTEMPTS_PER_ARM;
+        const note = `${NOTES[reason ?? 'failed']}${again ? ' The laptop is trying once more; keep still.' : ''}`;
+        await postNote(apiUrl, pick.token, note, !again, fetchImpl).catch((e) => log(`[presage] could not report to the phone: ${e.message}`));
+        if (again) {
+          log(`[presage] capture exited ${code} (${reason ?? 'unknown'}); retrying while the phone still waits`);
+        } else {
+          handled.set(pick.token, pick.armedAt);
+          log(`[presage] capture exited ${code} (${reason ?? 'unknown'}); told the phone: ${NOTES[reason ?? 'failed']}`);
+        }
       }
       continue; // re-poll at once: the post cleared pending, or a new arm is waiting
     }

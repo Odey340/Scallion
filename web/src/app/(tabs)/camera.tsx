@@ -110,17 +110,13 @@ export default function CameraScreen() {
   const [previewAvailable, setPreviewAvailable] = useState(true);
   // 'armed': the API accepted the arm, so a worker left running with --watch will capture now.
   const [armState, setArmState] = useState<'idle' | 'arming' | 'armed' | 'failed'>('idle');
+  // The worker's reason when a capture fails (webcam busy, no face), via GET /vitals/arm `note`.
+  const [note, setNote] = useState<string | null>(null);
 
   const start = async () => {
-    let granted = permission?.granted ?? false;
-    if (!granted) {
-      const res = await requestPermission().catch(() => null);
-      granted = res?.granted ?? false;
-    }
-    // No preview is not a blocker: the measurement runs on the laptop webcam; the countdown still helps.
-    setPreviewAvailable(granted);
     setReading(null);
     setFitness(null);
+    setNote(null);
     // Tell the laptop worker (presage-worker --watch) to capture; a hand-started worker still works.
     armedAt.current = null;
     if (hasToken()) {
@@ -135,7 +131,22 @@ export default function CameraScreen() {
     } else {
       setArmState('idle');
     }
-    const holdSeconds = armedAt.current != null ? HOLD_SECONDS : CAPTURE_SECONDS;
+    const armed = armedAt.current != null;
+    if (armed) {
+      // The laptop webcam does the measuring, so this device's camera stays closed: with this page open
+      // in the laptop's own browser the preview held the webcam and the SDK could not start (Media
+      // Foundation 0xC00D3704, Sun H33); on a phone the preview showed the wrong camera anyway.
+      setPreviewAvailable(false);
+    } else {
+      let granted = permission?.granted ?? false;
+      if (!granted) {
+        const res = await requestPermission().catch(() => null);
+        granted = res?.granted ?? false;
+      }
+      // No preview is not a blocker: the measurement runs on the laptop webcam; the countdown still helps.
+      setPreviewAvailable(granted);
+    }
+    const holdSeconds = armed ? HOLD_SECONDS : CAPTURE_SECONDS;
     captureStart.current = Date.now();
     setSecondsLeft(holdSeconds);
     setPhase('capturing');
@@ -147,7 +158,19 @@ export default function CameraScreen() {
     }, 500);
     timers.current.poll = setInterval(async () => {
       const row = await fetchLatest();
-      if (row && accepts(row)) finish(row);
+      if (row && accepts(row)) {
+        finish(row);
+        return;
+      }
+      if (!armed) return;
+      // The worker says why a capture failed (webcam busy, no face). A final note ends the arm on the
+      // API (armed_at null), so stop waiting and show it instead of the generic timeout.
+      const status = await api.armStatus().catch(() => null);
+      if (status?.note) setNote(status.note);
+      if (status?.note && status.armed_at === null) {
+        clearTimers();
+        setPhase('timeout');
+      }
     }, POLL_MS);
     timers.current.stop = setTimeout(() => {
       clearTimers();
@@ -217,9 +240,9 @@ export default function CameraScreen() {
               <>
                 <ThemedText type="smallBold">Measure now</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Face the light, hold still, keep your face inside the oval. The camera preview stays on this device; the
-                  measurement runs on the demo laptop&apos;s webcam and the numbers appear here. Start tells the laptop
-                  worker to capture (it must be running with --watch).
+                  Sit in front of the demo laptop&apos;s webcam, face the light, hold still. Start tells the laptop worker
+                  to capture (it must be running with --watch); the numbers appear here. This device&apos;s camera stays
+                  closed so it never competes with the laptop&apos;s.
                 </ThemedText>
                 {permission && !permission.granted && !permission.canAskAgain && (
                   <ThemedText type="small" themeColor="silence">
@@ -233,9 +256,9 @@ export default function CameraScreen() {
                 )}
                 {phase === 'timeout' && (
                   <ThemedText type="small" themeColor="silence">
-                    No reading arrived{account ? ` for ${account}` : ''}. On the demo laptop the worker must be running
-                    (`node index.mjs --watch`, add `--replay test/fixtures/capture_real.json` when there is no camera) and its
-                    terminal must list this account. Then press Start again.
+                    {note
+                      ? `The laptop reported: ${note}`
+                      : `No reading arrived${account ? ` for ${account}` : ''}. On the demo laptop the worker must be running (node index.mjs --watch; add --replay test/fixtures/capture_real.json when there is no camera) and its terminal must list this account. Then press Start again.`}
                   </ThemedText>
                 )}
                 <Pressable style={styles.primaryButton} onPress={start}>
@@ -252,8 +275,9 @@ export default function CameraScreen() {
                   ) : (
                     <View style={[styles.preview, styles.previewFallback]}>
                       <ThemedText type="small" style={styles.previewFallbackText}>
-                        Camera preview unavailable here (permission not granted). The countdown still runs; face the demo
-                        laptop&apos;s webcam.
+                        {armState === 'armed'
+                          ? 'Face the laptop webcam and hold still. No preview here: the laptop camera does the measuring, and a preview on this device would compete for it.'
+                          : "Camera preview unavailable here (permission not granted). The countdown still runs; face the demo laptop's webcam."}
                       </ThemedText>
                     </View>
                   )}
@@ -281,6 +305,11 @@ export default function CameraScreen() {
                       : armState === 'armed'
                         ? 'Laptop worker told to capture (needs node index.mjs --watch running there).'
                         : 'Could not reach the API to start the laptop worker; run node index.mjs there by hand.'}
+                  </ThemedText>
+                )}
+                {note && (
+                  <ThemedText type="small" themeColor="silence">
+                    Laptop: {note}
                   </ThemedText>
                 )}
                 <Pressable style={styles.secondaryButton} onPress={stop}>

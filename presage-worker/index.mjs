@@ -25,7 +25,7 @@ const replay = flag('replay', '');
 // Each capture is a child `node index.mjs` with the other flags passed through, so an SDK hang in
 // one capture cannot take the watcher down and the camera is released between captures.
 if (args.includes('--watch')) {
-  const { watchLoop } = await import('./src/watch.mjs');
+  const { watchLoop, classifyCaptureOutput } = await import('./src/watch.mjs');
   const { spawn } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
   const self = fileURLToPath(import.meta.url);
@@ -45,15 +45,36 @@ if (args.includes('--watch')) {
       new Promise((resolve) => {
         // Deadline: the SDK can block natively (camera held by another app, no timer fires in the
         // child), so the watcher kills a child that has not exited and keeps serving later Starts.
+        // stderr is piped through (and echoed) so the failure can be classified and told to the phone.
         const deadlineS = replay ? 60 : 180;
-        const child = spawn(process.execPath, [self, ...childArgs], { stdio: 'inherit', env: process.env });
+        const child = spawn(process.execPath, [self, ...childArgs], { stdio: ['ignore', 'pipe', 'pipe'], env: process.env });
+        let reason = null;
+        let done = false;
+        const settle = (code) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          resolve({ code, reason });
+        };
         const timer = setTimeout(() => {
-          console.error(`[presage] capture hung for ${deadlineS} s; killed it. Press Start again`);
+          reason = reason ?? 'hung';
+          console.error(`[presage] capture hung for ${deadlineS} s; killed it`);
           child.kill();
-          resolve(1);
+          settle(1);
         }, deadlineS * 1000);
-        child.on('exit', (code) => { clearTimeout(timer); resolve(code ?? 1); });
-        child.on('error', (e) => { clearTimeout(timer); console.error(`[presage] could not start capture: ${e.message}`); resolve(1); });
+        child.stdout.on('data', (d) => process.stdout.write(d));
+        child.stderr.on('data', (d) => {
+          process.stderr.write(d);
+          if (reason) return;
+          reason = classifyCaptureOutput(String(d));
+          if (reason === 'busy') {
+            // Another app holds the webcam (Media Foundation 0xC00D3704); waiting 2 min for a face is pointless.
+            console.error('[presage] webcam is busy (another app holds it); stopping this capture');
+            child.kill();
+          }
+        });
+        child.on('exit', (code) => settle(code ?? 1));
+        child.on('error', (e) => { console.error(`[presage] could not start capture: ${e.message}`); settle(1); });
       }),
   });
 }

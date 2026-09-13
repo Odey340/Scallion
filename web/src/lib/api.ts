@@ -105,6 +105,8 @@ export interface VitalsArm {
   armed_at: string | null;
   pending: boolean;
   window_s: number;
+  /** The worker's reason when a capture failed (webcam busy, no face); null until then. */
+  note: string | null;
 }
 
 export type ClockName = 'phenoage' | 'fitness' | 'social_risk';
@@ -266,6 +268,7 @@ export const api = {
   postVitals: (v: VitalsIn) => call<{ ok: true }>('/vitals', json(v)),
   latestVitals: () => call<VitalsOut>('/vitals/latest'), // 404 -> ApiError when none
   armVitals: () => call<VitalsArm>('/vitals/arm', { method: 'POST' }),
+  armStatus: () => call<VitalsArm>('/vitals/arm'),
   disarmVitals: () => call<VitalsArm>('/vitals/arm', { method: 'DELETE' }),
 
   me: () => call<Me>('/me'),

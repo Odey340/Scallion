@@ -75,7 +75,7 @@ def test_health_reports_memory_db(client):
 
 def test_arm_is_idle_by_default(client):
     body = client.get("/vitals/arm").json()
-    assert body == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S}
+    assert body == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": None}
 
 
 def test_arm_then_post_clears_pending(client):
@@ -121,3 +121,21 @@ def test_rearm_moves_armed_at(client, monkeypatch):
     monkeypatch.setattr(vitals_routes, "_now", lambda: t0 + timedelta(seconds=5))
     body = client.post("/vitals/arm").json()
     assert body["armed_at"].startswith("2026-09-13T14:00:05") and body["pending"] is True
+
+
+def test_worker_note_reaches_the_phone_and_final_ends_the_arm(client):
+    client.post("/vitals/arm")
+    r = client.patch("/vitals/arm", json={"note": "Face lost; trying once more."})
+    assert r.status_code == 200 and r.json()["note"] == "Face lost; trying once more." and r.json()["pending"] is True
+    assert client.get("/vitals/arm").json()["note"] == "Face lost; trying once more."
+    r = client.patch("/vitals/arm", json={"note": "Webcam busy. Press Start again.", "final": True})
+    assert r.json() == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": "Webcam busy. Press Start again."}
+    # the next Start clears the old reason
+    assert client.post("/vitals/arm").json()["note"] is None
+    client.patch("/vitals/arm", json={"note": "x"})
+    assert client.delete("/vitals/arm").json()["note"] is None
+
+
+@pytest.mark.parametrize("bad", [{"note": ""}, {"note": "x" * 301}, {}])
+def test_note_validation(client, bad):
+    assert client.patch("/vitals/arm", json=bad).status_code == 422
