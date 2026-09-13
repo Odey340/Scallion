@@ -2,32 +2,36 @@
 
 **Title:** Scallion
 **Tagline:** Know your biological age. Know your circle. Then move both.
-**Track:** Healthcare
-**Challenges (tick every one):** Healthcare track · MathWorks · Persona · ElevenLabs (sponsor) · MLH Best Use of ElevenLabs · MLH Best Use of Gemini · Presage · Tiger Data · Backboard · Vultr · GoDaddy Registry · Lilie Lab · Notability
+**Track (pick exactly one):** Healthcare
+**Challenges (tick each one we can evidence, see the list at the end):** MathWorks · Persona · ElevenLabs (sponsor) · MLH Best Use of ElevenLabs · MLH Best Use of Gemini · MLH Presage · MLH Tiger Data · MLH Backboard · MLH Vultr · MLH GoDaddy Registry · Lilie Lab (Rice only) · Notability (only with evidence)
 
 ## Inspiration
 
-Two numbers decide a lot about how the next decades go, and almost nobody sees either one.
+The Healthcare track describes longevity as a stack: cellular aging and inflammation at the base, biomarkers and biological age above that, then sleep, nutrition, exercise and stress, and at the outer edge, environment and social connection. What struck us is that almost nobody can see their own stack. Two of its numbers are already within reach and nobody shows them.
 
-The first is already sitting in a blood panel on a patient portal. Nine ordinary analytes (albumin, creatinine, glucose, CRP, lymphocyte percentage, MCV, RDW, alkaline phosphatase, white cell count) feed a published clock, PhenoAge (Levine 2018), that says whether your body is running older or younger than your birthday. Nobody hands you that number, and nobody tells you which marker is costing you the years.
+The first sits in a blood panel on a patient portal. Nine ordinary analytes, including CRP for inflammation, feed a published clock, PhenoAge (Levine 2018), that says whether your body is running older or younger than your birthday. Nobody hands you that number, and nobody tells you which marker is costing you the years.
 
-The second is invisible. How many real people do you actually exchange messages with, and is that circle quietly shrinking? Holt-Lunstad's meta-analyses put sustained isolation on the same mortality scale as the lab markers, yet no app measures it, partly because doing so honestly means never reading a message.
+The second is the outermost layer, and it is invisible. How many real people do you actually exchange messages with, and is that circle quietly shrinking? Holt-Lunstad's meta-analyses put sustained isolation on the same mortality scale as the lab markers, yet no app measures it, partly because doing so honestly means never reading a message.
 
-We wanted one screen that shows both on the same clock, labelled honestly, and then does one concrete thing about it before dinner tonight.
+Scallion puts every layer on one clock, in years, labelled honestly, and then does one concrete thing about it before dinner tonight. That is what we understood "clear, actionable guidance" to mean: not a dashboard, but a number you can explain and a step you can take today.
 
 ## What it does
 
-**Upload the labs you already have.** Pick the PDF from any portal. The browser renders it with pdf.js, runs 17 redaction rules over the text layer (name, date of birth, record number, address, physician, contact details), and only the redacted text leaves the device. Gemini extracts the printed rows into a strict schema with the exact source line for each value. A unit normalizer converts to the paper's units, flags anything it cannot read instead of guessing, maps Spanish analyte names, and derives lymphocyte percentage from an absolute count when a lab omits it. The PhenoAge clock runs in the browser from MATLAB-exported coefficients. A waterfall shows the cohort offset and each analyte's cost in years, with NHANES percentiles for context. An imputed analyte is labelled "8 of 9 markers" and widens the uncertainty band. Any critical-range value hides the age and says "see a clinician first".
+**Cells and biomarkers: the labs you already have.** Pick the PDF from any portal. The browser renders it with pdf.js, runs 17 redaction rules over the text layer (name, date of birth, record number, address, physician, contact details), and only the redacted text leaves the device. Gemini extracts the printed rows into a strict schema with the exact source line for each value. A unit normalizer converts to the paper's units, flags anything it cannot read instead of guessing, maps Spanish analyte names, and derives lymphocyte percentage from an absolute count when a lab omits it. The PhenoAge clock runs in the browser from MATLAB-exported coefficients. A waterfall shows the cohort offset and each analyte's cost in years, so a raised CRP or RDW is a bar you can point at, with NHANES percentiles for context. An imputed analyte is labelled "8 of 9 markers" and widens the uncertainty band. Any critical-range value hides the age and says "see a clinician first". A "complete your clock" card lists what to order for missing markers and when to re-test.
 
-**Thirty seconds at a camera.** Press Start on the phone; the demo laptop's webcam, driven by the Presage SmartSpectra SDK, reads pulse and breathing with no wearable. A fitness age comes from the HUNT VO2max equation, and the QR landing page gives that same fitness age from four questions in ten seconds. If a capture fails, the laptop tells the phone why (webcam in use, no face found) instead of a generic timeout.
+**Diagnostics without a lab: thirty seconds at a camera.** Press Start on the phone; the demo laptop's webcam, driven by the Presage SmartSpectra SDK, reads pulse and breathing with no wearable. A fitness age comes from the HUNT VO2max equation, and the QR landing page gives that same fitness age from four questions in ten seconds. If a capture fails, the laptop tells the phone why (webcam in use, no face found) instead of a generic timeout.
 
-**Your circle, from metadata only.** Upload a WhatsApp export, run the iMessage exporter on a Mac, or connect an inbox through the Gmail metadata-only scope. Content is parsed on the device and discarded; what leaves is a hashed contact id, a timestamp, the app, the direction, and a length bucket. From that: active and close ties, initiation share, reply latency, churn, days of silence, a 52-week heatmap, an LSNS-6 proxy (four items from messaging, two you answer), and which specific ties are drifting past their own usual gap. Isolation is converted to risk-equivalent years from published hazard ratios via the Gompertz mortality doubling time (years = 8 × log2 HR), labelled "if sustained, population estimate", never "life lost". One tap forgets a contact; one tap deletes everything.
+**Lifestyle: one decision today.** Nutrition: photograph or type a meal, and a SimBiology glucose-insulin sweep shows the curve for someone with your fasting glucose and weight, with and without a 30-minute walk. Exercise: the walk comparison and the fitness age, with exercise-timing advice switched off for anyone on blood-sugar medication. Sleep: a last-coffee time from caffeine half-life, adjusted for smoking and oral contraceptives, and short or long sleep as a lever on the same clock. Stress: a stress index from the camera capture, labelled exploratory.
 
-**One thing today.** A nudge before a tie goes cold. A plate decision: photograph or type a meal, and a SimBiology glucose-insulin sweep shows the curve for someone with your fasting glucose and weight, with and without a 30-minute walk. A last-coffee time from caffeine half-life. And a voice coach (ElevenLabs Agents) in English or Spanish with six tools that read your data, plus memory across days through Backboard.
+**Environment and social connection: your circle, from metadata only.** Upload a WhatsApp export, run the iMessage exporter on a Mac, or connect an inbox through the Gmail metadata-only scope. Content is parsed on the device and discarded; what leaves is a hashed contact id, a timestamp, the app, the direction, and a length bucket. From that: active and close ties, initiation share, reply latency, churn, days of silence, a 52-week heatmap, an LSNS-6 proxy (four items from messaging, two you answer), and which specific ties are drifting past their own usual gap. A nudge lands before a tie goes cold. One tap forgets a contact; one tap deletes everything.
+
+**One clock across the layers.** Isolation, loneliness, living alone, short sleep, smoking and low fitness are each converted to risk-equivalent years from published hazard ratios via the Gompertz mortality doubling time (years = 8 × log2 HR), labelled "if sustained, population estimate", never "life lost". Home shows one result, what is driving it, and one action. Every lever names its source paper.
+
+**Understanding and coaching.** Tap any analyte for a plain-language explanation in English or Spanish, with one citation and no digits it did not get from the engine. Every result has a "How this is calculated" disclosure. A voice coach (ElevenLabs Agents) answers questions with six tools that read your data, logs meals and check-ins, and remembers across days through Backboard, so "did I walk after dinner yesterday" gets a real answer.
 
 **Every number is checked.** The coach may only say numbers that exist in the engine's output. A validator rejects any sentence containing a number not present in the user's context, and the app drops it before it is spoken.
 
-**Trust and safety.** Persona verifies a government ID once; the over-65 large-type mode switches on from the verified birthdate, never from a typed age. The blood-sugar medication question turns off exercise-timing advice. Every estimate says "estimate, not diagnosis".
+**Trust and safety.** Persona verifies a government ID once; the over-65 large-type mode switches on from the verified birthdate, never from a typed age, and the coach's share-with-circle action refuses until the person is verified. Every estimate says "estimate, not diagnosis".
 
 ## How we built it
 
@@ -60,7 +64,7 @@ Four lanes, one contract file. Each teammate owned a directory and a Claude Code
 ## Accomplishments that we're proud of
 
 - **The math reconciles.** Age plus cohort offset plus analyte years equals PhenoAge, exactly, on every screen. The TypeScript port reproduces the MATLAB vectors, and Home refuses to show drivers that do not add up.
-- **A validated meal model, not a picture of one.** 432 SimBiology simulations, a surrogate with peak RMSE of 1.2 mg/dL (R² 0.9997) under 5-fold cross-validation, and a console that overlays the full model on the grid within about 1 mg/dL.
+- **A validated in-silico model, not a picture of one.** 432 SimBiology simulations, a surrogate with peak RMSE of 1.2 mg/dL (R² 0.9997) under 5-fold cross-validation, and a console that overlays the full model on the grid within about 1 mg/dL.
 - **A real pulse with no wearable.** Captures of 68.5, 72.6, and 74 bpm from the demo laptop's webcam, stored in Tiger Data, retrievable by the phone.
 - **A lab PDF to nine analytes in about 35 seconds,** each with its source line, its SI value, and a derived lymphocyte percentage when needed, redacted before it left the browser and never stored.
 - **A coach that cannot make up a number.** Ask it anything; every reply passes through the validator first.
@@ -79,7 +83,7 @@ Four lanes, one contract file. Each teammate owned a directory and a Claude Code
 
 ## What's next for Scallion
 
-- **Longitudinal clocks.** The review screen already computes a re-test date and what to order to complete the nine markers; the next step is tracking PhenoAge across draws and showing the trend.
+- **Longitudinal clocks.** The review screen already computes a re-test date and what to order to complete the nine markers; the next step is tracking PhenoAge across draws and showing the trend, so healthspan becomes a line rather than a number.
 - **More fitness inputs.** Apple Health, Fitbit, and Garmin resting heart rate and VO2max alongside the camera reading.
 - **Live inbox connect.** The Gmail metadata-scope flow is built and tested against fixtures; it needs a verified Google OAuth client. Then SMS backups and iMessage inside the app, and a second inbox.
 - **Family and friend tagging** to complete the LSNS-6 rather than proxying it.
@@ -88,10 +92,29 @@ Four lanes, one contract file. Each teammate owned a directory and a Claude Code
 
 ## Built with
 
-MATLAB R2026a (SimBiology, Statistics and Machine Learning Toolbox, Simulink), Expo / React Native, TypeScript, pdf.js, FastAPI, Python 3.12, Docker, Caddy, Vultr, Tiger Data (TimescaleDB), Supabase Auth, Gemini 3.6 Flash, Presage SmartSpectra Node SDK, ElevenLabs Agents, Persona, Backboard, Vercel, GoDaddy.
+MATLAB R2026a (SimBiology, Statistics and Machine Learning Toolbox, Simulink), Expo / React Native, TypeScript, pdf.js, FastAPI, Python 3.12, Docker, Caddy, Vultr, Tiger Data (TimescaleDB), Supabase Auth, Gemini 3.6 Flash, Presage SmartSpectra Node SDK, ElevenLabs Agents, Persona, Backboard, Vercel, a .us domain (GoDaddy Registry).
+
+## Challenges pursued: technology and how we used it
+
+Choose one track (Healthcare) and tick every challenge below that we can show a judge.
+
+- **Healthcare track.** All of the above. The four layers the track names map to four screens: Labs (cells and biomarkers), Camera (diagnostics), Scan and Home levers (lifestyle), Circle (social connection), with the coach as the "goal-setting and coaching" and "educational insights" directions.
+- **MathWorks: Best Use of MathWorks.** MATLAB R2026a, SimBiology, Statistics and Machine Learning Toolbox, Simulink. The in-silico model is SimBiology's `insulindemo` (Cobelli/Dalla Man glucose-insulin meal model) configured for body weight, three insulin-sensitivity variants and a calibrated walk; a 144-cell sweep, a Gaussian-process surrogate with 5-fold cross-validation, a coded uifigure console with a Validation tab, a MATLAB project and a live script that runs tests and writes every number the app displays as JSON. PhenoAge, NHANES norms, HUNT fitness age, risk years and caffeine PK are all MATLAB. The coding agent drove MATLAB through batch runs.
+- **Persona: Prove you're human.** Persona hosted flow, one-time inquiry links minted server-side, HMAC-signed webhook. Verification sets `verified` and a birthdate; the over-65 large-type mode adapts from the verified birthdate instead of demanding a typed age (the handbook's "age-aware" direction), and the coach's share-with-circle tool refuses to act until the person is verified (the "agent that can only act for you once you've proven you're you" direction). Sandbox, no real IDs.
+- **ElevenLabs: Best Project Built with ElevenLabs (sponsor) and MLH Best Use of ElevenLabs.** ElevenLabs Agents plus the multilingual TTS API. A "Scallion coach" agent created from code with six client tools (get_clock, get_circle, explain_analyte, get_today_plan, log_meal, share_with_circle), started from a server-minted signed URL so the key never reaches the browser, hold-to-talk with captions, English default and a Spanish preset. Every caption passes the number validator before it is shown. `GET /tts` reads one sentence aloud in EN or ES for the text fallback.
+- **MLH: Best Use of Gemini.** Gemini 3.6 Flash via the Gemini API. Lab-report extraction with a strict response schema (printed value, unit, reference range, source line, fasting flag, language), Spanish-format reports, and photo-to-carbs estimation on the Scan screen. Gemini extracts and narrates; it never produces a displayed number.
+- **MLH: Best Use of Presage.** Presage SmartSpectra Node SDK. A headless worker on the demo laptop's webcam reads pulse, breathing and a Baevsky stress index over a 30-second capture, takes the confident median, and posts to the API; an arm/watch handshake lets a phone press Start and receive the reading or the reason it failed. Real captures of 68.5, 72.6 and 74 bpm.
+- **MLH: Best Use of Tiger Data.** Tiger Cloud (TimescaleDB). Hypertables for `contact_events`, `vitals` and `clock_history`, a `daily_connection` continuous aggregate with real-time aggregation for the 52-week heatmap, a dedup index that makes event upload idempotent, plus `profiles` and `checkins` tables. Only metadata is stored, never message content.
+- **MLH: Best Use of Backboard.** Backboard API. One assistant per user, created lazily; every check-in, meal and share is mirrored as a memory; `GET /coach/recall?q=` does semantic recall so the coach can answer "did I walk after dinner yesterday" across days.
+- **MLH: Best Use of Vultr.** Vultr cloud compute (Dallas, Ubuntu 24.04). Provisioned through the Vultr API with cloud-init, Docker Compose running the FastAPI service behind Caddy with automatic TLS at api.scallion.us, one-command redeploy script.
+- **MLH: Best Domain Name from GoDaddy Registry.** scallion.us. The web app is at scallion.us and the API at api.scallion.us; .us is operated by GoDaddy Registry. Confirm the registration path meets MLH's rule before ticking (DNS is currently hosted at Porkbun).
+- **Lilie Lab AI Challenge (Rice students only).** Gemini extraction, the ElevenLabs agent and the Claude Code agent workflow, applied to a pressing problem: making biological age and social isolation legible and actionable. Tick only if a Rice student is on the team.
+- **Notability: Trust the Process.** Tick only if the team has Notability notes or wireframes from the weekend to show; there is no evidence in the repo.
+
+Skipped on purpose: Capital One Nessie, Solana, Lovable, Goldman Sachs (challenge details never published).
 
 ## Links to fill in Sunday
 
 - Live app: https://scallion.us · API: https://api.scallion.us/health · Repo: https://github.com/Odey340/Scallion
-- Video (3-4 min): media/
+- Video (3-4 min, handbook outline: 30 s intro, 2 min demo, 30 s technical design, 30 s impact): media/
 - MATLAB: `matlab/Scallion.prj`, `matlab/main_live_script.m`
