@@ -113,5 +113,8 @@ export async function captureVitals({ apiKey, seconds = 30, deviceIndex = 0, ver
     // process.exit()s, which releases the camera; stop() above already ended the measurement.
     log(`[presage] capture finished at ${elapsed()}s (${samples.length} samples)`);
   }
-  return { samples, raw, capturedAt: new Date(tRunning ?? t0), durationMs: Date.now() - t0 };
+  // Stamp the reading at the end of the window: the number is the median of the second half, and
+  // the camera screen accepts a row captured up to 60 s before Start, so this gives the presenter
+  // a full minute after "POST ok" to press Start (stamping the Running instant left ~15 s).
+  return { samples, raw, capturedAt: new Date(), durationMs: Date.now() - t0 };
 }
