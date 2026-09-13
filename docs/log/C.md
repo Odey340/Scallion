@@ -434,3 +434,25 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Phase 6 (Circle) — ask the human first, per the one-phase-at-a-time agreement. Worth a similar audit-first pass: check what a concurrent session may have already built there too.
 
 **Contract changes needed:** None.
+
+## Session 24 (2026-09-13): Phase 6 — Circle surfaces the metrics it already computes; mobile no longer buries the map under setup; destructive clear now confirms
+
+**Audit first, per the established pattern** (a concurrent session had substantially rebuilt Labs before Phase 5, so checked Circle the same way before touching anything): `circle.tsx` + `circle-dot-map.tsx` already had a real split layout, Gmail/WhatsApp/sample connection, the animated constellation map with a Close/Active/Weak legend, tap-to-select cross-highlighting between the map and the advice list, an honestly-worded LSNS-6 score, and month-over-month trend arrows. Good foundation — found three real, scoped gaps instead of a rewrite:
+
+**1. Two of Circle's own computed metrics were never shown anywhere.** `api.ts`'s `Metrics` type (and the server response) has carried `initiationShare` and `replyLatencyH: {mine, theirs}` since the contract was written — `circle.tsx` never rendered either. Added a "Connection pattern" row inside the existing Social score card: "You start N%", "Your reply time / Their reply time" (h, or "not enough data" when a side has no thread starts yet — `replyLatencyH.mine`/`.theirs` are nullable), "Gone quiet %" (promoted the existing churn sentence into the same row instead of a separate line). No new computation — this is data the server already sends back that the UI was silently discarding.
+
+**2. Added a real "Overdue" count next to Active/Close** in the map card's headline metrics — `summary.nudges.length`, only shown once `summary` exists (the real server-computed nudge list, not the local same-device fallback heuristic, so as not to mislabel an approximation with the term the backend's actual overdue rule owns). Also added one caption line under the map ("You're at the center. Closer means more frequent recent contact.") and a collapsed `Disclosure` ("How Scallion sees your circle") giving the real active/close/overdue definitions read straight from `api/app/circle/metrics.py`'s own docstring (two-way exchange within a week; close = 4+ such days in 30; overdue = your own typical gap plus slack, not a fixed number) — paraphrased for a non-technical reader, not reworded into something the code doesn't actually do.
+
+**3. On a phone, a returning user with a circle already connected had to scroll past four setup cards (sample/Gmail/WhatsApp/more-sources) before reaching their own map** — the literal complaint the redesign brief made about Circle specifically. Extracted the sources and circle sections into `sourcesColumn`/`circleColumn` JSX values; on narrow screens (`!isWide`) with `allEvents.length > 0`, circle renders first, sources follow. On a wide screen both are already visible side by side (sources left, circle right, unchanged), and on narrow with no data yet, sources still lead so first-time setup isn't buried under an empty map. Verified via an iframe at 390px: with a sample circle loaded, the map/metrics/advice load above the fold and the four setup cards appear only on scrolling past them.
+
+**Destructive-action gap closed:** "Clear everything" deleted local state and called `DELETE` on all server events on a single tap, no confirmation — flagged as a real risk (this app's own safety instructions and the redesign brief both call for confirming destructive actions). Now tapping it shows an inline card ("Delete everything Scallion knows about your circle? ... This can't be undone.") with Cancel and a visually distinct red "Delete everything" button; only the second tap calls `handleClear()`. Verified live: Cancel dismisses with no state change, the confirm card only appears after the first tap.
+
+**Verified:** `tsc` clean, 77/77 tests (no new ones — these are presentational/data-surfacing changes over already-tested `social/`/API-shaped data), lint clean except the pre-existing `animated.tsx` false positive, `expo export` clean. Live-browser-verified end to end: sample circle load, wide-layout metrics/pattern row, the 390px mobile reorder (via iframe, the same technique used for Phase 2's responsive checks), and the two-step clear confirmation including Cancel.
+
+**Deliberately not touched:** `circle-dot-map.tsx`'s animation/rendering internals, the Gmail/WhatsApp ingest pipeline, and `social/`'s metric definitions — all correct and out of scope; this session only added a presentation layer over data the backend already computes.
+
+**Blocked:** Nothing.
+
+**Next:** Phase 7 (Camera and Coach polish) — ask the human first. Audit first again; D's sessions have touched both screens recently (presage-worker timing fix, ElevenLabs stale-chunk guard).
+
+**Contract changes needed:** None.

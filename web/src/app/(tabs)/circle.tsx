@@ -18,6 +18,7 @@ import {
 import { ActivityStrip } from '@/components/activity-strip';
 import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { CircleDotMap } from '@/components/circle-dot-map';
+import { Disclosure } from '@/components/disclosure';
 import { Field, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -83,6 +84,7 @@ export default function CircleScreen() {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CircleSummary | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const allEvents = useMemo(() => [...whatsappEvents, ...gmailEvents], [whatsappEvents, gmailEvents]);
   const strengths: ContactStrength[] = useMemo(() => contactStrengths(allEvents, new Date()), [allEvents]);
@@ -274,6 +276,7 @@ export default function CircleScreen() {
   }
 
   async function handleClear() {
+    setConfirmingClear(false);
     setWhatsappEvents([]);
     setGmailEvents([]);
     setResults([]);
@@ -298,6 +301,322 @@ export default function CircleScreen() {
     }
   }
 
+  // On a phone (stacked, not side-by-side), a returning user with a circle already connected
+  // would otherwise scroll past four setup cards before reaching it. Once there's data, the
+  // circle leads and the connection controls follow; on a wide screen both are visible at once
+  // side by side, so the setup column stays put on the left there.
+  const circleFirst = !isWide && allEvents.length > 0;
+
+  const sourcesColumn = (
+    <View style={[styles.column, isWide && styles.leftColumnWide]}>
+      <FadeInUp delay={35}>
+        <View style={[styles.card, CardShadow, styles.sampleCard]}>
+          <SectionHeader icon="sparkles-outline" label="No account handy?" />
+          <ThemedText type="small" themeColor="textSecondary">
+            Load a synthetic circle — twelve fake contacts across months of fake messages — to see the map and advice
+            without connecting anything real.
+          </ThemedText>
+          <AnimatedPressable style={styles.sampleButton} onPress={() => void handleTrySample()} disabled={sampleBusy}>
+            {sampleBusy ? (
+              <ActivityIndicator color={Colors.accent} />
+            ) : (
+              <View style={styles.buttonContent}>
+                <Ionicons name="sparkles-outline" size={16} color={Colors.accent} />
+                <ThemedText type="smallBold" themeColor="accent">
+                  Load sample circle
+                </ThemedText>
+              </View>
+            )}
+          </AnimatedPressable>
+          {sampleError && (
+            <ThemedText type="small" themeColor="silence">
+              {sampleError}
+            </ThemedText>
+          )}
+        </View>
+      </FadeInUp>
+
+      <FadeInUp delay={70}>
+        <View style={[styles.card, CardShadow]}>
+          <SectionHeader icon="mail" label="Gmail — read-only metadata" />
+          <Field label="Your Gmail address">
+            <TextField value={gmailEmail} onChangeText={setGmailEmail} placeholder="you@gmail.com" keyboardType="email-address" />
+          </Field>
+          <AnimatedPressable style={styles.button} onPress={() => void handleGmailConnect()} disabled={gmailBusy}>
+            {gmailBusy ? (
+              <ActivityIndicator color={Colors.accentText} />
+            ) : (
+              <View style={styles.buttonContent}>
+                <Ionicons name="mail-outline" size={16} color={Colors.accentText} />
+                <ThemedText type="smallBold" themeColor="accentText">
+                  Connect Gmail
+                </ThemedText>
+              </View>
+            )}
+          </AnimatedPressable>
+          {gmailStatus && (
+            <ThemedText type="small" themeColor="textMuted">
+              {gmailStatus}
+            </ThemedText>
+          )}
+        </View>
+      </FadeInUp>
+
+      <FadeInUp delay={140}>
+        <View style={[styles.card, CardShadow]}>
+          <SectionHeader icon="logo-whatsapp" label="WhatsApp — export upload" />
+          <Field label="Your name, exactly as it appears in your own messages">
+            <TextField value={ownerName} onChangeText={setOwnerName} placeholder="e.g. your WhatsApp display name" />
+          </Field>
+          <AnimatedPressable style={styles.button} onPress={() => void handleWhatsAppUpload()}>
+            <View style={styles.buttonContent}>
+              <Ionicons name="cloud-upload-outline" size={16} color={Colors.accentText} />
+              <ThemedText type="smallBold" themeColor="accentText">
+                Upload .txt export(s)
+              </ThemedText>
+            </View>
+          </AnimatedPressable>
+          <ThemedText type="small" themeColor="textMuted">
+            Export chat -&gt; Without media, one file per person.
+          </ThemedText>
+          {whatsappError && (
+            <ThemedText type="small" themeColor="silence">
+              {whatsappError}
+            </ThemedText>
+          )}
+        </View>
+      </FadeInUp>
+
+      <FadeInUp delay={210}>
+        <View style={[styles.card, CardShadow]}>
+          <SectionHeader icon="add-circle-outline" label="More sources" />
+          <View style={styles.wrap}>
+            <Chip icon="phone-portrait-outline" label="SMS (Android)" />
+            <Chip icon="chatbubble-ellipses-outline" label="iMessage (Mac)" />
+          </View>
+          <ThemedText type="small" themeColor="textMuted">
+            Same pipeline, not wired up yet.
+          </ThemedText>
+        </View>
+      </FadeInUp>
+
+      {results.length > 0 && (
+        <FadeInUp delay={0}>
+          <View style={[styles.card, CardShadow]}>
+            <SectionHeader icon="list-outline" label="Sources" />
+            {results.map((r, i) => (
+              <ThemedText key={`${r.source}-${r.label}-${i}`} type="small" themeColor={r.status === 'ok' ? 'textSecondary' : 'silence'}>
+                {r.source === 'gmail' ? 'Gmail' : 'WhatsApp'} — {r.label}: {r.status === 'ok' ? `${r.eventCount} events` : r.message}
+              </ThemedText>
+            ))}
+          </View>
+        </FadeInUp>
+      )}
+
+      {allEvents.length > 0 &&
+        (confirmingClear ? (
+          <View style={[styles.card, styles.confirmCard]}>
+            <ThemedText type="small">Delete everything Scallion knows about your circle?</ThemedText>
+            <ThemedText type="small" themeColor="textMuted">
+              Removes the stored connection events from the server and this device. This can&apos;t be undone.
+            </ThemedText>
+            <View style={styles.wrap}>
+              <AnimatedPressable style={styles.secondaryButtonSmall} onPress={() => setConfirmingClear(false)}>
+                <ThemedText type="smallBold" themeColor="accent">
+                  Cancel
+                </ThemedText>
+              </AnimatedPressable>
+              <AnimatedPressable style={styles.dangerButton} onPress={() => void handleClear()}>
+                <ThemedText type="smallBold" themeColor="accentText">
+                  Delete everything
+                </ThemedText>
+              </AnimatedPressable>
+            </View>
+          </View>
+        ) : (
+          <AnimatedPressable style={styles.link} onPress={() => setConfirmingClear(true)}>
+            <ThemedText type="small" themeColor="textMuted">
+              Clear everything (session + saved names + salt)
+            </ThemedText>
+          </AnimatedPressable>
+        ))}
+    </View>
+  );
+
+  const circleColumn = (
+    <View style={[styles.column, isWide && styles.rightColumnWide]}>
+      <FadeInUp delay={allEvents.length > 0 ? 0 : 280}>
+        <View style={[styles.card, CardShadow, styles.circleCard]}>
+          <View style={styles.circleHeaderRow}>
+            <SectionHeader icon="planet-outline" label="Your circle" />
+            {syncing && <ActivityIndicator size="small" color={Colors.accent} />}
+          </View>
+
+          {allEvents.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="radio-outline" size={26} color={Colors.textMuted} />
+              <ThemedText type="small" themeColor="textMuted" style={styles.emptyStateText}>
+                Connect Gmail or upload a WhatsApp export to see your circle and get relationship advice here.
+              </ThemedText>
+            </View>
+          ) : (
+            <>
+              {summary && (
+                <View style={styles.metricsRow}>
+                  <Metric label="Active" value={summary.metrics.activeTies} />
+                  <Metric label="Close" value={summary.metrics.closeTies} />
+                  <Metric label="Overdue" value={summary.nudges.length} color={summary.nudges.length > 0 ? 'silence' : 'connection'} />
+                </View>
+              )}
+
+              <CircleDotMap contacts={strengths} selected={selected} onSelect={setSelected} />
+              <ThemedText type="small" themeColor="textMuted" style={styles.mapCaption}>
+                You&apos;re at the center. Closer means more frequent recent contact.
+              </ThemedText>
+
+              {summary && (
+                <Disclosure title="How Scallion sees your circle">
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Active: at least one real back-and-forth day (a message from you and one from them, within a
+                    week of each other) in the last 30 days. Close: four or more such days in that window.
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Overdue: it&apos;s been longer than your own typical gap with that person (plus some slack for
+                    normal variation) — not a fixed number of days for everyone.
+                  </ThemedText>
+                </Disclosure>
+              )}
+
+              {syncError && (
+                <ThemedText type="small" themeColor="silence">
+                  {syncError}
+                </ThemedText>
+              )}
+
+              {selected && selectedInfo && (
+                <FadeInUp duration={260} distance={6}>
+                  <View style={styles.detailCard}>
+                    <View style={styles.detailHeaderRow}>
+                      <View style={[styles.tierDot, { backgroundColor: TIER_COLOR[selectedInfo.tier] }]} />
+                      <ThemedText type="smallBold" style={{ flex: 1 }}>
+                        {displayContact(selected)}
+                      </ThemedText>
+                      <AnimatedPressable onPress={() => setSelected(null)} hitSlop={8}>
+                        <Ionicons name="close" size={16} color={Colors.textMuted} />
+                      </AnimatedPressable>
+                    </View>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {TIER_LABEL[selectedInfo.tier]} tie · {selectedInfo.eventCount} messages in 30 days · last contact{' '}
+                      {selectedInfo.daysSinceLast} day{selectedInfo.daysSinceLast === 1 ? '' : 's'} ago
+                    </ThemedText>
+                    {selectedAdvice && (
+                      <ThemedText type="small" themeColor="accent">
+                        {selectedAdvice.text}
+                      </ThemedText>
+                    )}
+                  </View>
+                </FadeInUp>
+              )}
+
+              {advice.length > 0 && (
+                <View style={{ gap: Spacing.two }}>
+                  <ThemedText type="smallBold" themeColor="textSecondary">
+                    Reach out to revive
+                  </ThemedText>
+                  {advice.map((a) => {
+                    const isSelected = selected === a.contact;
+                    return (
+                      <AnimatedPressable
+                        key={a.contact}
+                        onPress={() => setSelected(isSelected ? null : a.contact)}
+                        style={[styles.adviceRow, isSelected && styles.adviceRowSelected]}>
+                        <Ionicons name="alert-circle-outline" size={14} color={isSelected ? Colors.accent : Colors.textMuted} />
+                        <ThemedText type="small" themeColor={isSelected ? 'accent' : 'textSecondary'} style={{ flex: 1 }}>
+                          {displayContact(a.contact)} — {a.text}
+                        </ThemedText>
+                      </AnimatedPressable>
+                    );
+                  })}
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </FadeInUp>
+
+      {allEvents.length > 0 && (
+        <FadeInUp delay={60}>
+          <View style={[styles.card, CardShadow]}>
+            <SectionHeader icon="pulse-outline" label="Social score" />
+            {summary ? (
+              <>
+                <View style={styles.scoreRow}>
+                  <AnimatedNumber
+                    value={summary.lsns.score}
+                    type="numeric"
+                    style={styles.scoreNumber}
+                    themeColor={summary.lsns.atRisk ? 'silence' : 'connection'}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="small" themeColor="textMuted">
+                      out of 30 · LSNS-6 proxy, 4 of 6 items from your messaging
+                    </ThemedText>
+                    <ThemedText type="small" themeColor={summary.lsns.atRisk ? 'silence' : 'textSecondary'}>
+                      {summary.lsns.label}
+                      {summary.lsns.atRisk && summary.risk
+                        ? ` — risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.`
+                        : ''}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                <View style={styles.trendRow}>
+                  <TrendStat label="Active ties" current={summary.metrics.activeTies} previous={summary.previous.activeTies} />
+                  <TrendStat label="Close ties" current={summary.metrics.closeTies} previous={summary.previous.closeTies} />
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.patternHeading}>
+                  Connection pattern
+                </ThemedText>
+                <View style={styles.patternGrid}>
+                  <PatternStat label="You start" value={`${Math.round(summary.metrics.initiationShare * 100)}%`} />
+                  <PatternStat
+                    label="Your reply time"
+                    value={summary.metrics.replyLatencyH.mine !== null ? `${summary.metrics.replyLatencyH.mine} h` : 'not enough data'}
+                  />
+                  <PatternStat
+                    label="Their reply time"
+                    value={summary.metrics.replyLatencyH.theirs !== null ? `${summary.metrics.replyLatencyH.theirs} h` : 'not enough data'}
+                  />
+                  {summary.metrics.churn > 0 && <PatternStat label="Gone quiet" value={`${Math.round(summary.metrics.churn * 100)}%`} />}
+                </View>
+
+                {summary.heatmap.length > 0 && (
+                  <View style={{ gap: Spacing.one }}>
+                    <ThemedText type="small" themeColor="textMuted">
+                      Last 30 days
+                    </ThemedText>
+                    <ActivityStrip days={summary.heatmap.slice(-30)} />
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.scoreRow}>
+                <ThemedText type="numeric" style={styles.scoreNumber}>
+                  {strengths.filter((s) => s.tier !== 'weak').length}/{strengths.length}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+                  ties active or close in the last 30 days, computed on this device. Connect to sync for your full
+                  LSNS-6 social score, connection pattern, and month-over-month trend.
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        </FadeInUp>
+      )}
+    </View>
+  );
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -319,277 +638,18 @@ export default function CircleScreen() {
             </FadeInUp>
 
             <View style={[styles.splitRow, isWide && styles.splitRowWide]}>
-              <View style={[styles.column, isWide && styles.leftColumnWide]}>
-                <FadeInUp delay={35}>
-                  <View style={[styles.card, CardShadow, styles.sampleCard]}>
-                    <SectionHeader icon="sparkles-outline" label="No account handy?" />
-                    <ThemedText type="small" themeColor="textSecondary">
-                      Load a synthetic circle — twelve fake contacts across months of fake messages — to see the map and
-                      advice without connecting anything real.
-                    </ThemedText>
-                    <AnimatedPressable style={styles.sampleButton} onPress={() => void handleTrySample()} disabled={sampleBusy}>
-                      {sampleBusy ? (
-                        <ActivityIndicator color={Colors.accent} />
-                      ) : (
-                        <View style={styles.buttonContent}>
-                          <Ionicons name="sparkles-outline" size={16} color={Colors.accent} />
-                          <ThemedText type="smallBold" themeColor="accent">
-                            Load sample circle
-                          </ThemedText>
-                        </View>
-                      )}
-                    </AnimatedPressable>
-                    {sampleError && (
-                      <ThemedText type="small" themeColor="silence">
-                        {sampleError}
-                      </ThemedText>
-                    )}
-                  </View>
-                </FadeInUp>
-
-                <FadeInUp delay={70}>
-                  <View style={[styles.card, CardShadow]}>
-                    <SectionHeader icon="mail" label="Gmail — read-only metadata" />
-                    <Field label="Your Gmail address">
-                      <TextField
-                        value={gmailEmail}
-                        onChangeText={setGmailEmail}
-                        placeholder="you@gmail.com"
-                        keyboardType="email-address"
-                      />
-                    </Field>
-                    <AnimatedPressable style={styles.button} onPress={() => void handleGmailConnect()} disabled={gmailBusy}>
-                      {gmailBusy ? (
-                        <ActivityIndicator color={Colors.accentText} />
-                      ) : (
-                        <View style={styles.buttonContent}>
-                          <Ionicons name="mail-outline" size={16} color={Colors.accentText} />
-                          <ThemedText type="smallBold" themeColor="accentText">
-                            Connect Gmail
-                          </ThemedText>
-                        </View>
-                      )}
-                    </AnimatedPressable>
-                    {gmailStatus && (
-                      <ThemedText type="small" themeColor="textMuted">
-                        {gmailStatus}
-                      </ThemedText>
-                    )}
-                  </View>
-                </FadeInUp>
-
-                <FadeInUp delay={140}>
-                  <View style={[styles.card, CardShadow]}>
-                    <SectionHeader icon="logo-whatsapp" label="WhatsApp — export upload" />
-                    <Field label="Your name, exactly as it appears in your own messages">
-                      <TextField value={ownerName} onChangeText={setOwnerName} placeholder="e.g. your WhatsApp display name" />
-                    </Field>
-                    <AnimatedPressable style={styles.button} onPress={() => void handleWhatsAppUpload()}>
-                      <View style={styles.buttonContent}>
-                        <Ionicons name="cloud-upload-outline" size={16} color={Colors.accentText} />
-                        <ThemedText type="smallBold" themeColor="accentText">
-                          Upload .txt export(s)
-                        </ThemedText>
-                      </View>
-                    </AnimatedPressable>
-                    <ThemedText type="small" themeColor="textMuted">
-                      Export chat -&gt; Without media, one file per person.
-                    </ThemedText>
-                    {whatsappError && (
-                      <ThemedText type="small" themeColor="silence">
-                        {whatsappError}
-                      </ThemedText>
-                    )}
-                  </View>
-                </FadeInUp>
-
-                <FadeInUp delay={210}>
-                  <View style={[styles.card, CardShadow]}>
-                    <SectionHeader icon="add-circle-outline" label="More sources" />
-                    <View style={styles.wrap}>
-                      <Chip icon="phone-portrait-outline" label="SMS (Android)" />
-                      <Chip icon="chatbubble-ellipses-outline" label="iMessage (Mac)" />
-                    </View>
-                    <ThemedText type="small" themeColor="textMuted">
-                      Same pipeline, not wired up yet.
-                    </ThemedText>
-                  </View>
-                </FadeInUp>
-
-                {results.length > 0 && (
-                  <FadeInUp delay={0}>
-                    <View style={[styles.card, CardShadow]}>
-                      <SectionHeader icon="list-outline" label="Sources" />
-                      {results.map((r, i) => (
-                        <ThemedText
-                          key={`${r.source}-${r.label}-${i}`}
-                          type="small"
-                          themeColor={r.status === 'ok' ? 'textSecondary' : 'silence'}>
-                          {r.source === 'gmail' ? 'Gmail' : 'WhatsApp'} — {r.label}:{' '}
-                          {r.status === 'ok' ? `${r.eventCount} events` : r.message}
-                        </ThemedText>
-                      ))}
-                    </View>
-                  </FadeInUp>
-                )}
-              </View>
-
-              <View style={[styles.column, isWide && styles.rightColumnWide]}>
-                <FadeInUp delay={allEvents.length > 0 ? 0 : 280}>
-                  <View style={[styles.card, CardShadow, styles.circleCard]}>
-                    <View style={styles.circleHeaderRow}>
-                      <SectionHeader icon="planet-outline" label="Your circle" />
-                      {syncing && <ActivityIndicator size="small" color={Colors.accent} />}
-                    </View>
-
-                    {allEvents.length === 0 ? (
-                      <View style={styles.emptyState}>
-                        <Ionicons name="radio-outline" size={26} color={Colors.textMuted} />
-                        <ThemedText type="small" themeColor="textMuted" style={styles.emptyStateText}>
-                          Connect Gmail or upload a WhatsApp export to see your circle and get relationship advice here.
-                        </ThemedText>
-                      </View>
-                    ) : (
-                      <>
-                        <CircleDotMap contacts={strengths} selected={selected} onSelect={setSelected} />
-
-                        {summary && (
-                          <View style={styles.metricsRow}>
-                            <Metric label="Active ties" value={summary.metrics.activeTies} />
-                            <Metric label="Close ties" value={summary.metrics.closeTies} />
-                          </View>
-                        )}
-
-                        {syncError && (
-                          <ThemedText type="small" themeColor="silence">
-                            {syncError}
-                          </ThemedText>
-                        )}
-
-                        {selected && selectedInfo && (
-                          <FadeInUp duration={260} distance={6}>
-                            <View style={styles.detailCard}>
-                              <View style={styles.detailHeaderRow}>
-                                <View style={[styles.tierDot, { backgroundColor: TIER_COLOR[selectedInfo.tier] }]} />
-                                <ThemedText type="smallBold" style={{ flex: 1 }}>
-                                  {displayContact(selected)}
-                                </ThemedText>
-                                <AnimatedPressable onPress={() => setSelected(null)} hitSlop={8}>
-                                  <Ionicons name="close" size={16} color={Colors.textMuted} />
-                                </AnimatedPressable>
-                              </View>
-                              <ThemedText type="small" themeColor="textSecondary">
-                                {TIER_LABEL[selectedInfo.tier]} tie · {selectedInfo.eventCount} messages in 30 days · last
-                                contact {selectedInfo.daysSinceLast} day{selectedInfo.daysSinceLast === 1 ? '' : 's'} ago
-                              </ThemedText>
-                              {selectedAdvice && (
-                                <ThemedText type="small" themeColor="accent">
-                                  {selectedAdvice.text}
-                                </ThemedText>
-                              )}
-                            </View>
-                          </FadeInUp>
-                        )}
-
-                        {advice.length > 0 && (
-                          <View style={{ gap: Spacing.two }}>
-                            <ThemedText type="smallBold" themeColor="textSecondary">
-                              Reach out to revive
-                            </ThemedText>
-                            {advice.map((a) => {
-                              const isSelected = selected === a.contact;
-                              return (
-                                <AnimatedPressable
-                                  key={a.contact}
-                                  onPress={() => setSelected(isSelected ? null : a.contact)}
-                                  style={[styles.adviceRow, isSelected && styles.adviceRowSelected]}>
-                                  <Ionicons
-                                    name="alert-circle-outline"
-                                    size={14}
-                                    color={isSelected ? Colors.accent : Colors.textMuted}
-                                  />
-                                  <ThemedText type="small" themeColor={isSelected ? 'accent' : 'textSecondary'} style={{ flex: 1 }}>
-                                    {displayContact(a.contact)} — {a.text}
-                                  </ThemedText>
-                                </AnimatedPressable>
-                              );
-                            })}
-                          </View>
-                        )}
-                      </>
-                    )}
-                  </View>
-                </FadeInUp>
-
-                {allEvents.length > 0 && (
-                  <FadeInUp delay={60}>
-                    <View style={[styles.card, CardShadow]}>
-                      <SectionHeader icon="pulse-outline" label="Social score" />
-                      {summary ? (
-                        <>
-                          <View style={styles.scoreRow}>
-                            <AnimatedNumber
-                              value={summary.lsns.score}
-                              type="numeric"
-                              style={styles.scoreNumber}
-                              themeColor={summary.lsns.atRisk ? 'silence' : 'connection'}
-                            />
-                            <View style={{ flex: 1 }}>
-                              <ThemedText type="small" themeColor="textMuted">
-                                out of 30 · LSNS-6 proxy, 4 of 6 items from your messaging
-                              </ThemedText>
-                              <ThemedText type="small" themeColor={summary.lsns.atRisk ? 'silence' : 'textSecondary'}>
-                                {summary.lsns.label}
-                                {summary.lsns.atRisk && summary.risk
-                                  ? ` — risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.`
-                                  : ''}
-                              </ThemedText>
-                            </View>
-                          </View>
-
-                          <View style={styles.trendRow}>
-                            <TrendStat label="Active ties" current={summary.metrics.activeTies} previous={summary.previous.activeTies} />
-                            <TrendStat label="Close ties" current={summary.metrics.closeTies} previous={summary.previous.closeTies} />
-                          </View>
-
-                          {summary.metrics.churn > 0 && (
-                            <ThemedText type="small" themeColor="textSecondary">
-                              {Math.round(summary.metrics.churn * 100)}% of last month&apos;s active ties have gone quiet
-                              this month.
-                            </ThemedText>
-                          )}
-
-                          {summary.heatmap.length > 0 && (
-                            <View style={{ gap: Spacing.one }}>
-                              <ThemedText type="small" themeColor="textMuted">
-                                Last 30 days
-                              </ThemedText>
-                              <ActivityStrip days={summary.heatmap.slice(-30)} />
-                            </View>
-                          )}
-                        </>
-                      ) : (
-                        <View style={styles.scoreRow}>
-                          <ThemedText type="numeric" style={styles.scoreNumber}>
-                            {strengths.filter((s) => s.tier !== 'weak').length}/{strengths.length}
-                          </ThemedText>
-                          <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
-                            ties active or close in the last 30 days, computed on this device. Connect to sync for your
-                            full LSNS-6 social score and month-over-month trend.
-                          </ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  </FadeInUp>
-                )}
-              </View>
+              {circleFirst ? (
+                <>
+                  {circleColumn}
+                  {sourcesColumn}
+                </>
+              ) : (
+                <>
+                  {sourcesColumn}
+                  {circleColumn}
+                </>
+              )}
             </View>
-
-            <AnimatedPressable style={styles.link} onPress={() => void handleClear()}>
-              <ThemedText type="small" themeColor="textMuted">
-                Clear everything (session + saved names + salt)
-              </ThemedText>
-            </AnimatedPressable>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -606,10 +666,24 @@ function SectionHeader({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; 
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value, color }: { label: string; value: number; color?: 'silence' | 'connection' }) {
   return (
     <View style={styles.metric}>
-      <AnimatedNumber value={value} type="numeric" style={{ fontSize: 28, lineHeight: 32 }} />
+      <AnimatedNumber value={value} type="numeric" themeColor={color} style={{ fontSize: 28, lineHeight: 32 }} />
+      <ThemedText type="small" themeColor="textMuted">
+        {label}
+      </ThemedText>
+    </View>
+  );
+}
+
+/** One line of the "Connection pattern" breakdown — a stat with no history to compare against, unlike TrendStat. */
+function PatternStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.patternStat}>
+      <ThemedText type="smallBold" style={styles.tabular}>
+        {value}
+      </ThemedText>
       <ThemedText type="small" themeColor="textMuted">
         {label}
       </ThemedText>
@@ -729,9 +803,36 @@ const styles = StyleSheet.create({
   },
   metricsRow: { flexDirection: 'row', gap: Spacing.four, justifyContent: 'center' },
   metric: { alignItems: 'center' },
+  mapCaption: { textAlign: 'center' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   scoreNumber: { fontSize: 44, lineHeight: 48 },
   trendRow: { flexDirection: 'row', gap: Spacing.five, justifyContent: 'center' },
   trendStat: { alignItems: 'center', gap: Spacing.half },
+  patternHeading: { marginTop: Spacing.one },
+  patternGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four, rowGap: Spacing.two },
+  patternStat: { gap: Spacing.half, minWidth: 96 },
+  tabular: { fontVariant: ['tabular-nums'] },
   link: { alignItems: 'center', paddingVertical: Spacing.two },
+  confirmCard: {
+    borderWidth: 1,
+    borderColor: Colors.silence,
+    gap: Spacing.two,
+  },
+  secondaryButtonSmall: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  dangerButton: {
+    backgroundColor: Colors.silence,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
 });
