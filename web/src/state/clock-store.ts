@@ -16,6 +16,9 @@ export interface LocalClock {
   computedAt: string;
   /** phenoage only: analytes imputed ("8 of 9 markers"). */
   imputed?: string[];
+  /** phenoage: the nine SI inputs used (same shape as POST /clock `inputs`), so Home can rebuild the waterfall. */
+  inputs?: Record<string, number>;
+  sex?: 'M' | 'F';
 }
 
 /** What /start asked, kept so the Camera screen can turn a measured pulse into a fitness age. */

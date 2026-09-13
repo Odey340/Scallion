@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, TextInput, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -6,6 +7,7 @@ import { ANALYTE_LABELS } from '@/components/waterfall';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { ANALYTES, type AnalyteKey } from '@/engine/phenoage';
 import type { Analyte } from '@/lib/api';
+import { parseNumberText, textForValue } from '@/lib/number-text';
 
 /**
  * The nine PhenoAge analytes as the report printed them, next to the SI value the clock uses.
@@ -62,17 +64,7 @@ export function ReviewTable({ units, analytes, values, onChange, selected, onSel
                 )}
               </View>
               <View style={styles.rowValue}>
-                <TextInput
-                  style={[styles.input, missing && styles.inputMissing]}
-                  keyboardType="numeric"
-                  placeholder="—"
-                  placeholderTextColor={Colors.textMuted}
-                  value={missing ? '' : String(v)}
-                  onChangeText={(t) => {
-                    const n = Number(t);
-                    onChange(key, t.trim() === '' || !Number.isFinite(n) ? null : n);
-                  }}
-                />
+                <NumberCell style={[styles.input, missing && styles.inputMissing]} value={v} onChange={(n) => onChange(key, n)} />
                 <ThemedText type="small" themeColor="textMuted">
                   {units[key]}
                 </ThemedText>
@@ -97,6 +89,32 @@ export function ReviewTable({ units, analytes, values, onChange, selected, onSel
         );
       })}
     </View>
+  );
+}
+
+/** Keeps the user's own text (so "5." survives) and only shows a new number when it changed elsewhere. */
+function NumberCell({
+  value,
+  onChange,
+  style,
+}: {
+  value: number | null | undefined;
+  onChange: (n: number | null) => void;
+  style: StyleProp<TextStyle>;
+}) {
+  const [text, setText] = useState(() => textForValue('', value));
+  return (
+    <TextInput
+      style={style}
+      keyboardType="decimal-pad"
+      placeholder="—"
+      placeholderTextColor={Colors.textMuted}
+      value={textForValue(text, value)}
+      onChangeText={(t) => {
+        setText(t);
+        onChange(parseNumberText(t));
+      }}
+    />
   );
 }
 

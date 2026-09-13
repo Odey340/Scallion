@@ -230,7 +230,16 @@ export default function LabsScreen() {
     setLabs({ age, result });
     updateProfile({ age, sex: labs.sex });
     if (result.phenoage !== null) {
-      setLocalClock({ clock: 'phenoage', years: result.phenoage, chronologicalAge: age, band: result.band, computedAt: new Date().toISOString(), imputed: result.imputed });
+      setLocalClock({
+        clock: 'phenoage',
+        years: result.phenoage,
+        chronologicalAge: age,
+        band: result.band,
+        computedAt: new Date().toISOString(),
+        imputed: result.imputed,
+        inputs: { ...result.inputs },
+        sex: result.sex,
+      });
       if (hasToken()) {
         api
           .postClock({

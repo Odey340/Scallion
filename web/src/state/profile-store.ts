@@ -121,6 +121,15 @@ export const PROFILE_REQUIREMENTS = {
   phenoAge: ['age', 'sex'] as ProfileField[],
 };
 
+/** Each feature, where it lives, and the profile fields it waits for — shown so users know why a question is asked. */
+export const PROFILE_FEATURES: { label: string; where: string; fields: ProfileField[] }[] = [
+  { label: 'Fitness age', where: 'Start and Camera', fields: PROFILE_REQUIREMENTS.fitnessAge },
+  { label: 'Meal model', where: 'Scan', fields: PROFILE_REQUIREMENTS.mealModel },
+  { label: 'Coffee cutoff', where: 'Scan', fields: PROFILE_REQUIREMENTS.caffeine },
+  { label: 'Blood age', where: 'Labs', fields: PROFILE_REQUIREMENTS.phenoAge },
+  { label: 'Social support score', where: 'Circle', fields: ['help_family', 'help_friends'] },
+];
+
 export function missingFields(requirement: ProfileField[], profile: UserProfile = current): ProfileField[] {
   return requirement.filter((f) => {
     if (f === 'on_glucose_meds' && profile.glucoseMedsDeclined) return false;

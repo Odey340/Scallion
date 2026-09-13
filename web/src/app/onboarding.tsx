@@ -26,7 +26,7 @@ import { api, type Me } from '@/lib/api';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { useSession } from '@/state/auth-store';
 import { decodeJwtSub } from '@/state/local-identity';
-import { answersFromProfile, getProfile, missingFields, PROFILE_REQUIREMENTS, updateProfile, useProfile, type UserProfile } from '@/state/profile-store';
+import { answersFromProfile, getProfile, missingFields, PROFILE_FEATURES, updateProfile, useProfile, type UserProfile } from '@/state/profile-store';
 
 const RESEND_COOLDOWN_S = 60;
 
@@ -96,14 +96,7 @@ const FIELD_NAME: Partial<Record<Field_, string>> = {
   help_friends: 'friends question',
 };
 
-/** What each feature needs from the profile — shown so the user knows why a question is asked. */
-const READINESS: { label: string; where: string; fields: Field_[] }[] = [
-  { label: 'Fitness age', where: 'Start and Camera', fields: PROFILE_REQUIREMENTS.fitnessAge },
-  { label: 'Meal model', where: 'Scan', fields: PROFILE_REQUIREMENTS.mealModel },
-  { label: 'Coffee cutoff', where: 'Scan', fields: PROFILE_REQUIREMENTS.caffeine },
-  { label: 'Blood age', where: 'Labs', fields: PROFILE_REQUIREMENTS.phenoAge },
-  { label: 'Social support score', where: 'Circle', fields: ['help_family', 'help_friends'] },
-];
+const READINESS = PROFILE_FEATURES;
 
 function sectionFields(key: SectionKey, p: UserProfile): Field_[] {
   switch (key) {
