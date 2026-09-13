@@ -8,9 +8,30 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { api, type Answers, type Me } from '@/lib/api';
-import { decodeJwtSub, loadLocalAnswers, saveLocalAnswers, signIn, signOut, useLocalUser } from '@/state/local-identity';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { useSession } from '@/state/auth-store';
+import { decodeJwtSub, loadLocalAnswers, saveLocalAnswers } from '@/state/local-identity';
 
 const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
+const RESEND_COOLDOWN_S = 60;
+
+/**
+ * Supabase's raw auth errors are terse. The ones we hit in practice:
+ *  - "email rate limit exceeded": the PROJECT-wide cap on auth emails (now 60/hour via custom
+ *    SMTP; was 2/hour on Supabase's built-in sender) — nothing the app can do but wait.
+ *  - "For security purposes, you can only request this after N seconds": per-address 60 s cooldown.
+ */
+function describeAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('rate limit')) {
+    return 'Too many sign-in emails were sent from this project in the last hour (Supabase caps them). Please try again in a while.';
+  }
+  const wait = /after (\d+) seconds/.exec(m);
+  if (wait) return `Please wait ${wait[1]} seconds before requesting another code.`;
+  if (m.includes('expired')) return 'That code has expired. Request a new one.';
+  if (m.includes('invalid')) return 'That code did not match. Check the email and try again.';
+  return message;
+}
 
 // docs/log/D.md session H13: template created for this project. Not a secret by Persona's own
 // design (it's meant to sit in a client-facing verify_url) — overridable if D rotates it.
@@ -19,16 +40,27 @@ const DEMO_TOKEN = process.env.EXPO_PUBLIC_DEMO_TOKEN ?? null;
 const DEMO_USER_ID = DEMO_TOKEN ? decodeJwtSub(DEMO_TOKEN) : null;
 
 /**
- * What leaves your phone; a fake local sign-in (see state/local-identity.ts for why); the full
- * onboarding questionnaire (contracts.md §3 AnswersIn — medication, sleep, smoking, oral
+ * What leaves your phone; real sign-in (Supabase email one-time code, verified by api/app/auth.py);
+ * the full onboarding questionnaire (contracts.md §3 AnswersIn — medication, sleep, smoking, oral
  * contraceptive use, bedtime, usual caffeine, and the two LSNS items plus loneliness/living alone);
  * Persona identity verification via a client-built verify_url. docs/lanes/C.md Block 4.
  */
 export default function OnboardingScreen() {
-  const user = useLocalUser();
+  const { session, loading } = useSession();
+  const user = session ? { id: session.user.id, email: session.user.email ?? '' } : null;
 
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   const [onMeds, setOnMeds] = useState<boolean | null>(null);
   const [smoker, setSmoker] = useState<boolean | null>(null);
@@ -47,8 +79,9 @@ export default function OnboardingScreen() {
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
 
-  const canUseRealApi = Boolean(DEMO_TOKEN && DEMO_USER_ID);
-  const personaReferenceId = DEMO_USER_ID ?? user?.id ?? null;
+  // A real session always wins; the shared demo account is the fallback when nobody is signed in.
+  const canUseRealApi = Boolean(session) || Boolean(DEMO_TOKEN && DEMO_USER_ID);
+  const personaReferenceId = session?.user.id ?? DEMO_USER_ID ?? null;
   const verifyUrl = personaReferenceId
     ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}`
     : null;
@@ -82,15 +115,43 @@ export default function OnboardingScreen() {
     const stored = loadLocalAnswers();
     if (stored) applyStoredAnswers(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [session]);
 
-  const handleSignIn = () => {
-    if (!name.trim() || !email.trim()) return;
-    signIn(name, email);
+  const sendCode = async () => {
+    if (!supabase || !email.trim() || cooldown > 0) return;
+    setAuthBusy(true);
+    setAuthError(null);
+    // The emailed link returns here; the origin must be in the Supabase project's redirect
+    // allowlist (it is: scallion.us, *.vercel.app, localhost), else Supabase falls back to Site URL.
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: redirectTo },
+    });
+    setAuthBusy(false);
+    if (error) {
+      setAuthError(describeAuthError(error.message));
+      setCooldown(RESEND_COOLDOWN_S);
+      return;
+    }
+    setOtpSent(true);
+    setCooldown(RESEND_COOLDOWN_S);
   };
 
-  const handleSignOut = () => {
-    signOut();
+  const verifyCode = async () => {
+    if (!supabase || !otp.trim()) return;
+    setAuthBusy(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: 'email' });
+    setAuthBusy(false);
+    if (error) setAuthError(describeAuthError(error.message));
+  };
+
+  const handleSignOut = async () => {
+    await supabase?.auth.signOut();
+    setOtpSent(false);
+    setOtp('');
+    setAuthError(null);
     setMe(null);
   };
 
@@ -114,7 +175,7 @@ export default function OnboardingScreen() {
     if (canUseRealApi) {
       try {
         await api.setAnswers(answers);
-        setSaveStatus('Saved to the demo account.');
+        setSaveStatus(session ? 'Saved to your account.' : 'Saved to the demo account.');
         refreshMe();
         return;
       } catch {
@@ -122,7 +183,11 @@ export default function OnboardingScreen() {
       }
     }
     saveLocalAnswers(answers);
-    setSaveStatus('Saved on this device (no demo account configured, so this stays local).');
+    setSaveStatus(
+      canUseRealApi
+        ? 'Could not reach the API, so this is saved on this device instead.'
+        : 'Saved on this device (not signed in, so this stays local).',
+    );
   };
 
   return (
@@ -161,14 +226,18 @@ export default function OnboardingScreen() {
             <FadeInUp delay={210}>
               <ThemedView type="surface" style={[styles.card, CardShadow]}>
                 <ThemedText type="smallBold">Sign in</ThemedText>
-                <ThemedText type="small" themeColor="textMuted">
-                  This isn&apos;t a real account — just a name so the app can remember you on this
-                  device. Nothing is verified here; that&apos;s what Persona (below) is for.
-                </ThemedText>
-                {user ? (
+                {!isSupabaseConfigured ? (
+                  <ThemedText type="small" themeColor="silence">
+                    Sign-in isn&apos;t configured (missing the Supabase URL/anon key env vars).
+                  </ThemedText>
+                ) : loading ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Checking your session…
+                  </ThemedText>
+                ) : user ? (
                   <>
                     <ThemedText type="small" themeColor="textSecondary">
-                      Signed in as {user.name} ({user.email}).
+                      Signed in as {user.email || 'your account'}.
                     </ThemedText>
                     <AnimatedPressable style={styles.secondaryButton} onPress={handleSignOut}>
                       <ThemedText type="small">Sign out</ThemedText>
@@ -176,17 +245,60 @@ export default function OnboardingScreen() {
                   </>
                 ) : (
                   <>
-                    <Field label="Name">
-                      <TextField value={name} onChangeText={setName} placeholder="Your name" />
-                    </Field>
+                    <ThemedText type="small" themeColor="textMuted">
+                      We email you a 6-digit code. No password, and nothing else leaves the app.
+                    </ThemedText>
                     <Field label="Email">
                       <TextField value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
                     </Field>
-                    <AnimatedPressable style={styles.submit} onPress={handleSignIn} disabled={!name.trim() || !email.trim()}>
-                      <ThemedText type="smallBold" themeColor="accentText">
-                        Continue
+                    {!otpSent ? (
+                      <AnimatedPressable
+                        style={[styles.submit, (authBusy || cooldown > 0) && styles.submitDisabled]}
+                        onPress={sendCode}
+                        disabled={authBusy || cooldown > 0 || !email.trim()}
+                      >
+                        <ThemedText type="smallBold" themeColor="accentText">
+                          {authBusy ? 'Sending…' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send sign-in code'}
+                        </ThemedText>
+                      </AnimatedPressable>
+                    ) : (
+                      <>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          Check your email for a 6-digit code and enter it below, or click the link in the
+                          email to come straight back here signed in.
+                        </ThemedText>
+                        <Field label="6-digit code">
+                          <TextField value={otp} onChangeText={setOtp} placeholder="123456" keyboardType="number-pad" />
+                        </Field>
+                        <AnimatedPressable style={styles.submit} onPress={verifyCode} disabled={authBusy || !otp.trim()}>
+                          <ThemedText type="smallBold" themeColor="accentText">
+                            {authBusy ? 'Verifying…' : 'Verify code'}
+                          </ThemedText>
+                        </AnimatedPressable>
+                        <AnimatedPressable
+                          style={[styles.secondaryButton, cooldown > 0 && styles.submitDisabled]}
+                          onPress={sendCode}
+                          disabled={authBusy || cooldown > 0}
+                        >
+                          <ThemedText type="small">{cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}</ThemedText>
+                        </AnimatedPressable>
+                        <AnimatedPressable
+                          style={styles.secondaryButton}
+                          onPress={() => {
+                            setOtpSent(false);
+                            setOtp('');
+                            setAuthError(null);
+                          }}
+                        >
+                          <ThemedText type="small">Use a different email</ThemedText>
+                        </AnimatedPressable>
+                      </>
+                    )}
+                    {authError && (
+                      <ThemedText type="small" themeColor="silence">
+                        {authError}
                       </ThemedText>
-                    </AnimatedPressable>
+                    )}
                   </>
                 )}
               </ThemedView>
@@ -299,9 +411,8 @@ export default function OnboardingScreen() {
                   <>
                     {!canUseRealApi && (
                       <ThemedText type="small" themeColor="textMuted">
-                        No demo account is configured, so the app can&apos;t ask the real API to
-                        confirm your result — but Persona&apos;s own verification flow below is
-                        real and fully testable end to end.
+                        The app can&apos;t reach the real API for your account right now, but
+                        Persona&apos;s own verification flow below is real and fully testable.
                       </ThemedText>
                     )}
                     {meError && (
@@ -366,6 +477,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  submitDisabled: {
+    opacity: 0.6,
   },
   secondaryButton: {
     borderWidth: 1,

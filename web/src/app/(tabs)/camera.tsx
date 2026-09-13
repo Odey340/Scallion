@@ -11,7 +11,7 @@ import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constant
 import { computeFitnessAge, FALLBACK_PAI_OPTIONS, type FitnessAgeResult, type HuntData, type Sex } from '@/engine/fitness-age';
 import { ApiError, api, hasToken, type VitalsOut } from '@/lib/api';
 import { setFitnessInputs, setLocalClock, useFitnessInputs } from '@/state/clock-store';
-import { useLocalUser } from '@/state/local-identity';
+import { useSession } from '@/state/auth-store';
 
 /**
  * Camera: thirty seconds of face for pulse and breathing (docs/lanes/C.md Blocks 1 and 3).
@@ -32,7 +32,8 @@ type Phase = 'idle' | 'capturing' | 'settling' | 'done' | 'timeout';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  const localUser = useLocalUser();
+  // Subscribing re-renders this screen when the session (and so hasToken()) changes.
+  useSession();
   const inputs = useFitnessInputs();
 
   const [hunt, setHunt] = useState<HuntData | null>(null);
@@ -263,15 +264,13 @@ export default function CameraScreen() {
               <ThemedText type="small" themeColor="textSecondary">
                 {hasToken()
                   ? latestError ?? 'No reading yet. Start a capture, or run the worker on the demo laptop.'
-                  : localUser
-                    ? "Readings from the demo laptop's worker are stored on a real account, which this device doesn't have. Your capture above and the fitness age below still work fully on this device."
-                    : 'Readings are stored against an account. Set up your Scallion profile to personalize the rest of the app; the capture preview and fitness age below work either way.'}
+                  : 'Readings are stored against your account. Sign in to keep them; the capture preview and fitness age below work either way.'}
               </ThemedText>
-              {!hasToken() && !localUser && (
+              {!hasToken() && (
                 <Link href="/onboarding" asChild>
                   <Pressable style={styles.secondaryButton}>
                     <ThemedText type="smallBold" themeColor="accent">
-                      Set up your profile
+                      Sign in
                     </ThemedText>
                   </Pressable>
                 </Link>

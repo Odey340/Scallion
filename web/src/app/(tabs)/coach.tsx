@@ -12,7 +12,7 @@ import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constant
 import { ANALYTES, type AnalyteKey } from '@/engine/phenoage';
 import { ApiError, api, hasToken, type Checkin, type CoachContext, type Explain } from '@/lib/api';
 import { startVoice, voiceSupported, type VoiceMode, type VoiceStatus } from '@/lib/coach-voice';
-import { useLocalUser } from '@/state/local-identity';
+import { useSession } from '@/state/auth-store';
 
 /**
  * Coach (docs/lanes/C.md Block 4): push-to-talk to D's ElevenLabs agent with captions, every
@@ -40,7 +40,8 @@ function isClockRow(v: unknown): v is ClockRow {
 }
 
 export default function CoachScreen() {
-  const localUser = useLocalUser();
+  // Subscribing re-renders this screen when the session (and so hasToken()) changes.
+  useSession();
   const [lang, setLang] = useState<Lang>('en');
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const [context, setContext] = useState<CoachContext | null>(null);
@@ -193,18 +194,13 @@ export default function CoachScreen() {
           {!hasToken() && (
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="small" themeColor="textSecondary">
-                {localUser
-                  ? t(
-                      "The coach reads your stored clock, circle and plan from a real account, which this device doesn't have. Setting up your local Scallion profile doesn't unlock this — it needs a demo account for this build.",
-                      'El coach lee tu reloj, círculo y plan de una cuenta real, y este dispositivo no tiene una. Configurar tu perfil local de Scallion no habilita esto: necesita una cuenta de demostración para esta versión.',
-                    )
-                  : t('The coach reads your stored clock, circle and plan, so it needs an account.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita una cuenta.')}
+                {t('The coach reads your stored clock, circle and plan, so it needs you signed in.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita que inicies sesión.')}
               </ThemedText>
-              {!localUser && (
+              {!hasToken() && (
                 <Link href="/onboarding" asChild>
                   <Pressable style={styles.secondaryButton}>
                     <ThemedText type="smallBold" themeColor="accent">
-                      {t('Set up your profile', 'Configura tu perfil')}
+                      {t('Sign in', 'Iniciar sesión')}
                     </ThemedText>
                   </Pressable>
                 </Link>
