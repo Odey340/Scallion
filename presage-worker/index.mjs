@@ -68,3 +68,4 @@ if (dryRun) {
   const res = await postVitals(payload, { apiUrl, token });
   console.error(`[presage] POST ${apiUrl}/vitals -> ${JSON.stringify(res)}`);
 }
+process.exit(0); // the SDK's native camera handles keep the loop alive after destroy()

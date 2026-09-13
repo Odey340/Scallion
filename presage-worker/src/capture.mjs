@@ -15,7 +15,8 @@ import {
 import { samplesFromMetrics } from './flatten.mjs';
 
 const START_GRACE_S = 120; // camera ISP lock + settle (~20 s) and the SDK waits for a face before Running
-const STOP_GRACE_S = 30; // stop() -> Idle (observed ~1 s)
+const STOP_GRACE_S = 10; // stopAsync() -> Idle; the samples are already in hand, so do not wait long
+const DESTROY_GRACE_S = 5; // destroy() after a camera session never resolved on Windows (Sun H28); do not wait on it
 
 export async function captureVitals({ apiKey, seconds = 30, deviceIndex = 0, verbose = false, log = console.error }) {
   const sdk = new SmartSpectraSDK({
@@ -46,11 +47,13 @@ export async function captureVitals({ apiKey, seconds = 30, deviceIndex = 0, ver
         log(`[presage] warning: no Idle within ${STOP_GRACE_S} s of stop(); using the samples collected`);
         resolve();
       }, STOP_GRACE_S * 1000);
-      try {
-        sdk.stop();
-      } catch (e) {
-        log(`[presage] stop() threw: ${e.message}`);
-      }
+      // stop() is the SDK's blocking native Stop(): with a live camera it never returned on
+      // Windows and froze the event loop (no timer fired, Sun H28). stopAsync() runs it on a
+      // koffi worker thread; we resolve on Idle or on the grace timer, whichever comes first.
+      sdk.stopAsync().then(
+        () => { if (verbose) log(`[presage] stopAsync() returned at ${elapsed()}s`); },
+        (e) => log(`[presage] stopAsync() failed: ${e.message}`),
+      );
     };
 
     sdk.on('processingStatus', (status) => {
@@ -105,7 +108,10 @@ export async function captureVitals({ apiKey, seconds = 30, deviceIndex = 0, ver
     sdk.start();
     await settled;
   } finally {
-    await sdk.destroy();
+    // Do not call sdk.destroy() here: after a camera session it blocks the event loop for good on
+    // Windows (Sun H28: no timer fires, the process sits until killed). The caller posts and then
+    // process.exit()s, which releases the camera; stop() above already ended the measurement.
+    log(`[presage] capture finished at ${elapsed()}s (${samples.length} samples)`);
   }
   return { samples, raw, capturedAt: new Date(tRunning ?? t0), durationMs: Date.now() - t0 };
 }
