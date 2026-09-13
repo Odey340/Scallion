@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.6-flash"  # 2.5-flash returns 404 "no longer available to new users" (Sat H8)
     gemini_fake: bool = False
 
-    supabase_jwt_secret: str = ""
+    supabase_jwt_secret: str = ""  # legacy HS256 secret
+    supabase_url: str = ""  # https://<ref>.supabase.co; enables ES256 verification via its JWKS
     dev_auth_bypass: bool = False
 
     web_origin: str = "http://localhost:8081"
