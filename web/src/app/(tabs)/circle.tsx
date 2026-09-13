@@ -15,6 +15,7 @@ import {
   type StrengthTier,
 } from '@/lib/social';
 
+import { ActivityStrip } from '@/components/activity-strip';
 import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { CircleDotMap } from '@/components/circle-dot-map';
 import { Field, TextField } from '@/components/form-controls';
@@ -456,15 +457,7 @@ export default function CircleScreen() {
                           <View style={styles.metricsRow}>
                             <Metric label="Active ties" value={summary.metrics.activeTies} />
                             <Metric label="Close ties" value={summary.metrics.closeTies} />
-                            <Metric label="LSNS proxy" value={summary.lsns.score} />
                           </View>
-                        )}
-
-                        {summary?.lsns.atRisk && (
-                          <ThemedText type="small" themeColor="silence">
-                            {summary.lsns.label}. Score below 12 — sustained isolation risk.
-                            {summary.risk ? ` Risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.` : ''}
-                          </ThemedText>
                         )}
 
                         {syncError && (
@@ -527,6 +520,68 @@ export default function CircleScreen() {
                     )}
                   </View>
                 </FadeInUp>
+
+                {allEvents.length > 0 && (
+                  <FadeInUp delay={60}>
+                    <View style={[styles.card, CardShadow]}>
+                      <SectionHeader icon="pulse-outline" label="Social score" />
+                      {summary ? (
+                        <>
+                          <View style={styles.scoreRow}>
+                            <AnimatedNumber
+                              value={summary.lsns.score}
+                              type="numeric"
+                              style={styles.scoreNumber}
+                              themeColor={summary.lsns.atRisk ? 'silence' : 'connection'}
+                            />
+                            <View style={{ flex: 1 }}>
+                              <ThemedText type="small" themeColor="textMuted">
+                                out of 30 · LSNS-6 proxy, 4 of 6 items from your messaging
+                              </ThemedText>
+                              <ThemedText type="small" themeColor={summary.lsns.atRisk ? 'silence' : 'textSecondary'}>
+                                {summary.lsns.label}
+                                {summary.lsns.atRisk && summary.risk
+                                  ? ` — risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.`
+                                  : ''}
+                              </ThemedText>
+                            </View>
+                          </View>
+
+                          <View style={styles.trendRow}>
+                            <TrendStat label="Active ties" current={summary.metrics.activeTies} previous={summary.previous.activeTies} />
+                            <TrendStat label="Close ties" current={summary.metrics.closeTies} previous={summary.previous.closeTies} />
+                          </View>
+
+                          {summary.metrics.churn > 0 && (
+                            <ThemedText type="small" themeColor="textSecondary">
+                              {Math.round(summary.metrics.churn * 100)}% of last month&apos;s active ties have gone quiet
+                              this month.
+                            </ThemedText>
+                          )}
+
+                          {summary.heatmap.length > 0 && (
+                            <View style={{ gap: Spacing.one }}>
+                              <ThemedText type="small" themeColor="textMuted">
+                                Last 30 days
+                              </ThemedText>
+                              <ActivityStrip days={summary.heatmap.slice(-30)} />
+                            </View>
+                          )}
+                        </>
+                      ) : (
+                        <View style={styles.scoreRow}>
+                          <ThemedText type="numeric" style={styles.scoreNumber}>
+                            {strengths.filter((s) => s.tier !== 'weak').length}/{strengths.length}
+                          </ThemedText>
+                          <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+                            ties active or close in the last 30 days, computed on this device. Connect to sync for your
+                            full LSNS-6 social score and month-over-month trend.
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  </FadeInUp>
+                )}
               </View>
             </View>
 
@@ -557,6 +612,23 @@ function Metric({ label, value }: { label: string; value: number }) {
       <AnimatedNumber value={value} type="numeric" style={{ fontSize: 28, lineHeight: 32 }} />
       <ThemedText type="small" themeColor="textMuted">
         {label}
+      </ThemedText>
+    </View>
+  );
+}
+
+function TrendStat({ label, current, previous }: { label: string; current: number; previous: number }) {
+  const delta = current - previous;
+  const color = delta > 0 ? 'connection' : delta < 0 ? 'silence' : 'textMuted';
+  const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
+  return (
+    <View style={styles.trendStat}>
+      <AnimatedNumber value={current} type="numeric" style={{ fontSize: 22, lineHeight: 26 }} />
+      <ThemedText type="small" themeColor="textMuted">
+        {label}
+      </ThemedText>
+      <ThemedText type="small" themeColor={color}>
+        {arrow} {Math.abs(delta)} vs last month
       </ThemedText>
     </View>
   );
@@ -657,5 +729,9 @@ const styles = StyleSheet.create({
   },
   metricsRow: { flexDirection: 'row', gap: Spacing.four, justifyContent: 'center' },
   metric: { alignItems: 'center' },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  scoreNumber: { fontSize: 44, lineHeight: 48 },
+  trendRow: { flexDirection: 'row', gap: Spacing.five, justifyContent: 'center' },
+  trendStat: { alignItems: 'center', gap: Spacing.half },
   link: { alignItems: 'center', paddingVertical: Spacing.two },
 });
