@@ -37,9 +37,9 @@ export default function ScanResultsScreen() {
   }
 
   const { meal, mealType, onMeds, carbsSource, gemini, coffee } = result;
-  const score = computeWellbeingScore(meal.eatNow.summary);
+  const score = computeWellbeingScore(meal.eatNow.curve, meal.tMin);
   const tier = wellbeingTier(score);
-  const walkScore = computeWellbeingScore(meal.withWalk.summary);
+  const walkScore = computeWellbeingScore(meal.withWalk.curve, meal.tMin);
   const walkImprovement = walkScore - score;
 
   return (
@@ -117,8 +117,9 @@ export default function ScanResultsScreen() {
           <FadeInUp delay={210}>
           <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
             Estimate, not diagnosis. A typical curve for someone with your fasting glucose and weight (ADA Standards
-            of Care fasting cut points). The wellbeing score is Lane C&apos;s own composite of glucose peak, exposure,
-            and recovery time — not a validated clinical index.
+            of Care fasting cut points). The wellbeing score is your glucose at the 2-hour mark measured against the
+            same ADA diagnostic thresholds used for an oral glucose tolerance test (normal &lt;140 mg/dL, impaired
+            140-199, diabetes range &gt;=200) — not a validated clinical index on its own, but grounded in one.
           </ThemedText>
 
           <AnimatedPressable

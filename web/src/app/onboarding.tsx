@@ -3,65 +3,58 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, FadeInUp } from '@/components/animated';
-import { Field, SegmentButton, TextField } from '@/components/form-controls';
+import { Field, NumberInput, SegmentButton, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { api, setToken, type Me } from '@/lib/api';
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { useSession } from '@/state/auth-store';
+import { api, type Answers, type Me } from '@/lib/api';
+import { decodeJwtSub, loadLocalAnswers, saveLocalAnswers, signIn, signOut, useLocalUser } from '@/state/local-identity';
 
 const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
-const RESEND_COOLDOWN_S = 60;
+
+// docs/log/D.md session H13: template created for this project. Not a secret by Persona's own
+// design (it's meant to sit in a client-facing verify_url) — overridable if D rotates it.
+const PERSONA_TEMPLATE_ID = process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID ?? 'itmpl_AH43ZFeBwqDRXTQLsUW8vEpdokrjAU';
+const DEMO_TOKEN = process.env.EXPO_PUBLIC_DEMO_TOKEN ?? null;
+const DEMO_USER_ID = DEMO_TOKEN ? decodeJwtSub(DEMO_TOKEN) : null;
 
 /**
- * Supabase's raw auth errors are terse. The two we hit in practice:
- *  - "email rate limit exceeded": the PROJECT-wide cap on auth emails (2/hour on Supabase's
- *    built-in sender, shared by every user) — fixed in the dashboard by adding custom SMTP and
- *    raising Auth > Rate Limits > "emails sent"; nothing the app can do but wait.
- *  - "For security purposes, you can only request this after N seconds": per-address 60 s cooldown.
- */
-function describeAuthError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes('rate limit')) {
-    return 'Too many sign-in emails were sent from this project in the last hour (Supabase caps them). Wait an hour, or ask the team to enable custom SMTP in the Supabase dashboard.';
-  }
-  const wait = /after (\d+) seconds/.exec(m);
-  if (wait) return `Please wait ${wait[1]} seconds before requesting another code.`;
-  return message;
-}
-
-/**
- * What leaves your phone; the medication question; the two LSNS questions; sign-in (Supabase,
- * verified by api/app/auth.py); Persona identity verification via GET /me's verify_url.
- * Personal answers only save once signed in. docs/lanes/C.md Block 4, contracts.md §3.
+ * What leaves your phone; a fake local sign-in (see state/local-identity.ts for why); the full
+ * onboarding questionnaire (contracts.md §3 AnswersIn — medication, sleep, smoking, oral
+ * contraceptive use, bedtime, usual caffeine, and the two LSNS items plus loneliness/living alone);
+ * Persona identity verification via a client-built verify_url. docs/lanes/C.md Block 4.
  */
 export default function OnboardingScreen() {
-  const { session, loading } = useSession();
+  const user = useLocalUser();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authBusy, setAuthBusy] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const id = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
-    return () => clearInterval(id);
-  }, [cooldown]);
 
   const [onMeds, setOnMeds] = useState<boolean | null>(null);
+  const [smoker, setSmoker] = useState<boolean | null>(null);
+  const [oralContraceptive, setOralContraceptive] = useState<boolean | null>(null);
+  const [sleepH, setSleepH] = useState('');
+  const [bedtime, setBedtime] = useState('');
+  const [coffeeMgPerCup, setCoffeeMgPerCup] = useState('');
+
   const [helpFamily, setHelpFamily] = useState<(typeof HELP_SCALE)[number] | null>(null);
   const [helpFriends, setHelpFriends] = useState<(typeof HELP_SCALE)[number] | null>(null);
+  const [lonely, setLonely] = useState<boolean | null>(null);
+  const [livesAlone, setLivesAlone] = useState<boolean | null>(null);
+
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
 
+  const canUseRealApi = Boolean(DEMO_TOKEN && DEMO_USER_ID);
+  const personaReferenceId = DEMO_USER_ID ?? user?.id ?? null;
+  const verifyUrl = personaReferenceId
+    ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}`
+    : null;
+
   const refreshMe = async () => {
-    if (!session) return;
+    if (!canUseRealApi) return;
     setMeError(null);
     try {
       setMe(await api.me());
@@ -70,69 +63,66 @@ export default function OnboardingScreen() {
     }
   };
 
+  function applyStoredAnswers(a: Answers) {
+    if (a.on_glucose_meds !== undefined) setOnMeds(a.on_glucose_meds);
+    if (a.smoker !== undefined) setSmoker(a.smoker);
+    if (a.oral_contraceptive !== undefined) setOralContraceptive(a.oral_contraceptive);
+    if (a.sleep_h !== undefined) setSleepH(String(a.sleep_h));
+    if (a.bedtime) setBedtime(a.bedtime);
+    if (a.coffee_mg_per_cup !== undefined) setCoffeeMgPerCup(String(a.coffee_mg_per_cup));
+    if (a.help_family !== undefined) setHelpFamily(a.help_family);
+    if (a.help_friends !== undefined) setHelpFriends(a.help_friends);
+    if (a.lonely !== undefined) setLonely(a.lonely);
+    if (a.lives_alone !== undefined) setLivesAlone(a.lives_alone);
+  }
+
   useEffect(() => {
-    setToken(session?.access_token ?? null);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshMe();
+    const stored = loadLocalAnswers();
+    if (stored) applyStoredAnswers(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [user]);
 
-  const sendCode = async () => {
-    if (!supabase || !email || cooldown > 0) return;
-    setAuthBusy(true);
-    setAuthError(null);
-    // Supabase's default email template is a clickable link, not a typed code — emailRedirectTo
-    // controls where that link sends the user back to. Without it (or without this URL in the
-    // Supabase project's Redirect URLs allowlist), Supabase falls back to its default Site URL,
-    // which is why the email link was landing on an inaccessible localhost address.
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: redirectTo },
-    });
-    setAuthBusy(false);
-    if (error) {
-      setAuthError(describeAuthError(error.message));
-      // Supabase refuses repeat sends for 60 s per address; don't let the button hammer it.
-      setCooldown(RESEND_COOLDOWN_S);
-      return;
-    }
-    setOtpSent(true);
-    setCooldown(RESEND_COOLDOWN_S);
+  const handleSignIn = () => {
+    if (!name.trim() || !email.trim()) return;
+    signIn(name, email);
   };
 
-  const verifyCode = async () => {
-    if (!supabase || !otp) return;
-    setAuthBusy(true);
-    setAuthError(null);
-    const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
-    setAuthBusy(false);
-    if (error) {
-      setAuthError(error.message);
-    }
-  };
-
-  const signOut = async () => {
-    await supabase?.auth.signOut();
-    setOtpSent(false);
-    setOtp('');
+  const handleSignOut = () => {
+    signOut();
     setMe(null);
   };
 
   const saveAnswers = async () => {
-    if (!session) return;
+    if (!user) return;
     setSaveStatus(null);
-    try {
-      await api.setAnswers({
-        on_glucose_meds: onMeds ?? undefined,
-        help_family: helpFamily ?? undefined,
-        help_friends: helpFriends ?? undefined,
-      });
-      setSaveStatus('Saved.');
-      refreshMe();
-    } catch {
-      setSaveStatus('Could not save — try again.');
+
+    const answers: Answers = {
+      on_glucose_meds: onMeds ?? undefined,
+      smoker: smoker ?? undefined,
+      oral_contraceptive: oralContraceptive ?? undefined,
+      sleep_h: sleepH ? Number(sleepH) : undefined,
+      bedtime: bedtime || undefined,
+      coffee_mg_per_cup: coffeeMgPerCup ? Number(coffeeMgPerCup) : undefined,
+      help_family: helpFamily ?? undefined,
+      help_friends: helpFriends ?? undefined,
+      lonely: lonely ?? undefined,
+      lives_alone: livesAlone ?? undefined,
+    };
+
+    if (canUseRealApi) {
+      try {
+        await api.setAnswers(answers);
+        setSaveStatus('Saved to the demo account.');
+        refreshMe();
+        return;
+      } catch {
+        // fall through to local save so the answers are not lost
+      }
     }
+    saveLocalAnswers(answers);
+    setSaveStatus('Saved on this device (no demo account configured, so this stays local).');
   };
 
   return (
@@ -140,168 +130,206 @@ export default function OnboardingScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
           <View style={styles.scroll}>
-          <FadeInUp delay={0}>
-            <ThemedText type="subtitle">Onboarding</ThemedText>
-          </FadeInUp>
+            <FadeInUp delay={0}>
+              <ThemedText type="subtitle">Onboarding</ThemedText>
+            </FadeInUp>
 
-          <FadeInUp delay={70}>
-            <ThemedView type="surfaceRaised" style={styles.card}>
-              <ThemedText type="smallBold">What leaves your phone</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                Message content is parsed on your device and discarded; only a hashed contact id,
-                timestamp, app, direction, and a length bucket ever leave the phone. Lab PDFs are
-                redacted client-side before upload. Uploads are never stored.
-              </ThemedText>
-            </ThemedView>
-          </FadeInUp>
-
-          <FadeInUp delay={140}>
-            <ThemedView type="surfaceRaised" style={[styles.card, styles.sensitiveCard]}>
-              <ThemedText type="smallBold" themeColor="silence">
-                Your health data is sensitive
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                Answers below only save to your account once you sign in, and identity verification
-                (below) confirms it&apos;s really you before anything sensitive is attached to your
-                profile.
-              </ThemedText>
-            </ThemedView>
-          </FadeInUp>
-
-          <FadeInUp delay={210}>
-          <ThemedView type="surface" style={[styles.card, CardShadow]}>
-            <ThemedText type="smallBold">Sign in</ThemedText>
-            {!isSupabaseConfigured ? (
-              <ThemedText type="small" themeColor="silence">
-                Sign-in isn&apos;t configured yet (missing the Supabase project URL/anon key as Vercel
-                env vars). Answers and verification can&apos;t be saved until that&apos;s set.
-              </ThemedText>
-            ) : loading ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                Checking your session…
-              </ThemedText>
-            ) : session ? (
-              <>
+            <FadeInUp delay={70}>
+              <ThemedView type="surfaceRaised" style={styles.card}>
+                <ThemedText type="smallBold">What leaves your phone</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Signed in as {session.user.email ?? 'your account'}.
+                  Message content is parsed on your device and discarded; only a hashed contact id,
+                  timestamp, app, direction, and a length bucket ever leave the phone. Lab PDFs are
+                  redacted client-side before upload. Uploads are never stored.
                 </ThemedText>
-                <AnimatedPressable style={styles.secondaryButton} onPress={signOut}>
-                  <ThemedText type="small">Sign out</ThemedText>
-                </AnimatedPressable>
-              </>
-            ) : (
-              <>
-                <Field label="Email">
-                  <TextField value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
-                </Field>
-                {!otpSent ? (
-                  <AnimatedPressable
-                    style={[styles.submit, (authBusy || cooldown > 0) && styles.submitDisabled]}
-                    onPress={sendCode}
-                    disabled={authBusy || cooldown > 0}
-                  >
-                    <ThemedText type="smallBold" themeColor="accentText">
-                      {authBusy ? 'Sending…' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send sign-in code'}
-                    </ThemedText>
-                  </AnimatedPressable>
-                ) : (
+              </ThemedView>
+            </FadeInUp>
+
+            <FadeInUp delay={140}>
+              <ThemedView type="surfaceRaised" style={[styles.card, styles.sensitiveCard]}>
+                <ThemedText type="smallBold" themeColor="silence">
+                  Your health data is sensitive
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Answers below only save once you sign in, and identity verification (below)
+                  confirms it&apos;s really you before anything sensitive is attached to your
+                  profile.
+                </ThemedText>
+              </ThemedView>
+            </FadeInUp>
+
+            <FadeInUp delay={210}>
+              <ThemedView type="surface" style={[styles.card, CardShadow]}>
+                <ThemedText type="smallBold">Sign in</ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  This isn&apos;t a real account — just a name so the app can remember you on this
+                  device. Nothing is verified here; that&apos;s what Persona (below) is for.
+                </ThemedText>
+                {user ? (
                   <>
                     <ThemedText type="small" themeColor="textSecondary">
-                      Check your email — click the sign-in link and you&apos;ll be brought right back here signed
-                      in. If your email shows a 6-digit code instead of a link, enter it below.
+                      Signed in as {user.name} ({user.email}).
                     </ThemedText>
-                    <Field label="6-digit code (optional, only if your email shows one)">
-                      <TextField value={otp} onChangeText={setOtp} placeholder="123456" keyboardType="number-pad" />
+                    <AnimatedPressable style={styles.secondaryButton} onPress={handleSignOut}>
+                      <ThemedText type="small">Sign out</ThemedText>
+                    </AnimatedPressable>
+                  </>
+                ) : (
+                  <>
+                    <Field label="Name">
+                      <TextField value={name} onChangeText={setName} placeholder="Your name" />
                     </Field>
-                    <AnimatedPressable style={styles.submit} onPress={verifyCode} disabled={authBusy || !otp}>
+                    <Field label="Email">
+                      <TextField value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
+                    </Field>
+                    <AnimatedPressable style={styles.submit} onPress={handleSignIn} disabled={!name.trim() || !email.trim()}>
                       <ThemedText type="smallBold" themeColor="accentText">
-                        {authBusy ? 'Verifying…' : 'Verify code'}
+                        Continue
                       </ThemedText>
                     </AnimatedPressable>
                   </>
                 )}
-                {authError && (
-                  <ThemedText type="small" themeColor="silence">
-                    {authError}
+              </ThemedView>
+            </FadeInUp>
+
+            <FadeInUp delay={280}>
+              <ThemedView type="surface" style={[styles.card, CardShadow]}>
+                <ThemedText type="smallBold">Your health</ThemedText>
+
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Do you take medicine that affects your blood sugar?
+                </ThemedText>
+                <View style={styles.row}>
+                  <SegmentButton label="No" active={onMeds === false} onPress={() => setOnMeds(false)} />
+                  <SegmentButton label="Yes" active={onMeds === true} onPress={() => setOnMeds(true)} />
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.questionSpacing}>
+                  Do you smoke?
+                </ThemedText>
+                <View style={styles.row}>
+                  <SegmentButton label="No" active={smoker === false} onPress={() => setSmoker(false)} />
+                  <SegmentButton label="Yes" active={smoker === true} onPress={() => setSmoker(true)} />
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.questionSpacing}>
+                  Do you take an oral contraceptive?
+                </ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  Slows caffeine clearance — changes your last-coffee time on Scan.
+                </ThemedText>
+                <View style={styles.row}>
+                  <SegmentButton label="No" active={oralContraceptive === false} onPress={() => setOralContraceptive(false)} />
+                  <SegmentButton label="Yes" active={oralContraceptive === true} onPress={() => setOralContraceptive(true)} />
+                </View>
+
+                <Field label="Usual hours of sleep">
+                  <NumberInput value={sleepH} onChangeText={setSleepH} placeholder="7" />
+                </Field>
+
+                <Field label="Usual bedtime (HH:MM)">
+                  <TextField value={bedtime} onChangeText={setBedtime} placeholder="23:00" />
+                </Field>
+
+                <Field label="Caffeine in your usual cup (mg)">
+                  <NumberInput value={coffeeMgPerCup} onChangeText={setCoffeeMgPerCup} placeholder="95" />
+                </Field>
+              </ThemedView>
+            </FadeInUp>
+
+            <FadeInUp delay={350}>
+              <ThemedView type="surface" style={[styles.card, CardShadow]}>
+                <ThemedText type="smallBold">Your connections</ThemedText>
+
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  How many family members could you ask for help?
+                </ThemedText>
+                <View style={styles.wrap}>
+                  {HELP_SCALE.map((n) => (
+                    <SegmentButton key={n} label={String(n)} active={helpFamily === n} onPress={() => setHelpFamily(n)} />
+                  ))}
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.questionSpacing}>
+                  How many friends could you ask for help?
+                </ThemedText>
+                <View style={styles.wrap}>
+                  {HELP_SCALE.map((n) => (
+                    <SegmentButton key={n} label={String(n)} active={helpFriends === n} onPress={() => setHelpFriends(n)} />
+                  ))}
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.questionSpacing}>
+                  Do you often feel lonely?
+                </ThemedText>
+                <View style={styles.row}>
+                  <SegmentButton label="No" active={lonely === false} onPress={() => setLonely(false)} />
+                  <SegmentButton label="Yes" active={lonely === true} onPress={() => setLonely(true)} />
+                </View>
+
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.questionSpacing}>
+                  Do you live alone?
+                </ThemedText>
+                <View style={styles.row}>
+                  <SegmentButton label="No" active={livesAlone === false} onPress={() => setLivesAlone(false)} />
+                  <SegmentButton label="Yes" active={livesAlone === true} onPress={() => setLivesAlone(true)} />
+                </View>
+
+                <AnimatedPressable style={[styles.submit, styles.questionSpacing]} onPress={saveAnswers} disabled={!user}>
+                  <ThemedText type="smallBold" themeColor="accentText">
+                    {user ? 'Save answers' : 'Sign in to save'}
                   </ThemedText>
-                )}
-              </>
-            )}
-          </ThemedView>
-          </FadeInUp>
-
-          <FadeInUp delay={280}>
-          <ThemedView type="surface" style={[styles.card, CardShadow]}>
-            <ThemedText type="smallBold">Do you take medicine that affects your blood sugar?</ThemedText>
-            <View style={styles.row}>
-              <SegmentButton label="No" active={onMeds === false} onPress={() => setOnMeds(false)} />
-              <SegmentButton label="Yes" active={onMeds === true} onPress={() => setOnMeds(true)} />
-            </View>
-
-            <ThemedText type="smallBold" style={styles.questionSpacing}>
-              How many family members could you ask for help?
-            </ThemedText>
-            <View style={styles.wrap}>
-              {HELP_SCALE.map((n) => (
-                <SegmentButton key={n} label={String(n)} active={helpFamily === n} onPress={() => setHelpFamily(n)} />
-              ))}
-            </View>
-
-            <ThemedText type="smallBold" style={styles.questionSpacing}>
-              How many friends could you ask for help?
-            </ThemedText>
-            <View style={styles.wrap}>
-              {HELP_SCALE.map((n) => (
-                <SegmentButton key={n} label={String(n)} active={helpFriends === n} onPress={() => setHelpFriends(n)} />
-              ))}
-            </View>
-
-            <AnimatedPressable style={[styles.submit, styles.questionSpacing]} onPress={saveAnswers} disabled={!session}>
-              <ThemedText type="smallBold" themeColor="accentText">
-                {session ? 'Save answers' : 'Sign in to save'}
-              </ThemedText>
-            </AnimatedPressable>
-            {saveStatus && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {saveStatus}
-              </ThemedText>
-            )}
-          </ThemedView>
-          </FadeInUp>
-
-          <FadeInUp delay={350}>
-          <ThemedView type="surface" style={[styles.card, CardShadow]}>
-            <ThemedText type="smallBold">Identity verification</ThemedText>
-            {!session ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                Sign in above first.
-              </ThemedText>
-            ) : (
-              <>
-                {meError && (
-                  <ThemedText type="small" themeColor="silence">
-                    {meError}
-                  </ThemedText>
-                )}
-                {me && (
-                  <ThemedText type="small" themeColor={me.verified ? 'connection' : 'textSecondary'}>
-                    {me.verified ? `Verified${me.age ? ` • age ${me.age}` : ''}` : 'Not verified yet'}
-                  </ThemedText>
-                )}
-                {me?.verify_url && (
-                  <AnimatedPressable style={styles.submit} onPress={() => Linking.openURL(me.verify_url!)}>
-                    <ThemedText type="smallBold" themeColor="accentText">
-                      Verify with Persona
-                    </ThemedText>
-                  </AnimatedPressable>
-                )}
-                <AnimatedPressable style={styles.secondaryButton} onPress={refreshMe}>
-                  <ThemedText type="small">Refresh status</ThemedText>
                 </AnimatedPressable>
-              </>
-            )}
-          </ThemedView>
-          </FadeInUp>
+                {saveStatus && (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {saveStatus}
+                  </ThemedText>
+                )}
+              </ThemedView>
+            </FadeInUp>
+
+            <FadeInUp delay={420}>
+              <ThemedView type="surface" style={[styles.card, CardShadow]}>
+                <ThemedText type="smallBold">Identity verification</ThemedText>
+                {!user ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Sign in above first.
+                  </ThemedText>
+                ) : (
+                  <>
+                    {!canUseRealApi && (
+                      <ThemedText type="small" themeColor="textMuted">
+                        No demo account is configured, so the app can&apos;t ask the real API to
+                        confirm your result — but Persona&apos;s own verification flow below is
+                        real and fully testable end to end.
+                      </ThemedText>
+                    )}
+                    {meError && (
+                      <ThemedText type="small" themeColor="silence">
+                        {meError}
+                      </ThemedText>
+                    )}
+                    {canUseRealApi && me && (
+                      <ThemedText type="small" themeColor={me.verified ? 'connection' : 'textSecondary'}>
+                        {me.verified ? `Verified${me.age ? ` • age ${me.age}` : ''}` : 'Not verified yet'}
+                      </ThemedText>
+                    )}
+                    {verifyUrl && (
+                      <AnimatedPressable style={styles.submit} onPress={() => Linking.openURL(verifyUrl)}>
+                        <ThemedText type="smallBold" themeColor="accentText">
+                          Verify with Persona
+                        </ThemedText>
+                      </AnimatedPressable>
+                    )}
+                    {canUseRealApi && (
+                      <AnimatedPressable style={styles.secondaryButton} onPress={refreshMe}>
+                        <ThemedText type="small">Refresh status</ThemedText>
+                      </AnimatedPressable>
+                    )}
+                  </>
+                )}
+              </ThemedView>
+            </FadeInUp>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -338,9 +366,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     alignItems: 'center',
-  },
-  submitDisabled: {
-    opacity: 0.6,
   },
   secondaryButton: {
     borderWidth: 1,
