@@ -1,7 +1,8 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { Colors, Fonts, MaxChartWidth } from '@/constants/theme';
+import { ThemedText } from '@/components/themed-text';
+import { Colors, Fonts, MaxChartWidth, Spacing } from '@/constants/theme';
 import type { MealCurveSeries } from '@/engine/meal';
 
 const VIEW_WIDTH = 320;
@@ -113,6 +114,30 @@ export function CurveBand({
           </SvgText>
         ))}
       </Svg>
+      <View style={styles.legend}>
+        <LegendItem swatch={styles.legendLine}>Typical — the model&apos;s median estimate</LegendItem>
+        <LegendItem swatch={styles.legendBand}>Model range — across a plausible insulin-sensitivity spread, not a measured confidence interval</LegendItem>
+      </View>
     </View>
   );
 }
+
+function LegendItem({ swatch, children }: { swatch: object; children: string }) {
+  return (
+    <View style={styles.legendRow}>
+      <View style={[styles.legendSwatch, swatch]} />
+      <ThemedText type="small" themeColor="textMuted" style={styles.legendText}>
+        {children}
+      </ThemedText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  legend: { gap: Spacing.half, marginTop: Spacing.one },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  legendSwatch: { width: 14, height: 3, borderRadius: 1.5 },
+  legendLine: { backgroundColor: Colors.accent, height: 2.5 },
+  legendBand: { backgroundColor: Colors.accent, opacity: 0.3, height: 8 },
+  legendText: { flex: 1, flexShrink: 1 },
+});

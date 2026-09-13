@@ -389,3 +389,26 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Phase 4 (Scan: richer calculation presentation — peak/AUC/walk-effect numbers already computed by `meal.ts` but not all surfaced, uncertainty band labelled instead of an unexplained shaded region, honest language for the modeled curve).
 
 **Contract changes needed:** None — `LocalClock.inputs`/`.sex` are additive fields in a client-only store; `/clock`'s wire shape is unchanged.
+
+## Session 22 (2026-09-13): Phase 4 — Scan results lead with real computed numbers, not the score ring; chart legend; walk effect as a comparison
+
+**Human approved Phase 4** (richer calculation presentation on Scan) after Phase 3.
+
+**`scan-results.tsx` reordered so the numbers Scallion actually computed come first**, per the human's own product spec for this phase: a "Modeled response" block (Peak, Peak time, 2-hour estimate, Back near baseline — all already in `meal.ts`'s `MealSummary`, but only 3 of them were shown before) leads the page. The ADA-anchored 0-100 score (session 17's grounding of what used to be an invented composite) is demoted from a giant hero ring to a smaller "Where this lands on the ADA scale" card lower on the page — still shown, still cited, just no longer the first and biggest thing on the screen ahead of the model's own numbers, which was the actual product complaint in the request.
+
+**Three new pure functions in `meal.ts`, not new modeling — just reading more out of the curve the sweep already produced:**
+- `glucoseAtMinute(series, tMin, minute)`: linear interpolation for the "2-hour estimate" (t=120 already falls on a grid point in the current 5-min export, but this doesn't assume that).
+- `minutesAboveThreshold(series, tMin, threshold)`: minutes the median curve spends over 140 or 200 mg/dL, linearly interpolating the crossing point. Only shown when > 0, labelled "Model estimate... Not a measurement" — this is a derived quantity from a population sweep, not anything measured.
+- `walkEffect(eatNowSummary, withWalkSummary)`: peak-without vs. peak-with, absolute mg/dL difference, and the fraction — the two curves already have the walk's effect baked in from `meal_grid.json`'s own sweep (`walk_calibration`, Buffey 2022, target 10-20% peak reduction); this just reads both peaks back out and diffs them, not a new calculation.
+
+**`CurveBand` gets a real legend**, since the shaded band had no explanation anywhere on screen: "Typical — the model's median estimate" and "Model range — across a plausible insulin-sensitivity spread, not a measured confidence interval" — worded that way on purpose, since `meal_grid.json`'s own `band_rule` defines p10/p90 as the pointwise min/max over Vmx x {0.8, 1.0, 1.2}, which is not a statistical CI and the human's spec explicitly said not to call it one.
+
+**Language audit on this screen:** added "not a continuous glucose monitor reading and not your actual blood sugar" to the disclaimer (the previous copy said "estimate, not diagnosis" but never explicitly ruled out the CGM comparison a reader might otherwise draw); "modeled response" replaces the more clinical-sounding hero framing.
+
+**Verified:** `tsc` clean; 77/77 tests (9 new for the three `meal.ts` functions, run against both synthetic series and the real `meal_grid.json` sweep — including that `walkEffect`'s fraction lands inside the grid's own calibrated 10-20% target range); lint clean except the pre-existing `animated.tsx` false positive; `expo export` clean. **Not live-browser-verified:** the Claude-in-Chrome extension stayed disconnected for this entire session (reconnection attempted repeatedly, including a fresh port) — instead, hand-verified the actual numbers a realistic scenario (60 g carbs, 95 mg/dL fasting, 172 lb) would render by running the exact interpolation/summary/new-function logic against the real `meal_grid.json` outside the test suite: peak 144 mg/dL at 70 min, 2-hour estimate 128 mg/dL, 46 min above 140 (200 correctly suppressed at 0), walk peak 122 mg/dL (−22.5 mg/dL, −16%) — closely matching the human's own worked example in the spec, which is reassuring but is not the same as watching the page render. Flagging this gap again rather than claiming a check that didn't happen.
+
+**Blocked:** Nothing for the code; same environment-level browser-extension gap as last session.
+
+**Next:** Phase 5 (Labs as a guided process — though session 20's concurrent split-view rebuild of `labs.tsx` already covers a good chunk of this; re-read that code first before assuming what's left) — ask the human first.
+
+**Contract changes needed:** None — all three new functions are pure, client-side, derived from data already in `meal_grid.json`.

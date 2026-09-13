@@ -121,6 +121,62 @@ function lerpSeries(a: number[], b: number[], t: number): number[] {
   return a.map((v, i) => v + t * (b[i] - v));
 }
 
+/** Linear interpolation of the median curve at an arbitrary minute; clamped to the grid's range. */
+export function glucoseAtMinute(series: MealCurveSeries, tMin: number[], minute: number): number {
+  if (minute <= tMin[0]) return series.p50[0];
+  const last = tMin.length - 1;
+  if (minute >= tMin[last]) return series.p50[last];
+  for (let i = 0; i < last; i++) {
+    if (minute >= tMin[i] && minute <= tMin[i + 1]) {
+      const t = (minute - tMin[i]) / (tMin[i + 1] - tMin[i]);
+      return series.p50[i] + t * (series.p50[i + 1] - series.p50[i]);
+    }
+  }
+  return series.p50[last];
+}
+
+/**
+ * Minutes the median curve spends above a threshold, linearly interpolating the crossing point
+ * within whichever grid interval it falls in (the grid is every 5 min, so this is accurate to a
+ * fraction of that). A model-derived quantity, not a measurement — label it as such in the UI.
+ */
+export function minutesAboveThreshold(series: MealCurveSeries, tMin: number[], thresholdMgdl: number): number {
+  let minutes = 0;
+  for (let i = 1; i < tMin.length; i++) {
+    const dt = tMin[i] - tMin[i - 1];
+    const a = series.p50[i - 1] - thresholdMgdl;
+    const b = series.p50[i] - thresholdMgdl;
+    if (a >= 0 && b >= 0) {
+      minutes += dt;
+    } else if (a > 0 !== b > 0) {
+      // Crosses the threshold once within this interval; only the above-threshold fraction counts.
+      const cross = a / (a - b);
+      minutes += a > 0 ? dt * cross : dt * (1 - cross);
+    }
+  }
+  return Math.round(minutes);
+}
+
+export interface WalkEffect {
+  peakWithoutMgdl: number;
+  peakWithMgdl: number;
+  /** peakWithout - peakWith; positive means the walk lowered the peak. */
+  absoluteMgdl: number;
+  /** absoluteMgdl / peakWithout, as a fraction (0.16 = 16%). */
+  fraction: number;
+}
+
+/** Peak-reduction comparison between the two computed curves — both already carry the walk's effect built in via meal_grid.json's own sweep; this just reads the two peaks back out. */
+export function walkEffect(eatNow: MealSummary, withWalk: MealSummary): WalkEffect {
+  const absoluteMgdl = eatNow.peak_mgdL - withWalk.peak_mgdL;
+  return {
+    peakWithoutMgdl: eatNow.peak_mgdL,
+    peakWithMgdl: withWalk.peak_mgdL,
+    absoluteMgdl,
+    fraction: eatNow.peak_mgdL > 0 ? absoluteMgdl / eatNow.peak_mgdL : 0,
+  };
+}
+
 /** Mirrors meal_grid.json's own `summary_rule`: incremental AUC above basal 0-240 min; baseline = first time after the peak within 5 mg/dL of basal. */
 function deriveSummary(p50: number[], tMin: number[], basalMgdl: number): MealSummary {
   let peakIdx = 0;
