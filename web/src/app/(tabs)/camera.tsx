@@ -170,7 +170,8 @@ export default function CameraScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.scroll}>
           <ThemedText type="subtitle">Pulse and breathing from your face</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Thirty seconds, no wearable. Presage SmartSpectra reads pulse and breathing from skin colour changes. Estimate,
@@ -363,6 +364,7 @@ export default function CameraScreen() {
               )}
             </ThemedView>
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -410,6 +412,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
   scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

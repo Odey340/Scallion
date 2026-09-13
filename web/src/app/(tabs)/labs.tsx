@@ -252,10 +252,8 @@ export default function LabsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          style={styles.scrollOuter}
-          contentContainerStyle={[styles.scroll, step === 'review' && isWide && styles.scrollWide]}
-          keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={[styles.scroll, step === 'review' && isWide && styles.scrollWide]}>
           <FadeInUp delay={0}>
             <ThemedText type="subtitle">Your labs</ThemedText>
             <ThemedText type="default" themeColor="textSecondary">
@@ -490,6 +488,7 @@ export default function LabsScreen() {
               </View>
             </>
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -500,6 +499,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
   scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,
