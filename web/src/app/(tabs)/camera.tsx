@@ -79,13 +79,22 @@ export default function CameraScreen() {
     if (timers.current.stop) clearTimeout(timers.current.stop);
     timers.current = {};
   };
+  // Each Start is a run; a poll callback still in flight when Cancel or a give-up ends the run must
+  // not touch the screen afterwards.
+  const run = useRef(0);
+  const starting = useRef(false);
+  // The wait is over without a reading: stop, tell the API (so a capture the laptop has not started
+  // yet is not run for nobody, and a late verdict for this arm is dropped), and show why.
+  const giveUp = () => {
+    run.current += 1;
+    clearTimers();
+    setPhase((p) => (p === 'done' ? p : 'timeout'));
+    if (armedAt.current != null && hasToken()) api.disarmVitals().catch(() => undefined);
+  };
   // (Re)arm the give-up timer: the wait runs from now for `seconds`, whatever it was before.
   const stopAfter = (seconds: number) => {
     if (timers.current.stop) clearTimeout(timers.current.stop);
-    timers.current.stop = setTimeout(() => {
-      clearTimers();
-      setPhase((p) => (p === 'done' ? p : 'timeout'));
-    }, seconds * 1000);
+    timers.current.stop = setTimeout(giveUp, seconds * 1000);
   };
 
   const [ageText, setAgeText] = useState(profile.age ? String(profile.age) : inputs ? String(inputs.age) : '');
@@ -120,6 +129,7 @@ export default function CameraScreen() {
   }, [fetchLatest]);
 
   const finish = (row: VitalsOut) => {
+    run.current += 1;
     clearTimers();
     setReading(row);
     setPhase('done');
@@ -133,13 +143,19 @@ export default function CameraScreen() {
   // Whether a presage-worker is polling for this account (GET /vitals/arm `worker_seen_at`):
   // 'unknown' until the first status read, 'alive' while its polls are fresh, 'missing' ends the wait.
   const [workerState, setWorkerState] = useState<'unknown' | 'alive' | 'missing'>('unknown');
+  // true once the laptop ended the arm itself (final note): the note is a verdict, not a progress report.
+  const [noteFinal, setNoteFinal] = useState(false);
   const staleReads = useRef(0);
   const lastNote = useRef<string | null>(null);
 
   const start = async () => {
+    if (starting.current) return; // a second tap while the arm request is in flight
+    starting.current = true;
+    const myRun = (run.current += 1);
     setReading(null);
     setFitness(null);
     setNote(null);
+    setNoteFinal(false);
     setWorkerState('unknown');
     setElapsed(0);
     staleReads.current = 0;
@@ -178,6 +194,7 @@ export default function CameraScreen() {
     captureStart.current = startedAt;
     setSecondsLeft(holdSeconds);
     setPhase('capturing');
+    starting.current = false;
     timers.current.tick = setInterval(() => {
       const elapsedS = Math.floor((Date.now() - captureStart.current) / 1000);
       setElapsed(elapsedS);
@@ -187,17 +204,21 @@ export default function CameraScreen() {
     }, 500);
     timers.current.poll = setInterval(async () => {
       const row = await fetchLatest();
+      if (run.current !== myRun) return; // Cancel or a give-up ended this run while the request was out
       if (row && accepts(row)) {
         finish(row);
         return;
       }
       if (!armed) return;
       const status = await api.armStatus().catch(() => null);
+      if (run.current !== myRun) return;
       if (!status) return; // an API hiccup says nothing about the laptop
       // The worker says why a capture failed (webcam busy, no face). A final note ends the arm on the
       // API (armed_at null), so stop waiting and show it instead of the generic timeout.
       if (status.note) setNote(status.note);
       if (status.note && status.armed_at === null) {
+        setNoteFinal(true);
+        run.current += 1;
         clearTimers();
         setPhase('timeout');
         return;
@@ -222,14 +243,15 @@ export default function CameraScreen() {
       if (staleReads.current >= 2) {
         // Nothing on the laptop is polling for this account: say so now, not after minutes of waiting.
         setWorkerState('missing');
-        clearTimers();
-        setPhase('timeout');
+        giveUp();
       }
     }, POLL_MS);
     stopAfter(armed ? ATTEMPT_SECONDS : holdSeconds + SETTLE_SECONDS);
   };
 
   const stop = () => {
+    run.current += 1;
+    starting.current = false;
     clearTimers();
     setPhase('idle');
     setArmState('idle');
@@ -310,10 +332,10 @@ export default function CameraScreen() {
                   <ThemedText type="small" themeColor="silence">
                     {workerState === 'missing'
                       ? `No laptop worker is polling for ${account ?? 'this account'}. On the demo laptop run node index.mjs --watch in presage-worker (its terminal must list this account; add --replay test/fixtures/capture_real.json when there is no camera), then press Start again.${note ? ` Its last report: ${note}` : ''}`
-                      : note
+                      : note && noteFinal
                         ? `The laptop reported: ${note}`
                         : workerState === 'alive'
-                          ? `No reading arrived${account ? ` for ${account}` : ''} in ${mmss(elapsed)}, although the laptop worker was running. Check its terminal, then press Start again.`
+                          ? `No reading arrived${account ? ` for ${account}` : ''} in ${mmss(elapsed)}, although the laptop worker was running.${note ? ` Its last report: ${note}` : ''} Check its terminal, then press Start again.`
                           : `No reading arrived${account ? ` for ${account}` : ''}. On the demo laptop the worker must be running (node index.mjs --watch; add --replay test/fixtures/capture_real.json when there is no camera) and its terminal must list this account. Then press Start again.`}
                   </ThemedText>
                 )}

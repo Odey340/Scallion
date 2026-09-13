@@ -137,6 +137,35 @@ def test_worker_note_reaches_the_phone_and_final_ends_the_arm(client):
     assert client.delete("/vitals/arm").json()["note"] is None
 
 
+def test_note_for_a_superseded_arm_is_dropped(client, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    t0 = datetime(2026, 9, 13, 14, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0)
+    first = client.post("/vitals/arm").json()["armed_at"]
+    # a note about the current arm is kept, and can end it
+    r = client.patch("/vitals/arm", json={"note": "Face lost; trying once more.", "armed_at": first})
+    assert r.json()["note"] == "Face lost; trying once more." and r.json()["armed_at"]
+    # the phone presses Start again while that capture still runs
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0 + timedelta(seconds=30))
+    second = client.post("/vitals/arm").json()["armed_at"]
+    assert second != first
+    # the old attempt's final verdict arrives: it must not end or annotate the new arm
+    r = client.patch("/vitals/arm", json={"note": "Webcam busy. Press Start again.", "final": True, "armed_at": first})
+    assert r.json()["armed_at"] == second and r.json()["pending"] is True and r.json()["note"] is None
+    assert r.json()["worker_seen_at"]  # but the worker still counts as seen
+    # after a Cancel nothing is current, so a note that names an arm is dropped too
+    client.delete("/vitals/arm")
+    r = client.patch("/vitals/arm", json={"note": "late", "final": True, "armed_at": second})
+    assert r.json()["note"] is None and r.json()["armed_at"] is None
+    # a note without armed_at keeps the pre-H34 behaviour (applies to whatever is current)
+    client.post("/vitals/arm")
+    assert client.patch("/vitals/arm", json={"note": "x", "final": True}).json() == {
+        "armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": "x",
+        "worker_seen_at": client.get("/vitals/arm").json()["worker_seen_at"],
+    }
+
+
 @pytest.mark.parametrize("bad", [{"note": ""}, {"note": "x" * 301}, {}])
 def test_note_validation(client, bad):
     assert client.patch("/vitals/arm", json=bad).status_code == 422

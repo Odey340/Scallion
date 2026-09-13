@@ -38,10 +38,12 @@ export async function fetchArm(apiUrl, token, fetchImpl = fetch) {
   return res.json();
 }
 
-export async function postNote(apiUrl, token, note, final, fetchImpl = fetch) {
+// armedAt names the arm the note is about: the API drops a note for an arm the phone has since
+// cancelled or replaced, so a stale verdict cannot end (or show up on) the newer Start.
+export async function postNote(apiUrl, token, note, final, fetchImpl = fetch, armedAt = null) {
   const headers = { 'content-type': 'application/json', ...WORKER_HEADERS };
   if (token) headers.authorization = `Bearer ${token}`;
-  const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { method: 'PATCH', headers, body: JSON.stringify({ note, final }) });
+  const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { method: 'PATCH', headers, body: JSON.stringify({ note, final, armed_at: armedAt }) });
   if (!res.ok) throw new Error(`PATCH /vitals/arm -> ${res.status}`);
 }
 
@@ -130,7 +132,7 @@ export async function watchLoop({
         // arm (final) and let the presenter press Start again after closing the other camera app.
         const again = (reason == null || RETRYABLE.has(reason)) && n < MAX_ATTEMPTS_PER_ARM;
         const note = `${NOTES[reason ?? 'failed']}${again ? ' The laptop is trying once more; keep still.' : ''}`;
-        await postNote(apiUrl, pick.token, note, !again, fetchImpl).catch((e) => log(`[presage] could not report to the phone: ${e.message}`));
+        await postNote(apiUrl, pick.token, note, !again, fetchImpl, pick.armedAt).catch((e) => log(`[presage] could not report to the phone: ${e.message}`));
         if (again) {
           retry = pick;
           log(`[presage] capture exited ${code} (${reason ?? 'unknown'}); retrying while the phone still waits`);

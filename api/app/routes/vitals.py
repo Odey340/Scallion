@@ -17,7 +17,10 @@ router = APIRouter()
 # Start, and the presage-worker in --watch mode polls GET /vitals/arm and runs one capture per arm.
 # The state is one timestamp per user in this process (uvicorn runs a single worker); it is
 # transient by design, so no table. `pending` clears as soon as a vitals row lands after the arm.
-ARM_WINDOW_S = 120
+# A Start is served for this long. One laptop attempt can take 3 min (camera lock, up to 2 min for a
+# face, the recording), and a Start placed while the laptop is busy must still be pending when it
+# frees up; the phone disarms when it gives up, so a long window does not leave zombie arms.
+ARM_WINDOW_S = 300
 _arms: dict[str, datetime] = {}
 _notes: dict[str, str] = {}  # worker -> phone: why the last capture failed (PATCH), cleared by the next arm
 # Last request from a presage-worker (GET with the x-scallion-worker header, or PATCH) per user. The
@@ -43,6 +46,10 @@ class ArmOut(BaseModel):
 class ArmNote(BaseModel):
     note: str = Field(min_length=1, max_length=300)
     final: bool = False  # true: the worker gave up on this arm, so pending clears and the phone stops waiting
+    # The arm this note is about (H34). When given, a note for an arm that is no longer current (the
+    # phone cancelled or pressed Start again while that capture ran) is dropped, so a stale failure can
+    # neither end the newer arm nor show up on the phone for it. Omit it for the pre-H34 behaviour.
+    armed_at: datetime | None = None
 
 
 def clear_arms() -> None:
@@ -127,8 +134,10 @@ def disarm_vitals(user: CurrentUser, store: Store) -> ArmOut:
 def note_arm(user: CurrentUser, store: Store, body: ArmNote) -> ArmOut:
     """From the worker: why the capture failed (webcam busy, no face), shown on the phone. final=true ends the arm."""
     with _arm_lock:
-        _notes[user.id] = body.note
         _worker_seen[user.id] = _now()  # a note is the worker talking, so it counts as seen
-        if body.final:
-            _arms.pop(user.id, None)
+        current = _arms.get(user.id)
+        if body.armed_at is None or (current is not None and body.armed_at == current):
+            _notes[user.id] = body.note
+            if body.final:
+                _arms.pop(user.id, None)
     return _arm_status(user.id, store)

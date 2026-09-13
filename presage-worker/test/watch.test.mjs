@@ -92,7 +92,7 @@ test('a busy webcam is final at once (no retry) and the phone is told why', asyn
     maxIterations: 3,
   });
   assert.equal(captured.length, 1);
-  assert.deepEqual(patches, [{ note: NOTES.busy, final: true }]);
+  assert.deepEqual(patches, [{ note: NOTES.busy, final: true, armed_at: 't1' }]); // the note names its arm
 });
 
 test('classifyCaptureOutput recognises the failure signatures', () => {
