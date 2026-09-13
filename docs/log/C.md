@@ -206,3 +206,24 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Whoever revisits Home might want something in place of Levers eventually (the human only asked to remove it, not what replaces it, if anything).
 
 **Contract changes needed:** None.
+
+## Session 14 (2026-09-12): sign-in redirect bug; a concurrent session found a real crash in my centering fix
+
+**Human report:** entering an email got a real Supabase email, but it was a clickable confirmation link (not a typed code), and clicking it landed on an inaccessible `localhost` address.
+
+**Diagnosis:** `signInWithOtp({ email })` with no `options.emailRedirectTo` lets Supabase fall back to the project's configured **Site URL** — which is presumably still the default `localhost` value, never updated to `https://scallion.us`. Separately, Supabase's default email template renders `{{ .ConfirmationURL }}` (a link), not `{{ .Token }}` (a typed code), so our `verifyOtp`-based code-entry UI was built for a code that the default template never shows.
+
+**Fixed what's fixable from code:** `sendCode` now passes `options: { emailRedirectTo: `${window.location.origin}/onboarding` }`, so *if* Supabase's Redirect URLs allowlist includes this app's origin, the link correctly returns the user to `/onboarding` signed in (supabase-js's `detectSessionInUrl` is on by default in the browser — no extra code needed to pick up the session on return). Reworded the post-send UI to lead with "click the link," keeping the code field as a secondary option in case the email template is ever changed to include one.
+
+**Cannot fix from code — needs the human, in the Supabase dashboard (anon key has no access to project settings):**
+1. Authentication -> URL Configuration -> **Site URL**: set to `https://scallion.us`.
+2. Authentication -> URL Configuration -> **Redirect URLs**: add `https://scallion.us` (or `https://scallion.us/**`) to the allowlist — Supabase silently falls back to Site URL if the requested redirect isn't listed here, so both settings matter.
+3. Optional, only if a typed code is preferred over the link: Authentication -> Email Templates -> Magic Link, add `{{ .Token }}` to the template body.
+
+**Also this session:** rebased onto a concurrent session's `aca6357` ("fix ScrollView alignItems crash on web") — a real bug in my own session-12 centering fix: react-native-web does not allow layout props like `alignItems` on a `ScrollView`'s own `style`, only on `contentContainerStyle`; it has to be `alignItems` on `contentContainerStyle` wrapping an inner `View` that carries the `maxWidth`/padding. They fixed all six screens that had my pattern (I'd assumed `start.tsx` was missed based on a truncated `git show --stat` output piped through `head`, but it was in there — checked `git log -- start.tsx` to confirm, not fixed twice). Ran the full merged tree through `tsc`, lint, 44 tests, and `expo export` before pushing — all clean.
+
+**Blocked:** The three Supabase dashboard steps above — sign-in is not actually end-to-end working until the human does those.
+
+**Next:** research task from the human — read the current repo and write a detailed summary of whether/how to build the Coach screen (ElevenLabs) and other improvement suggestions. Separate message, not logged as lane work here since it produced no code.
+
+**Contract changes needed:** None.
