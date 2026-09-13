@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, SegmentButton, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -108,28 +109,35 @@ export default function OnboardingScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
           <View style={styles.scroll}>
-          <ThemedText type="subtitle">Onboarding</ThemedText>
+          <FadeInUp delay={0}>
+            <ThemedText type="subtitle">Onboarding</ThemedText>
+          </FadeInUp>
 
-          <ThemedView type="surfaceRaised" style={styles.card}>
-            <ThemedText type="smallBold">What leaves your phone</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Message content is parsed on your device and discarded; only a hashed contact id,
-              timestamp, app, direction, and a length bucket ever leave the phone. Lab PDFs are
-              redacted client-side before upload. Uploads are never stored.
-            </ThemedText>
-          </ThemedView>
+          <FadeInUp delay={70}>
+            <ThemedView type="surfaceRaised" style={styles.card}>
+              <ThemedText type="smallBold">What leaves your phone</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Message content is parsed on your device and discarded; only a hashed contact id,
+                timestamp, app, direction, and a length bucket ever leave the phone. Lab PDFs are
+                redacted client-side before upload. Uploads are never stored.
+              </ThemedText>
+            </ThemedView>
+          </FadeInUp>
 
-          <ThemedView type="surfaceRaised" style={[styles.card, styles.sensitiveCard]}>
-            <ThemedText type="smallBold" themeColor="silence">
-              Your health data is sensitive
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Answers below only save to your account once you sign in, and identity verification
-              (below) confirms it&apos;s really you before anything sensitive is attached to your
-              profile.
-            </ThemedText>
-          </ThemedView>
+          <FadeInUp delay={140}>
+            <ThemedView type="surfaceRaised" style={[styles.card, styles.sensitiveCard]}>
+              <ThemedText type="smallBold" themeColor="silence">
+                Your health data is sensitive
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Answers below only save to your account once you sign in, and identity verification
+                (below) confirms it&apos;s really you before anything sensitive is attached to your
+                profile.
+              </ThemedText>
+            </ThemedView>
+          </FadeInUp>
 
+          <FadeInUp delay={210}>
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <ThemedText type="smallBold">Sign in</ThemedText>
             {!isSupabaseConfigured ? (
@@ -146,9 +154,9 @@ export default function OnboardingScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   Signed in as {session.user.email ?? 'your account'}.
                 </ThemedText>
-                <Pressable style={styles.secondaryButton} onPress={signOut}>
+                <AnimatedPressable style={styles.secondaryButton} onPress={signOut}>
                   <ThemedText type="small">Sign out</ThemedText>
-                </Pressable>
+                </AnimatedPressable>
               </>
             ) : (
               <>
@@ -156,11 +164,11 @@ export default function OnboardingScreen() {
                   <TextField value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
                 </Field>
                 {!otpSent ? (
-                  <Pressable style={styles.submit} onPress={sendCode} disabled={authBusy}>
+                  <AnimatedPressable style={styles.submit} onPress={sendCode} disabled={authBusy}>
                     <ThemedText type="smallBold" themeColor="accentText">
                       {authBusy ? 'Sending…' : 'Send sign-in code'}
                     </ThemedText>
-                  </Pressable>
+                  </AnimatedPressable>
                 ) : (
                   <>
                     <ThemedText type="small" themeColor="textSecondary">
@@ -170,11 +178,11 @@ export default function OnboardingScreen() {
                     <Field label="6-digit code (optional, only if your email shows one)">
                       <TextField value={otp} onChangeText={setOtp} placeholder="123456" keyboardType="number-pad" />
                     </Field>
-                    <Pressable style={styles.submit} onPress={verifyCode} disabled={authBusy || !otp}>
+                    <AnimatedPressable style={styles.submit} onPress={verifyCode} disabled={authBusy || !otp}>
                       <ThemedText type="smallBold" themeColor="accentText">
                         {authBusy ? 'Verifying…' : 'Verify code'}
                       </ThemedText>
-                    </Pressable>
+                    </AnimatedPressable>
                   </>
                 )}
                 {authError && (
@@ -185,7 +193,9 @@ export default function OnboardingScreen() {
               </>
             )}
           </ThemedView>
+          </FadeInUp>
 
+          <FadeInUp delay={280}>
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <ThemedText type="smallBold">Do you take medicine that affects your blood sugar?</ThemedText>
             <View style={styles.row}>
@@ -211,18 +221,20 @@ export default function OnboardingScreen() {
               ))}
             </View>
 
-            <Pressable style={[styles.submit, styles.questionSpacing]} onPress={saveAnswers} disabled={!session}>
+            <AnimatedPressable style={[styles.submit, styles.questionSpacing]} onPress={saveAnswers} disabled={!session}>
               <ThemedText type="smallBold" themeColor="accentText">
                 {session ? 'Save answers' : 'Sign in to save'}
               </ThemedText>
-            </Pressable>
+            </AnimatedPressable>
             {saveStatus && (
               <ThemedText type="small" themeColor="textSecondary">
                 {saveStatus}
               </ThemedText>
             )}
           </ThemedView>
+          </FadeInUp>
 
+          <FadeInUp delay={350}>
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <ThemedText type="smallBold">Identity verification</ThemedText>
             {!session ? (
@@ -242,18 +254,19 @@ export default function OnboardingScreen() {
                   </ThemedText>
                 )}
                 {me?.verify_url && (
-                  <Pressable style={styles.submit} onPress={() => Linking.openURL(me.verify_url!)}>
+                  <AnimatedPressable style={styles.submit} onPress={() => Linking.openURL(me.verify_url!)}>
                     <ThemedText type="smallBold" themeColor="accentText">
                       Verify with Persona
                     </ThemedText>
-                  </Pressable>
+                  </AnimatedPressable>
                 )}
-                <Pressable style={styles.secondaryButton} onPress={refreshMe}>
+                <AnimatedPressable style={styles.secondaryButton} onPress={refreshMe}>
                   <ThemedText type="small">Refresh status</ThemedText>
-                </Pressable>
+                </AnimatedPressable>
               </>
             )}
           </ThemedView>
+          </FadeInUp>
           </View>
         </ScrollView>
       </SafeAreaView>

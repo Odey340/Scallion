@@ -1,9 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -159,101 +160,109 @@ export default function ScanScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.scroll}>
-          <ThemedText type="subtitle">Your meal</ThemedText>
-          <ThemedText type="default" themeColor="textSecondary">
-            Breakfast, lunch, dinner, or a snack — estimate, not diagnosis.
-          </ThemedText>
-
-          {loadError && (
-            <ThemedText type="small" themeColor="silence">
-              {loadError}
+          <FadeInUp delay={0}>
+            <ThemedText type="subtitle">Your meal</ThemedText>
+            <ThemedText type="default" themeColor="textSecondary">
+              Breakfast, lunch, dinner, or a snack — estimate, not diagnosis.
             </ThemedText>
-          )}
 
-          <Field label="What meal is this?">
-            <View style={styles.wrap}>
-              {MEAL_TYPES.map((type) => (
-                <SegmentButton key={type} label={type} active={mealType === type} onPress={() => setMealType(type)} />
-              ))}
-            </View>
-          </Field>
-
-          <Field label="Photo of the plate (optional)">
-            <View style={styles.row}>
-              <Pressable style={styles.photoButton} onPress={() => pickImage('camera')}>
-                <ThemedText type="small" themeColor="accentText">
-                  Take photo
-                </ThemedText>
-              </Pressable>
-              <Pressable style={styles.photoButton} onPress={() => pickImage('library')}>
-                <ThemedText type="small" themeColor="accentText">
-                  Choose photo
-                </ThemedText>
-              </Pressable>
-            </View>
-          </Field>
-
-          {imageUri && <Image source={{ uri: imageUri }} style={styles.thumbnail} />}
-          {analyzing && (
-            <View style={styles.row}>
-              <ActivityIndicator color={Colors.accent} />
-              <ThemedText type="small" themeColor="textSecondary">
-                Analyzing photo…
+            {loadError && (
+              <ThemedText type="small" themeColor="silence">
+                {loadError}
               </ThemedText>
-            </View>
-          )}
-          {gemini && (
-            <ThemedText type="small" themeColor="textSecondary">
-              {gemini.food_description} ({gemini.confidence} confidence)
+            )}
+          </FadeInUp>
+
+          <FadeInUp delay={70} style={{ gap: Spacing.three }}>
+            <Field label="What meal is this?">
+              <View style={styles.wrap}>
+                {MEAL_TYPES.map((type) => (
+                  <SegmentButton key={type} label={type} active={mealType === type} onPress={() => setMealType(type)} />
+                ))}
+              </View>
+            </Field>
+          </FadeInUp>
+
+          <FadeInUp delay={140} style={{ gap: Spacing.three }}>
+            <Field label="Photo of the plate (optional)">
+              <View style={styles.row}>
+                <AnimatedPressable style={styles.photoButton} onPress={() => pickImage('camera')}>
+                  <ThemedText type="small" themeColor="accentText">
+                    Take photo
+                  </ThemedText>
+                </AnimatedPressable>
+                <AnimatedPressable style={styles.photoButton} onPress={() => pickImage('library')}>
+                  <ThemedText type="small" themeColor="accentText">
+                    Choose photo
+                  </ThemedText>
+                </AnimatedPressable>
+              </View>
+            </Field>
+
+            {imageUri && <Image source={{ uri: imageUri }} style={styles.thumbnail} />}
+            {analyzing && (
+              <View style={styles.row}>
+                <ActivityIndicator color={Colors.accent} />
+                <ThemedText type="small" themeColor="textSecondary">
+                  Analyzing photo…
+                </ThemedText>
+              </View>
+            )}
+            {gemini && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {gemini.food_description} ({gemini.confidence} confidence)
+              </ThemedText>
+            )}
+            {photoError && (
+              <ThemedText type="small" themeColor="silence">
+                {photoError}
+              </ThemedText>
+            )}
+          </FadeInUp>
+
+          <FadeInUp delay={210} style={{ gap: Spacing.three }}>
+            <Field label="Carbs on the plate (g)">
+              <NumberInput value={carbsG} onChangeText={setCarbsG} placeholder="60" />
+            </Field>
+            <ThemedText type="small" themeColor="textMuted">
+              Pre-filled from your photo when available — always editable.
             </ThemedText>
-          )}
-          {photoError && (
-            <ThemedText type="small" themeColor="silence">
-              {photoError}
-            </ThemedText>
-          )}
 
-          <Field label="Carbs on the plate (g)">
-            <NumberInput value={carbsG} onChangeText={setCarbsG} placeholder="60" />
-          </Field>
-          <ThemedText type="small" themeColor="textMuted">
-            Pre-filled from your photo when available — always editable.
-          </ThemedText>
+            <Field label="Fasting glucose (mg/dL)">
+              <NumberInput value={fastingMgdl} onChangeText={setFastingMgdl} placeholder="95" />
+            </Field>
 
-          <Field label="Fasting glucose (mg/dL)">
-            <NumberInput value={fastingMgdl} onChangeText={setFastingMgdl} placeholder="95" />
-          </Field>
+            <Field label="Weight (lb)">
+              <NumberInput value={weightLb} onChangeText={setWeightLb} placeholder="172" />
+            </Field>
 
-          <Field label="Weight (lb)">
-            <NumberInput value={weightLb} onChangeText={setWeightLb} placeholder="172" />
-          </Field>
+            <Field label="Do you take medicine that affects your blood sugar?">
+              <View style={styles.row}>
+                <SegmentButton label="No" active={onMeds === false} onPress={() => setOnMeds(false)} />
+                <SegmentButton label="Yes" active={onMeds === true} onPress={() => setOnMeds(true)} />
+              </View>
+            </Field>
 
-          <Field label="Do you take medicine that affects your blood sugar?">
-            <View style={styles.row}>
-              <SegmentButton label="No" active={onMeds === false} onPress={() => setOnMeds(false)} />
-              <SegmentButton label="Yes" active={onMeds === true} onPress={() => setOnMeds(true)} />
-            </View>
-          </Field>
+            <Field label="Caffeine so far today (mg, optional — ~95 mg per cup of coffee)">
+              <NumberInput value={caffeineMg} onChangeText={setCaffeineMg} placeholder="95" />
+            </Field>
 
-          <Field label="Caffeine so far today (mg, optional — ~95 mg per cup of coffee)">
-            <NumberInput value={caffeineMg} onChangeText={setCaffeineMg} placeholder="95" />
-          </Field>
+            <Field label="Bedtime (HH:MM, optional)">
+              <TextField value={bedtime} onChangeText={setBedtime} placeholder="22:30" />
+            </Field>
 
-          <Field label="Bedtime (HH:MM, optional)">
-            <TextField value={bedtime} onChangeText={setBedtime} placeholder="22:30" />
-          </Field>
+            {formError && (
+              <ThemedText type="small" themeColor="silence">
+                {formError}
+              </ThemedText>
+            )}
 
-          {formError && (
-            <ThemedText type="small" themeColor="silence">
-              {formError}
-            </ThemedText>
-          )}
-
-          <Pressable style={styles.submit} onPress={handleSubmit}>
-            <ThemedText type="smallBold" themeColor="accentText">
-              See results
-            </ThemedText>
-          </Pressable>
+            <AnimatedPressable style={styles.submit} onPress={handleSubmit}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                See results
+              </ThemedText>
+            </AnimatedPressable>
+          </FadeInUp>
           </View>
         </ScrollView>
       </SafeAreaView>

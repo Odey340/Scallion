@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FadeInUp } from '@/components/animated';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -17,13 +18,15 @@ export function PlaceholderScreen({
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{title}</ThemedText>
-        <ThemedText type="default" themeColor="textSecondary" style={styles.description}>
-          {description}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textMuted">
-          {contractRef}
-        </ThemedText>
+        <FadeInUp>
+          <ThemedText type="title">{title}</ThemedText>
+          <ThemedText type="default" themeColor="textSecondary" style={styles.description}>
+            {description}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textMuted">
+            {contractRef}
+          </ThemedText>
+        </FadeInUp>
       </SafeAreaView>
     </ThemedView>
   );

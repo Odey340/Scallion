@@ -2,6 +2,8 @@
  * - pdf.js (pdfjs-dist) main + worker: loaded at runtime by src/lib/pdf.ts from /pdfjs/, outside Metro.
  * - api/redaction_rules.json (contracts.md section 7) when the api/ tree is present (monorepo checkout);
  *   the committed copy in public/ is used otherwise (Vercel CLI deploys upload web/ only).
+ * - fixtures/*_sample.* -> public/samples/: synthetic demo data (lab report, WhatsApp export,
+ *   Gmail metadata) so Labs and Circle can demo without a real report/account. Redacted/fake only.
  */
 const fs = require('fs');
 const path = require('path');
@@ -16,9 +18,12 @@ for (const f of ['pdf.min.mjs', 'pdf.worker.min.mjs']) {
 }
 const rules = path.join(root, '..', 'api', 'redaction_rules.json');
 if (fs.existsSync(rules)) fs.copyFileSync(rules, path.join(root, 'public', 'redaction_rules.json'));
-const sample = path.join(root, '..', 'fixtures', 'lab_report_synthetic.pdf');
-if (fs.existsSync(sample)) {
-  fs.mkdirSync(path.join(root, 'public', 'samples'), { recursive: true });
-  fs.copyFileSync(sample, path.join(root, 'public', 'samples', 'lab_report_synthetic.pdf'));
+const samples = ['lab_report_synthetic.pdf', 'whatsapp_sample.txt', 'gmail_metadata_sample.json'];
+for (const name of samples) {
+  const src = path.join(root, '..', 'fixtures', name);
+  if (fs.existsSync(src)) {
+    fs.mkdirSync(path.join(root, 'public', 'samples'), { recursive: true });
+    fs.copyFileSync(src, path.join(root, 'public', 'samples', name));
+  }
 }
-console.log('sync-assets: pdfjs + redaction_rules.json in public/');
+console.log('sync-assets: pdfjs + redaction_rules.json + samples in public/');

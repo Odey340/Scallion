@@ -1,0 +1,3098 @@
+[
+  {
+    "id": "msg-1",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1781598389930",
+    "sizeEstimate": 3233,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 16 Jun 2026 08:26:29 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-2",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781603545243",
+    "sizeEstimate": 2239,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 16 Jun 2026 09:52:25 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-3",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1781609641159",
+    "sizeEstimate": 5178,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 16 Jun 2026 11:34:01 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-4",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781612545567",
+    "sizeEstimate": 1735,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 16 Jun 2026 12:22:25 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-95",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781714759768",
+    "sizeEstimate": 984,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 17 Jun 2026 16:45:59 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-44",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781717508886",
+    "sizeEstimate": 6696,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "sam@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 17 Jun 2026 17:31:48 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-96",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1781797974919",
+    "sizeEstimate": 4253,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 18 Jun 2026 15:52:54 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-97",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781805709732",
+    "sizeEstimate": 1824,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 18 Jun 2026 18:01:49 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-98",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1781811424994",
+    "sizeEstimate": 1246,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 18 Jun 2026 19:37:04 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-99",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781817973910",
+    "sizeEstimate": 5128,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 18 Jun 2026 21:26:13 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-45",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1781828550216",
+    "sizeEstimate": 5194,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "sam@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 19 Jun 2026 00:22:30 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-48",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782120247566",
+    "sizeEstimate": 1280,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 22 Jun 2026 09:24:07 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-49",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782123091303",
+    "sizeEstimate": 5761,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 22 Jun 2026 10:11:31 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-68",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782181620199",
+    "sizeEstimate": 2431,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 02:27:00 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-69",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782190725207",
+    "sizeEstimate": 3695,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 04:58:45 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-70",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782192355286",
+    "sizeEstimate": 5135,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 05:25:55 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-28",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782197883677",
+    "sizeEstimate": 2221,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 06:58:03 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-29",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782198104277",
+    "sizeEstimate": 944,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 07:01:44 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-30",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782208412964",
+    "sizeEstimate": 5800,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 09:53:32 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-113",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782250041485",
+    "sizeEstimate": 5375,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 21:27:21 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-114",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782254984473",
+    "sizeEstimate": 2147,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 23 Jun 2026 22:49:44 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-46",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782261345213",
+    "sizeEstimate": 5600,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "sam@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 24 Jun 2026 00:35:45 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-47",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782267189103",
+    "sizeEstimate": 5589,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "sam@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 24 Jun 2026 02:13:09 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-9",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782324410723",
+    "sizeEstimate": 4529,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 24 Jun 2026 18:06:50 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-5",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782452047915",
+    "sizeEstimate": 2559,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 26 Jun 2026 05:34:07 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-6",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782457943101",
+    "sizeEstimate": 2577,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 26 Jun 2026 07:12:23 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-7",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782468624919",
+    "sizeEstimate": 2285,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 26 Jun 2026 10:10:24 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-71",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782726233524",
+    "sizeEstimate": 6518,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 29 Jun 2026 09:43:53 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-72",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1782728009113",
+    "sizeEstimate": 1410,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 29 Jun 2026 10:13:29 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-73",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782731227766",
+    "sizeEstimate": 3943,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 29 Jun 2026 11:07:07 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-100",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782741595003",
+    "sizeEstimate": 1134,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 29 Jun 2026 13:59:55 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-115",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782819428330",
+    "sizeEstimate": 4007,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 30 Jun 2026 11:37:08 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-31",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1782911965385",
+    "sizeEstimate": 5101,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 01 Jul 2026 13:19:25 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-50",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783028087636",
+    "sizeEstimate": 6321,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 02 Jul 2026 21:34:47 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-51",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783030922022",
+    "sizeEstimate": 2968,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 02 Jul 2026 22:22:02 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-52",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783036193241",
+    "sizeEstimate": 5781,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 02 Jul 2026 23:49:53 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-53",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783040676854",
+    "sizeEstimate": 6647,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 03 Jul 2026 01:04:36 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-10",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783082797989",
+    "sizeEstimate": 5765,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 03 Jul 2026 12:46:37 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-11",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783083349756",
+    "sizeEstimate": 1849,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 03 Jul 2026 12:55:49 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-12",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783087325151",
+    "sizeEstimate": 3351,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 03 Jul 2026 14:02:05 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-13",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783087663053",
+    "sizeEstimate": 1328,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 03 Jul 2026 14:07:43 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-74",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783187483004",
+    "sizeEstimate": 6247,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 04 Jul 2026 17:51:23 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-75",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783190613299",
+    "sizeEstimate": 3758,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 04 Jul 2026 18:43:33 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-76",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783200733422",
+    "sizeEstimate": 4855,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 04 Jul 2026 21:32:13 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-77",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783209447985",
+    "sizeEstimate": 2801,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 04 Jul 2026 23:57:27 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-8",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783423696960",
+    "sizeEstimate": 2545,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "maria@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 07 Jul 2026 11:28:16 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-54",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783661365458",
+    "sizeEstimate": 2559,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 10 Jul 2026 05:29:25 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-55",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783671034716",
+    "sizeEstimate": 4233,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 10 Jul 2026 08:10:34 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-101",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783742287359",
+    "sizeEstimate": 2885,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 11 Jul 2026 03:58:07 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-102",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783750975015",
+    "sizeEstimate": 5741,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 11 Jul 2026 06:22:55 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-116",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783844153158",
+    "sizeEstimate": 1056,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 12 Jul 2026 08:15:53 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-14",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1783932323449",
+    "sizeEstimate": 6477,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 13 Jul 2026 08:45:23 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-15",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783940038885",
+    "sizeEstimate": 4929,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 13 Jul 2026 10:53:58 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-32",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1783993776578",
+    "sizeEstimate": 5629,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 14 Jul 2026 01:49:36 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-33",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784000640087",
+    "sizeEstimate": 5780,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 14 Jul 2026 03:44:00 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-34",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784194264217",
+    "sizeEstimate": 1765,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 09:31:04 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-78",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784195839338",
+    "sizeEstimate": 1804,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 09:57:19 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-35",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784198662813",
+    "sizeEstimate": 2064,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 10:44:22 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-79",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784204087676",
+    "sizeEstimate": 1427,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 12:14:47 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-80",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784205098914",
+    "sizeEstimate": 6270,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 12:31:38 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-36",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784207569069",
+    "sizeEstimate": 5969,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 13:12:49 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-81",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784208148634",
+    "sizeEstimate": 4335,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 13:22:28 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-37",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784215636998",
+    "sizeEstimate": 4750,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 16 Jul 2026 15:27:16 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-16",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784327614220",
+    "sizeEstimate": 6278,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 17 Jul 2026 22:33:34 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-17",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784331216431",
+    "sizeEstimate": 1942,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 17 Jul 2026 23:33:36 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-82",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784523909837",
+    "sizeEstimate": 3479,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 20 Jul 2026 05:05:09 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-83",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784534608513",
+    "sizeEstimate": 1294,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 20 Jul 2026 08:03:28 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-84",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784535651389",
+    "sizeEstimate": 3087,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 20 Jul 2026 08:20:51 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-85",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784544295012",
+    "sizeEstimate": 4947,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 20 Jul 2026 10:44:55 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-117",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784614810687",
+    "sizeEstimate": 3691,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 21 Jul 2026 06:20:10 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-118",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784622111712",
+    "sizeEstimate": 2671,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 21 Jul 2026 08:21:51 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-119",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784628020267",
+    "sizeEstimate": 6441,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 21 Jul 2026 10:00:20 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-120",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784631315047",
+    "sizeEstimate": 4106,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 21 Jul 2026 10:55:15 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-103",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784701537465",
+    "sizeEstimate": 4625,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 06:25:37 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-104",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784709239693",
+    "sizeEstimate": 4928,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 08:33:59 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-105",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784712693240",
+    "sizeEstimate": 3219,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 09:31:33 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-106",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784719939933",
+    "sizeEstimate": 2764,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 11:32:19 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-56",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784741398415",
+    "sizeEstimate": 4986,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 17:29:58 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-57",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784751573926",
+    "sizeEstimate": 4103,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 20:19:33 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-58",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784758793534",
+    "sizeEstimate": 1774,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 22 Jul 2026 22:19:53 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-59",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784766401195",
+    "sizeEstimate": 3144,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 23 Jul 2026 00:26:41 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-86",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1784874789332",
+    "sizeEstimate": 3422,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 24 Jul 2026 06:33:09 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-87",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1784880787419",
+    "sizeEstimate": 1808,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 24 Jul 2026 08:13:07 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-107",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785021177870",
+    "sizeEstimate": 3359,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 25 Jul 2026 23:12:57 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-108",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785028978622",
+    "sizeEstimate": 2249,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 26 Jul 2026 01:22:58 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-18",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785037400401",
+    "sizeEstimate": 6328,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 26 Jul 2026 03:43:20 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-19",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785043437426",
+    "sizeEstimate": 5759,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 26 Jul 2026 05:23:57 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-38",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785295959031",
+    "sizeEstimate": 3735,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 29 Jul 2026 03:32:39 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-39",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785298560583",
+    "sizeEstimate": 4304,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 29 Jul 2026 04:16:00 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-40",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785307273945",
+    "sizeEstimate": 5923,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 29 Jul 2026 06:41:13 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-121",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785402213009",
+    "sizeEstimate": 1514,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 30 Jul 2026 09:03:33 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-122",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785408238482",
+    "sizeEstimate": 3520,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 30 Jul 2026 10:43:58 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-60",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785445060988",
+    "sizeEstimate": 1343,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 30 Jul 2026 20:57:40 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-61",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785452562367",
+    "sizeEstimate": 5192,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 30 Jul 2026 23:02:42 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-62",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785463100369",
+    "sizeEstimate": 2704,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 31 Jul 2026 01:58:20 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-63",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785466024461",
+    "sizeEstimate": 1204,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 31 Jul 2026 02:47:04 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-41",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785553179744",
+    "sizeEstimate": 1881,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 01 Aug 2026 02:59:39 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-42",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785556006574",
+    "sizeEstimate": 3433,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 01 Aug 2026 03:46:46 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-43",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785561283704",
+    "sizeEstimate": 1825,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "priya@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 01 Aug 2026 05:14:43 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-88",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785733791055",
+    "sizeEstimate": 1021,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 05:09:51 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-89",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785735877188",
+    "sizeEstimate": 5103,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 05:44:37 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-20",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785771838035",
+    "sizeEstimate": 4694,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 15:43:58 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-21",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785781581536",
+    "sizeEstimate": 6562,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 18:26:21 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-22",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785790751477",
+    "sizeEstimate": 4365,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 20:59:11 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-23",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785801281281",
+    "sizeEstimate": 6605,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 03 Aug 2026 23:54:41 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-109",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785841602635",
+    "sizeEstimate": 5693,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 04 Aug 2026 11:06:42 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-110",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1785843068840",
+    "sizeEstimate": 4123,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 04 Aug 2026 11:31:08 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-111",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1785849023277",
+    "sizeEstimate": 4756,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 04 Aug 2026 13:10:23 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-123",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786154507161",
+    "sizeEstimate": 5462,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 08 Aug 2026 02:01:47 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-124",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786160319112",
+    "sizeEstimate": 5315,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 08 Aug 2026 03:38:39 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-125",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786167066908",
+    "sizeEstimate": 4490,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 08 Aug 2026 05:31:06 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-126",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786173659707",
+    "sizeEstimate": 4850,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 08 Aug 2026 07:20:59 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-64",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786265161534",
+    "sizeEstimate": 6576,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 09 Aug 2026 08:46:01 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-65",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786267727855",
+    "sizeEstimate": 6672,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 09 Aug 2026 09:28:47 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-66",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786270899851",
+    "sizeEstimate": 4030,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 09 Aug 2026 10:21:39 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-67",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786275243673",
+    "sizeEstimate": 5081,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "alex@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Sun, 09 Aug 2026 11:34:03 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-24",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786418930455",
+    "sizeEstimate": 2768,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 11 Aug 2026 03:28:50 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-25",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786426872588",
+    "sizeEstimate": 4096,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 11 Aug 2026 05:41:12 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-26",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786435151085",
+    "sizeEstimate": 6661,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 11 Aug 2026 07:59:11 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-27",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786441292661",
+    "sizeEstimate": 5738,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "jordan@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 11 Aug 2026 09:41:32 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-112",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786552643515",
+    "sizeEstimate": 5073,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "lin@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 12 Aug 2026 16:37:23 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-90",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1786711950431",
+    "sizeEstimate": 2734,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 14 Aug 2026 12:52:30 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-91",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1786713093987",
+    "sizeEstimate": 1440,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 14 Aug 2026 13:11:33 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-127",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1787018033675",
+    "sizeEstimate": 4847,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 18 Aug 2026 01:53:53 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-128",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1787024922588",
+    "sizeEstimate": 1701,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 18 Aug 2026 03:48:42 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-129",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1787027796361",
+    "sizeEstimate": 6765,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "marcus@example.net"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 18 Aug 2026 04:36:36 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-92",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1787786780993",
+    "sizeEstimate": 1224,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 26 Aug 2026 23:26:20 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-93",
+    "labelIds": [
+      "INBOX"
+    ],
+    "internalDate": "1787792473379",
+    "sizeEstimate": 3358,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "To",
+          "value": "you@example.com"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 27 Aug 2026 01:01:13 GMT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "msg-94",
+    "labelIds": [
+      "SENT"
+    ],
+    "internalDate": "1787801008728",
+    "sizeEstimate": 1773,
+    "payload": {
+      "headers": [
+        {
+          "name": "From",
+          "value": "you@example.com"
+        },
+        {
+          "name": "To",
+          "value": "devon@example.org"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 27 Aug 2026 03:23:28 GMT"
+        }
+      ]
+    }
+  }
+]

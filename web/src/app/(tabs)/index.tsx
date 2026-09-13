@@ -1,8 +1,9 @@
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Wordmark } from '@/components/wordmark';
@@ -103,21 +104,25 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.accent} />}>
           <View style={styles.scroll}>
-            <View style={styles.hero}>
-              <Wordmark size="large" />
-              <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
-                Know your biological age. Know your circle. Then move both.
-              </ThemedText>
-            </View>
+            <FadeInUp delay={0}>
+              <View style={styles.hero}>
+                <Wordmark size="large" />
+                <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
+                  Know your biological age. Know your circle. Then move both.
+                </ThemedText>
+              </View>
+            </FadeInUp>
 
             <View style={styles.divider} />
 
-            <View style={styles.headerRow}>
-              <ThemedText type="subtitle">Today</ThemedText>
-              {circleAvailable && (
-                <StatePill state={alerts.includes('distancing') ? 'distancing' : alerts.includes('active') ? 'active' : 'steady'} />
-              )}
-            </View>
+            <FadeInUp delay={60}>
+              <View style={styles.headerRow}>
+                <ThemedText type="subtitle">Today</ThemedText>
+                {circleAvailable && (
+                  <StatePill state={alerts.includes('distancing') ? 'distancing' : alerts.includes('active') ? 'active' : 'steady'} />
+                )}
+              </View>
+            </FadeInUp>
 
             {offline && (
               <ThemedText type="small" themeColor="silence">
@@ -125,20 +130,26 @@ export default function HomeScreen() {
               </ThemedText>
             )}
 
-            <ClockCard clock={clock} critical={critical} labels={labels} />
+            <FadeInUp delay={120}>
+              <ClockCard clock={clock} critical={critical} labels={labels} />
+            </FadeInUp>
 
-            <NudgeCard nudge={nudge} circleAvailable={circleAvailable} hasSession={context !== null} />
+            <FadeInUp delay={180}>
+              <NudgeCard nudge={nudge} circleAvailable={circleAvailable} hasSession={context !== null} />
+            </FadeInUp>
 
             {caffeine?.last_coffee_by && (
-              <ThemedView type="surfaceRaised" style={styles.line}>
-                <ThemedText type="small">
-                  Last coffee by <ThemedText type="smallBold">{caffeine.last_coffee_by}</ThemedText>
-                  {caffeine.bedtime ? ` for a ${caffeine.bedtime} bedtime` : ''}.
-                </ThemedText>
-                <ThemedText type="small" themeColor="textMuted">
-                  {caffeine.dose_assumption ? `${caffeine.dose_assumption}. ` : ''}Source: {caffeine.source}.
-                </ThemedText>
-              </ThemedView>
+              <FadeInUp delay={240}>
+                <ThemedView type="surfaceRaised" style={styles.line}>
+                  <ThemedText type="small">
+                    Last coffee by <ThemedText type="smallBold">{caffeine.last_coffee_by}</ThemedText>
+                    {caffeine.bedtime ? ` for a ${caffeine.bedtime} bedtime` : ''}.
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textMuted">
+                    {caffeine.dose_assumption ? `${caffeine.dose_assumption}. ` : ''}Source: {caffeine.source}.
+                  </ThemedText>
+                </ThemedView>
+              </FadeInUp>
             )}
           </View>
         </ScrollView>
@@ -185,11 +196,11 @@ function ClockCard({
           has seen the report.
         </ThemedText>
         <Link href="/labs" asChild>
-          <Pressable style={styles.secondaryButton}>
+          <AnimatedPressable style={styles.secondaryButton}>
             <ThemedText type="smallBold" themeColor="accent">
               Review the report
             </ThemedText>
-          </Pressable>
+          </AnimatedPressable>
         </Link>
       </ThemedView>
     );
@@ -204,18 +215,18 @@ function ClockCard({
         <ThemedText type="default">No clock yet. Ten seconds for a fitness age, or upload a blood panel for PhenoAge.</ThemedText>
         <View style={styles.row}>
           <Link href="/start" asChild>
-            <Pressable style={styles.primaryButton}>
+            <AnimatedPressable style={styles.primaryButton}>
               <ThemedText type="smallBold" themeColor="accentText">
                 Fitness age in ten seconds
               </ThemedText>
-            </Pressable>
+            </AnimatedPressable>
           </Link>
           <Link href="/labs" asChild>
-            <Pressable style={styles.secondaryButton}>
+            <AnimatedPressable style={styles.secondaryButton}>
               <ThemedText type="smallBold" themeColor="accent">
                 Upload labs
               </ThemedText>
-            </Pressable>
+            </AnimatedPressable>
           </Link>
         </View>
         <ThemedText type="small" themeColor="textMuted">
@@ -242,9 +253,7 @@ function ClockCard({
         {isPheno ? 'Biological age (PhenoAge, Levine 2018)' : 'Fitness age (HUNT)'}
       </ThemedText>
       <View style={styles.clockRow}>
-        <ThemedText type="numeric" style={styles.bigNumber}>
-          {years}
-        </ThemedText>
+        <AnimatedNumber value={years} type="numeric" style={styles.bigNumber} duration={900} />
         <View style={styles.clockMeta}>
           {clock.band !== null && (
             <ThemedText type="small" themeColor="textSecondary">
@@ -299,11 +308,11 @@ function NudgeCard({ nudge, circleAvailable, hasSession }: { nudge: Nudge | null
             leave your phone; this one is a hash.
           </ThemedText>
           <Link href="/circle" asChild>
-            <Pressable style={styles.primaryButton}>
+            <AnimatedPressable style={styles.primaryButton}>
               <ThemedText type="smallBold" themeColor="accentText">
                 Open your circle
               </ThemedText>
-            </Pressable>
+            </AnimatedPressable>
           </Link>
         </>
       ) : circleAvailable ? (
@@ -318,11 +327,11 @@ function NudgeCard({ nudge, circleAvailable, hasSession }: { nudge: Nudge | null
               : 'Sign in and connect an inbox or a chat export to see who is drifting.'}
           </ThemedText>
           <Link href={hasSession ? '/circle' : '/onboarding'} asChild>
-            <Pressable style={styles.secondaryButton}>
+            <AnimatedPressable style={styles.secondaryButton}>
               <ThemedText type="smallBold" themeColor="accent">
                 {hasSession ? 'Open your circle' : 'Get started'}
               </ThemedText>
-            </Pressable>
+            </AnimatedPressable>
           </Link>
         </>
       )}

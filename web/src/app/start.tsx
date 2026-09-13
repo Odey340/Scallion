@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -99,73 +100,79 @@ export default function StartScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.scroll}>
-          <ThemedText type="subtitle">Your fitness age</ThemedText>
-          <ThemedText type="default" themeColor="textSecondary">
-            Ten seconds, no login. Estimate, not diagnosis.
-          </ThemedText>
-
-          {huntError && (
-            <ThemedText type="small" themeColor="silence">
-              {huntError}
+          <FadeInUp delay={0}>
+            <ThemedText type="subtitle">Your fitness age</ThemedText>
+            <ThemedText type="default" themeColor="textSecondary">
+              Ten seconds, no login. Estimate, not diagnosis.
             </ThemedText>
-          )}
 
-          <Field label="Age (years)">
-            <NumberInput value={age} onChangeText={setAge} placeholder="34" />
-          </Field>
+            {huntError && (
+              <ThemedText type="small" themeColor="silence">
+                {huntError}
+              </ThemedText>
+            )}
+          </FadeInUp>
 
-          <Field label="Sex">
-            <View style={styles.row}>
-              <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
-              <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
-            </View>
-          </Field>
+          <FadeInUp delay={70} style={{ gap: Spacing.four }}>
+            <Field label="Age (years)">
+              <NumberInput value={age} onChangeText={setAge} placeholder="34" />
+            </Field>
 
-          <Field label="Waist (cm)">
-            <NumberInput value={waistCm} onChangeText={setWaistCm} placeholder="85" />
-          </Field>
+            <Field label="Sex">
+              <View style={styles.row}>
+                <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
+                <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
+              </View>
+            </Field>
 
-          <Field label="Resting heart rate (bpm)">
-            <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
-          </Field>
+            <Field label="Waist (cm)">
+              <NumberInput value={waistCm} onChangeText={setWaistCm} placeholder="85" />
+            </Field>
 
-          <Field label="How often do you exercise hard enough to raise your heart rate?">
-            <View style={styles.wrap}>
-              {paiOptions.map((option, index) => (
-                <SegmentButton
-                  key={option.key}
-                  label={option.label}
-                  active={paiIndex === index}
-                  onPress={() => setPaiIndex(index)}
-                />
-              ))}
-            </View>
-          </Field>
+            <Field label="Resting heart rate (bpm)">
+              <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
+            </Field>
 
-          {formError && (
-            <ThemedText type="small" themeColor="silence">
-              {formError}
-            </ThemedText>
-          )}
+            <Field label="How often do you exercise hard enough to raise your heart rate?">
+              <View style={styles.wrap}>
+                {paiOptions.map((option, index) => (
+                  <SegmentButton
+                    key={option.key}
+                    label={option.label}
+                    active={paiIndex === index}
+                    onPress={() => setPaiIndex(index)}
+                  />
+                ))}
+              </View>
+            </Field>
 
-          <Pressable style={styles.submit} onPress={handleSubmit}>
-            <ThemedText type="smallBold" themeColor="accentText">
-              Get my fitness age
-            </ThemedText>
-          </Pressable>
+            {formError && (
+              <ThemedText type="small" themeColor="silence">
+                {formError}
+              </ThemedText>
+            )}
+
+            <AnimatedPressable style={styles.submit} onPress={handleSubmit}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                Get my fitness age
+              </ThemedText>
+            </AnimatedPressable>
+          </FadeInUp>
 
           {result && (
-            <ThemedView type="surface" style={styles.resultCard}>
-              <ThemedText type="numeric">{Math.round(result.fitnessAge)}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                fitness age, +/- {Math.round(result.band)} years
-              </ThemedText>
-              <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
-                Estimate, not diagnosis. {hunt?.label ?? 'From age, waist, resting pulse and activity.'}
-                {hunt?.vo2max_source ? ` VO2max: ${hunt.vo2max_source}.` : ''}
-                {hunt?.pai_source ? ` Activity index: ${hunt.pai_source}.` : ''}
-              </ThemedText>
-            </ThemedView>
+            <FadeInUp delay={0}>
+              <ThemedView type="surface" style={styles.resultCard}>
+                <AnimatedNumber value={Math.round(result.fitnessAge)} type="numeric" />
+                <ThemedText type="small" themeColor="textSecondary">
+                  fitness age, +/- {Math.round(result.band)} years
+                </ThemedText>
+                <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
+                  Estimate, not diagnosis. {hunt?.label ?? 'From age, waist, resting pulse and activity.'}
+                  {hunt?.vo2max_source ? ` VO2max: ${hunt.vo2max_source}.` : ''}
+                  {hunt?.pai_source ? ` Activity index: ${hunt.pai_source}.` : ''}
+                </ThemedText>
+              </ThemedView>
+            </FadeInUp>
           )}
           </View>
         </ScrollView>

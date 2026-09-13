@@ -1,14 +1,26 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contactStrengths, parseGmailHeaders, parseWhatsApp, UnsupportedChatError, type ContactStrength, type Event } from '@/lib/social';
+import {
+  contactStrengths,
+  hashContact,
+  parseGmailHeaders,
+  parseWhatsApp,
+  UnsupportedChatError,
+  type ContactStrength,
+  type Event,
+  type GmailMetadataMessage,
+  type StrengthTier,
+} from '@/lib/social';
 
+import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { CircleDotMap } from '@/components/circle-dot-map';
 import { Field, TextField } from '@/components/form-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { CardShadow, Colors, Radius, Spacing } from '@/constants/theme';
 import { api, ApiError, type CircleSummary } from '@/lib/api';
 import { fetchRecentMessages, requestGmailAccessToken } from '@/lib/gmail-ingest';
 import { clearDeviceSalt, getOrCreateDeviceSalt } from '@/lib/salt';
@@ -17,6 +29,11 @@ const OWNER_KEY = 'scallion.owner_name';
 const GMAIL_EMAIL_KEY = 'scallion.gmail_email';
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 const IS_WEB = Platform.OS === 'web';
+const SPLIT_MAX_WIDTH = 1080;
+const SPLIT_BREAKPOINT = 900;
+
+const TIER_LABEL: Record<StrengthTier, string> = { close: 'Close', active: 'Active', weak: 'Weak' };
+const TIER_COLOR: Record<StrengthTier, string> = { close: Colors.connection, active: Colors.accent, weak: Colors.textMuted };
 
 interface SourceResult {
   source: 'whatsapp' | 'gmail';
@@ -26,13 +43,25 @@ interface SourceResult {
   eventCount: number;
 }
 
+interface AdviceItem {
+  contact: string;
+  text: string;
+}
+
 /**
  * Turn your messages into your circle: connect Gmail (OAuth, metadata only) and/or upload
  * WhatsApp exports, both parsed to anonymized Events right here in the browser (social/), then
  * POSTed to the API for the metrics the client doesn't see (GET /circle/summary). The dot map
  * itself is computed locally from the same Events, so it still renders if the API is down.
+ *
+ * Layout: connection sources on the left, a live interactive circle map + relationship advice
+ * on the right (stacked below on narrow screens). Tapping a dot or an advice row selects that
+ * contact and cross-highlights the other side of the panel.
  */
 export default function CircleScreen() {
+  const { width } = useWindowDimensions();
+  const isWide = width >= SPLIT_BREAKPOINT;
+
   const [ownerName, setOwnerName] = useState(() => (IS_WEB ? (localStorage.getItem(OWNER_KEY) ?? '') : ''));
   const [gmailEmail, setGmailEmail] = useState(() => (IS_WEB ? (localStorage.getItem(GMAIL_EMAIL_KEY) ?? '') : ''));
   const [gmailBusy, setGmailBusy] = useState(false);
@@ -42,17 +71,45 @@ export default function CircleScreen() {
   const [gmailEvents, setGmailEvents] = useState<Event[]>([]);
   const [results, setResults] = useState<SourceResult[]>([]);
   const [whatsappError, setWhatsappError] = useState<string | null>(null);
+  const [sampleBusy, setSampleBusy] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
+  // Demo-only: a contact-hash -> first-name map, built solely from the synthetic fixture so the
+  // sample circle reads as people. Real Gmail/WhatsApp connections never populate this — only the
+  // hash ever reaches this component's state for a real account, by design.
+  const [demoNames, setDemoNames] = useState<Record<string, string>>({});
 
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CircleSummary | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const allEvents = useMemo(() => [...whatsappEvents, ...gmailEvents], [whatsappEvents, gmailEvents]);
   const strengths: ContactStrength[] = useMemo(() => contactStrengths(allEvents, new Date()), [allEvents]);
-  const mostOverdue = useMemo(
-    () => [...strengths].filter((s) => s.tier !== 'weak').sort((a, b) => b.daysSinceLast - a.daysSinceLast)[0] ?? null,
-    [strengths],
-  );
+
+  // Who to reach out to: the server's nudges (real thresholds) once synced, else the same
+  // "quietest active/close tie" signal computed locally so the panel is never empty.
+  const advice: AdviceItem[] = useMemo(() => {
+    if (summary && summary.nudges.length > 0) {
+      return summary.nudges.map((n) => ({ contact: n.contact, text: n.text }));
+    }
+    return [...strengths]
+      .filter((s) => s.tier !== 'weak')
+      .sort((a, b) => b.daysSinceLast - a.daysSinceLast)
+      .slice(0, 3)
+      .map((s) => {
+        const tier = TIER_LABEL[s.tier].toLowerCase();
+        const article = /^[aeiou]/i.test(tier) ? 'an' : 'a';
+        return {
+          contact: s.contact,
+          text: `${s.daysSinceLast} day${s.daysSinceLast === 1 ? '' : 's'} since your last exchange — ${article} ${tier} tie going quiet.`,
+        };
+      });
+  }, [summary, strengths]);
+
+  const selectedInfo = useMemo(() => strengths.find((s) => s.contact === selected) ?? null, [strengths, selected]);
+  const selectedAdvice = useMemo(() => advice.find((a) => a.contact === selected) ?? null, [advice, selected]);
+
+  const displayContact = useCallback((contact: string) => demoNames[contact] ?? `Contact ${contact.slice(0, 8)}`, [demoNames]);
 
   const sync = useCallback(async (events: Event[]) => {
     if (events.length === 0) return;
@@ -149,6 +206,72 @@ export default function CircleScreen() {
     setResults((prev) => [...prev, ...nextResults]);
   }
 
+  /** Synthetic circle (fixtures/whatsapp_sample.txt + gmail_metadata_sample.json, served from
+   * public/samples/ by sync-assets.js) so the map and advice can be demoed with no real account. */
+  async function handleTrySample() {
+    setSampleBusy(true);
+    setSampleError(null);
+    try {
+      const salt = getOrCreateDeviceSalt();
+      const [waText, gmailMessages] = await Promise.all([
+        fetch('/samples/whatsapp_sample.txt').then((res) => {
+          if (!res.ok) throw new Error('Sample WhatsApp export not available.');
+          return res.text();
+        }),
+        fetch('/samples/gmail_metadata_sample.json').then((res) => {
+          if (!res.ok) throw new Error('Sample Gmail metadata not available.');
+          return res.json() as Promise<GmailMetadataMessage[]>;
+        }),
+      ]);
+
+      // The fixture bundles one block per contact (real WhatsApp exports are one chat per file) —
+      // split on the "=== BLOCK: Name (platform) ===" markers before parsing, same as
+      // social/src/parsers/whatsapp.test.ts's loadFixtureBlocks.
+      const blocks = waText.split(/\n(?==== BLOCK: )/).filter((p) => p.trim().length > 0);
+      const waEvents: Event[] = [];
+      const waResults: SourceResult[] = [];
+      const names: Record<string, string> = {};
+      for (const block of blocks) {
+        const header = block.match(/^=== BLOCK: (.+) \((ios|android)\) ===\n?/);
+        if (!header) continue;
+        const [full, name] = header;
+        const events = parseWhatsApp(block.slice(full.length), 'You', salt);
+        waEvents.push(...events);
+        waResults.push({ source: 'whatsapp', label: `${name} (demo)`, status: 'ok', message: '', eventCount: events.length });
+        names[hashContact(name, salt)] = name;
+      }
+
+      const gmEvents = parseGmailHeaders(gmailMessages, 'you@example.com', salt);
+
+      // Same fixture identities on the Gmail side (maria@example.com, etc.) — the local part,
+      // capitalized, makes as good a display name as the WhatsApp block header.
+      const gmailAddresses = new Set<string>();
+      for (const msg of gmailMessages) {
+        for (const header of msg.payload?.headers ?? []) {
+          if (header.name.toLowerCase() === 'from' || header.name.toLowerCase() === 'to') {
+            gmailAddresses.add(header.value.trim().toLowerCase());
+          }
+        }
+      }
+      for (const address of gmailAddresses) {
+        if (address === 'you@example.com') continue;
+        const localPart = address.split('@')[0] ?? address;
+        names[hashContact(address, salt)] = localPart.charAt(0).toUpperCase() + localPart.slice(1);
+      }
+
+      setOwnerName('You');
+      setGmailEmail('you@example.com');
+      setWhatsappEvents(waEvents);
+      setGmailEvents(gmEvents);
+      setDemoNames(names);
+      setResults([...waResults, { source: 'gmail', label: 'you@example.com (demo)', status: 'ok', message: '', eventCount: gmEvents.length }]);
+    } catch (err) {
+      setSampleError(err instanceof Error ? err.message : 'Could not load the sample circle.');
+    } finally {
+      setSampleBusy(false);
+    }
+  }
+
   async function handleClear() {
     setWhatsappEvents([]);
     setGmailEvents([]);
@@ -157,6 +280,9 @@ export default function CircleScreen() {
     setSyncError(null);
     setGmailStatus(null);
     setWhatsappError(null);
+    setSampleError(null);
+    setSelected(null);
+    setDemoNames({});
     if (IS_WEB) {
       localStorage.removeItem(OWNER_KEY);
       localStorage.removeItem(GMAIL_EMAIL_KEY);
@@ -175,125 +301,240 @@ export default function CircleScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.scroll}>
-          <ThemedText type="subtitle">Your circle</ThemedText>
-          <ThemedText type="default" themeColor="textSecondary">
-            Connect Gmail and upload WhatsApp exports — message text never leaves this device, only a one-way hash of who
-            and when.
-          </ThemedText>
+          <View style={[styles.scroll, isWide && styles.scrollWide]}>
+            <FadeInUp delay={0}>
+              <View style={styles.hero}>
+                <View style={styles.heroBadge}>
+                  <Ionicons name="people" size={22} color={Colors.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ThemedText type="subtitle">Your circle</ThemedText>
+                  <ThemedText type="default" themeColor="textSecondary">
+                    Connect Gmail and upload WhatsApp exports — message text never leaves this device, only a one-way hash
+                    of who and when.
+                  </ThemedText>
+                </View>
+              </View>
+            </FadeInUp>
 
-          <View style={styles.card}>
-            <ThemedText type="smallBold">Gmail — read-only metadata</ThemedText>
-            <Field label="Your Gmail address">
-              <TextField value={gmailEmail} onChangeText={setGmailEmail} placeholder="you@gmail.com" keyboardType="email-address" />
-            </Field>
-            <Pressable style={styles.button} onPress={() => void handleGmailConnect()} disabled={gmailBusy}>
-              {gmailBusy ? <ActivityIndicator color={Colors.accentText} /> : <ThemedText type="smallBold" themeColor="accentText">Connect Gmail</ThemedText>}
-            </Pressable>
-            {gmailStatus && (
-              <ThemedText type="small" themeColor="textMuted">
-                {gmailStatus}
-              </ThemedText>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <ThemedText type="smallBold">WhatsApp — export upload</ThemedText>
-            <Field label="Your name, exactly as it appears in your own messages">
-              <TextField value={ownerName} onChangeText={setOwnerName} placeholder="e.g. your WhatsApp display name" />
-            </Field>
-            <Pressable style={styles.button} onPress={() => void handleWhatsAppUpload()}>
-              <ThemedText type="smallBold" themeColor="accentText">
-                Upload .txt export(s)
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="small" themeColor="textMuted">
-              Export chat -&gt; Without media, one file per person.
-            </ThemedText>
-            {whatsappError && (
-              <ThemedText type="small" themeColor="silence">
-                {whatsappError}
-              </ThemedText>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <ThemedText type="smallBold">More sources</ThemedText>
-            <View style={styles.wrap}>
-              <Chip label="SMS (Android)" />
-              <Chip label="iMessage (Mac)" />
-            </View>
-            <ThemedText type="small" themeColor="textMuted">
-              Same pipeline, not wired up yet.
-            </ThemedText>
-          </View>
-
-          {results.length > 0 && (
-            <View style={styles.card}>
-              <ThemedText type="smallBold">Sources</ThemedText>
-              {results.map((r, i) => (
-                <ThemedText key={`${r.source}-${r.label}-${i}`} type="small" themeColor={r.status === 'ok' ? 'textSecondary' : 'silence'}>
-                  {r.source === 'gmail' ? 'Gmail' : 'WhatsApp'} — {r.label}:{' '}
-                  {r.status === 'ok' ? `${r.eventCount} events` : r.message}
-                </ThemedText>
-              ))}
-            </View>
-          )}
-
-          {allEvents.length > 0 && (
-            <View style={styles.card}>
-              <ThemedText type="smallBold">Your circle{syncing ? ' — syncing…' : ''}</ThemedText>
-              <CircleDotMap contacts={strengths} />
-
-              {summary ? (
-                <>
-                  <View style={styles.metricsRow}>
-                    <Metric label="Active ties" value={summary.metrics.activeTies} />
-                    <Metric label="Close ties" value={summary.metrics.closeTies} />
-                    <Metric label="LSNS proxy" value={summary.lsns.score} />
-                  </View>
-                  {summary.lsns.atRisk && (
-                    <ThemedText type="small" themeColor="silence">
-                      {summary.lsns.label}. Score below 12 — sustained isolation risk.
-                      {summary.risk ? ` Risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.` : ''}
+            <View style={[styles.splitRow, isWide && styles.splitRowWide]}>
+              <View style={[styles.column, isWide && styles.leftColumnWide]}>
+                <FadeInUp delay={35}>
+                  <View style={[styles.card, CardShadow, styles.sampleCard]}>
+                    <SectionHeader icon="sparkles-outline" label="No account handy?" />
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Load a synthetic circle — twelve fake contacts across months of fake messages — to see the map and
+                      advice without connecting anything real.
                     </ThemedText>
-                  )}
-                  {summary.nudges.length > 0 && (
-                    <View style={{ gap: Spacing.two }}>
-                      <ThemedText type="smallBold" themeColor="textSecondary">
-                        Reach out to revive
+                    <AnimatedPressable style={styles.sampleButton} onPress={() => void handleTrySample()} disabled={sampleBusy}>
+                      {sampleBusy ? (
+                        <ActivityIndicator color={Colors.accent} />
+                      ) : (
+                        <View style={styles.buttonContent}>
+                          <Ionicons name="sparkles-outline" size={16} color={Colors.accent} />
+                          <ThemedText type="smallBold" themeColor="accent">
+                            Load sample circle
+                          </ThemedText>
+                        </View>
+                      )}
+                    </AnimatedPressable>
+                    {sampleError && (
+                      <ThemedText type="small" themeColor="silence">
+                        {sampleError}
                       </ThemedText>
-                      {summary.nudges.map((n) => (
-                        <ThemedText key={n.contact} type="small" themeColor="textSecondary">
-                          Contact {n.contact.slice(0, 8)} — {n.text}
+                    )}
+                  </View>
+                </FadeInUp>
+
+                <FadeInUp delay={70}>
+                  <View style={[styles.card, CardShadow]}>
+                    <SectionHeader icon="mail" label="Gmail — read-only metadata" />
+                    <Field label="Your Gmail address">
+                      <TextField
+                        value={gmailEmail}
+                        onChangeText={setGmailEmail}
+                        placeholder="you@gmail.com"
+                        keyboardType="email-address"
+                      />
+                    </Field>
+                    <AnimatedPressable style={styles.button} onPress={() => void handleGmailConnect()} disabled={gmailBusy}>
+                      {gmailBusy ? (
+                        <ActivityIndicator color={Colors.accentText} />
+                      ) : (
+                        <View style={styles.buttonContent}>
+                          <Ionicons name="mail-outline" size={16} color={Colors.accentText} />
+                          <ThemedText type="smallBold" themeColor="accentText">
+                            Connect Gmail
+                          </ThemedText>
+                        </View>
+                      )}
+                    </AnimatedPressable>
+                    {gmailStatus && (
+                      <ThemedText type="small" themeColor="textMuted">
+                        {gmailStatus}
+                      </ThemedText>
+                    )}
+                  </View>
+                </FadeInUp>
+
+                <FadeInUp delay={140}>
+                  <View style={[styles.card, CardShadow]}>
+                    <SectionHeader icon="logo-whatsapp" label="WhatsApp — export upload" />
+                    <Field label="Your name, exactly as it appears in your own messages">
+                      <TextField value={ownerName} onChangeText={setOwnerName} placeholder="e.g. your WhatsApp display name" />
+                    </Field>
+                    <AnimatedPressable style={styles.button} onPress={() => void handleWhatsAppUpload()}>
+                      <View style={styles.buttonContent}>
+                        <Ionicons name="cloud-upload-outline" size={16} color={Colors.accentText} />
+                        <ThemedText type="smallBold" themeColor="accentText">
+                          Upload .txt export(s)
+                        </ThemedText>
+                      </View>
+                    </AnimatedPressable>
+                    <ThemedText type="small" themeColor="textMuted">
+                      Export chat -&gt; Without media, one file per person.
+                    </ThemedText>
+                    {whatsappError && (
+                      <ThemedText type="small" themeColor="silence">
+                        {whatsappError}
+                      </ThemedText>
+                    )}
+                  </View>
+                </FadeInUp>
+
+                <FadeInUp delay={210}>
+                  <View style={[styles.card, CardShadow]}>
+                    <SectionHeader icon="add-circle-outline" label="More sources" />
+                    <View style={styles.wrap}>
+                      <Chip icon="phone-portrait-outline" label="SMS (Android)" />
+                      <Chip icon="chatbubble-ellipses-outline" label="iMessage (Mac)" />
+                    </View>
+                    <ThemedText type="small" themeColor="textMuted">
+                      Same pipeline, not wired up yet.
+                    </ThemedText>
+                  </View>
+                </FadeInUp>
+
+                {results.length > 0 && (
+                  <FadeInUp delay={0}>
+                    <View style={[styles.card, CardShadow]}>
+                      <SectionHeader icon="list-outline" label="Sources" />
+                      {results.map((r, i) => (
+                        <ThemedText
+                          key={`${r.source}-${r.label}-${i}`}
+                          type="small"
+                          themeColor={r.status === 'ok' ? 'textSecondary' : 'silence'}>
+                          {r.source === 'gmail' ? 'Gmail' : 'WhatsApp'} — {r.label}:{' '}
+                          {r.status === 'ok' ? `${r.eventCount} events` : r.message}
                         </ThemedText>
                       ))}
                     </View>
-                  )}
-                </>
-              ) : (
-                <>
-                  {syncError && (
-                    <ThemedText type="small" themeColor="silence">
-                      {syncError}
-                    </ThemedText>
-                  )}
-                  {mostOverdue && (
-                    <ThemedText type="small" themeColor="textSecondary">
-                      Reach out to revive: contact {mostOverdue.contact.slice(0, 8)} — {mostOverdue.daysSinceLast} days since
-                      you last exchanged messages. (Computed locally — connect to the server for the full picture.)
-                    </ThemedText>
-                  )}
-                </>
-              )}
-            </View>
-          )}
+                  </FadeInUp>
+                )}
+              </View>
 
-          <Pressable style={styles.link} onPress={() => void handleClear()}>
-            <ThemedText type="small" themeColor="textMuted">
-              Clear everything (session + saved names + salt)
-            </ThemedText>
-          </Pressable>
+              <View style={[styles.column, isWide && styles.rightColumnWide]}>
+                <FadeInUp delay={allEvents.length > 0 ? 0 : 280}>
+                  <View style={[styles.card, CardShadow, styles.circleCard]}>
+                    <View style={styles.circleHeaderRow}>
+                      <SectionHeader icon="planet-outline" label="Your circle" />
+                      {syncing && <ActivityIndicator size="small" color={Colors.accent} />}
+                    </View>
+
+                    {allEvents.length === 0 ? (
+                      <View style={styles.emptyState}>
+                        <Ionicons name="radio-outline" size={26} color={Colors.textMuted} />
+                        <ThemedText type="small" themeColor="textMuted" style={styles.emptyStateText}>
+                          Connect Gmail or upload a WhatsApp export to see your circle and get relationship advice here.
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      <>
+                        <CircleDotMap contacts={strengths} selected={selected} onSelect={setSelected} />
+
+                        {summary && (
+                          <View style={styles.metricsRow}>
+                            <Metric label="Active ties" value={summary.metrics.activeTies} />
+                            <Metric label="Close ties" value={summary.metrics.closeTies} />
+                            <Metric label="LSNS proxy" value={summary.lsns.score} />
+                          </View>
+                        )}
+
+                        {summary?.lsns.atRisk && (
+                          <ThemedText type="small" themeColor="silence">
+                            {summary.lsns.label}. Score below 12 — sustained isolation risk.
+                            {summary.risk ? ` Risk-equivalent years, if sustained, population estimate: ${summary.risk.years}.` : ''}
+                          </ThemedText>
+                        )}
+
+                        {syncError && (
+                          <ThemedText type="small" themeColor="silence">
+                            {syncError}
+                          </ThemedText>
+                        )}
+
+                        {selected && selectedInfo && (
+                          <FadeInUp duration={260} distance={6}>
+                            <View style={styles.detailCard}>
+                              <View style={styles.detailHeaderRow}>
+                                <View style={[styles.tierDot, { backgroundColor: TIER_COLOR[selectedInfo.tier] }]} />
+                                <ThemedText type="smallBold" style={{ flex: 1 }}>
+                                  {displayContact(selected)}
+                                </ThemedText>
+                                <AnimatedPressable onPress={() => setSelected(null)} hitSlop={8}>
+                                  <Ionicons name="close" size={16} color={Colors.textMuted} />
+                                </AnimatedPressable>
+                              </View>
+                              <ThemedText type="small" themeColor="textSecondary">
+                                {TIER_LABEL[selectedInfo.tier]} tie · {selectedInfo.eventCount} messages in 30 days · last
+                                contact {selectedInfo.daysSinceLast} day{selectedInfo.daysSinceLast === 1 ? '' : 's'} ago
+                              </ThemedText>
+                              {selectedAdvice && (
+                                <ThemedText type="small" themeColor="accent">
+                                  {selectedAdvice.text}
+                                </ThemedText>
+                              )}
+                            </View>
+                          </FadeInUp>
+                        )}
+
+                        {advice.length > 0 && (
+                          <View style={{ gap: Spacing.two }}>
+                            <ThemedText type="smallBold" themeColor="textSecondary">
+                              Reach out to revive
+                            </ThemedText>
+                            {advice.map((a) => {
+                              const isSelected = selected === a.contact;
+                              return (
+                                <AnimatedPressable
+                                  key={a.contact}
+                                  onPress={() => setSelected(isSelected ? null : a.contact)}
+                                  style={[styles.adviceRow, isSelected && styles.adviceRowSelected]}>
+                                  <Ionicons
+                                    name="alert-circle-outline"
+                                    size={14}
+                                    color={isSelected ? Colors.accent : Colors.textMuted}
+                                  />
+                                  <ThemedText type="small" themeColor={isSelected ? 'accent' : 'textSecondary'} style={{ flex: 1 }}>
+                                    {displayContact(a.contact)} — {a.text}
+                                  </ThemedText>
+                                </AnimatedPressable>
+                              );
+                            })}
+                          </View>
+                        )}
+                      </>
+                    )}
+                  </View>
+                </FadeInUp>
+              </View>
+            </View>
+
+            <AnimatedPressable style={styles.link} onPress={() => void handleClear()}>
+              <ThemedText type="small" themeColor="textMuted">
+                Clear everything (session + saved names + salt)
+              </ThemedText>
+            </AnimatedPressable>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -301,12 +542,19 @@ export default function CircleScreen() {
   );
 }
 
+function SectionHeader({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Ionicons name={icon} size={16} color={Colors.accent} />
+      <ThemedText type="smallBold">{label}</ThemedText>
+    </View>
+  );
+}
+
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.metric}>
-      <ThemedText type="numeric" style={{ fontSize: 28, lineHeight: 32 }}>
-        {value}
-      </ThemedText>
+      <AnimatedNumber value={value} type="numeric" style={{ fontSize: 28, lineHeight: 32 }} />
       <ThemedText type="small" themeColor="textMuted">
         {label}
       </ThemedText>
@@ -314,9 +562,10 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Chip({ label }: { label: string }) {
+function Chip({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
   return (
     <View style={styles.chip}>
+      <Ionicons name={icon} size={13} color={Colors.textMuted} />
       <ThemedText type="small" themeColor="textMuted">
         {label}
       </ThemedText>
@@ -331,11 +580,28 @@ const styles = StyleSheet.create({
   scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
-    maxWidth: MaxContentWidth,
+    maxWidth: 720,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.five,
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
+  scrollWide: { maxWidth: SPLIT_MAX_WIDTH },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  heroBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splitRow: { width: '100%', gap: Spacing.three },
+  splitRowWide: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.four },
+  column: { width: '100%', gap: Spacing.three },
+  leftColumnWide: { flex: 5, maxWidth: 420 },
+  rightColumnWide: { flex: 6 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  circleHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.medium,
@@ -344,14 +610,46 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.two,
   },
+  circleCard: { minHeight: 320 },
+  sampleCard: { borderStyle: 'dashed', borderColor: Colors.accent },
+  sampleButton: {
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+  },
+  emptyState: { alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.six },
+  emptyStateText: { textAlign: 'center', maxWidth: 260 },
+  detailCard: {
+    backgroundColor: Colors.surfaceRaised,
+    borderRadius: Radius.medium,
+    padding: Spacing.three,
+    gap: Spacing.half,
+  },
+  detailHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  tierDot: { width: 8, height: 8, borderRadius: 4 },
+  adviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: Radius.small,
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+  },
+  adviceRowSelected: { backgroundColor: Colors.surfaceRaised },
   button: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     alignItems: 'center',
   },
+  buttonContent: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
     backgroundColor: Colors.surfaceRaised,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,

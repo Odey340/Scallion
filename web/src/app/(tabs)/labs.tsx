@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
 import { ALT_UNITS, ReviewTable } from '@/components/review-table';
 import { ThemedText } from '@/components/themed-text';
@@ -228,18 +229,20 @@ export default function LabsScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <ThemedText type="subtitle">Your labs</ThemedText>
-          <ThemedText type="default" themeColor="textSecondary">
-            Upload the blood panel you already have. PhenoAge (Levine 2018) reads nine common analytes. Estimate, not diagnosis.
-          </ThemedText>
-          {loadError && (
-            <ThemedText type="small" themeColor="silence">
-              {loadError}
+          <FadeInUp delay={0}>
+            <ThemedText type="subtitle">Your labs</ThemedText>
+            <ThemedText type="default" themeColor="textSecondary">
+              Upload the blood panel you already have. PhenoAge (Levine 2018) reads nine common analytes. Estimate, not diagnosis.
             </ThemedText>
-          )}
+            {loadError && (
+              <ThemedText type="small" themeColor="silence">
+                {loadError}
+              </ThemedText>
+            )}
+          </FadeInUp>
 
           {step === 'pick' && (
-            <>
+            <FadeInUp delay={70}>
               <ThemedView type="surface" style={[styles.card, CardShadow]}>
                 <ThemedText type="smallBold">What leaves your phone</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
@@ -248,21 +251,21 @@ export default function LabsScreen() {
                   never stored.
                 </ThemedText>
                 <View style={styles.row}>
-                  <Pressable style={styles.primaryButton} onPress={pickPdf}>
+                  <AnimatedPressable style={styles.primaryButton} onPress={pickPdf}>
                     <ThemedText type="smallBold" themeColor="accentText">
                       Pick a PDF or photo
                     </ThemedText>
-                  </Pressable>
-                  <Pressable style={styles.secondaryButton} onPress={startTyped}>
+                  </AnimatedPressable>
+                  <AnimatedPressable style={styles.secondaryButton} onPress={startTyped}>
                     <ThemedText type="smallBold" themeColor="accent">
                       Type the values
                     </ThemedText>
-                  </Pressable>
-                  <Pressable style={styles.secondaryButton} onPress={trySample}>
+                  </AnimatedPressable>
+                  <AnimatedPressable style={styles.secondaryButton} onPress={trySample}>
                     <ThemedText type="smallBold" themeColor="accent">
                       Try the sample report
                     </ThemedText>
-                  </Pressable>
+                  </AnimatedPressable>
                 </View>
                 {!hasToken() && (
                   <ThemedText type="small" themeColor="textMuted">
@@ -275,20 +278,22 @@ export default function LabsScreen() {
                   {error}
                 </ThemedText>
               )}
-            </>
+            </FadeInUp>
           )}
 
           {step === 'working' && (
-            <ThemedView type="surface" style={[styles.card, CardShadow, styles.center]}>
-              <ActivityIndicator color={Colors.accent} />
-              <ThemedText type="small" themeColor="textSecondary">
-                {status || 'Working…'}
-              </ThemedText>
-            </ThemedView>
+            <FadeInUp delay={0}>
+              <ThemedView type="surface" style={[styles.card, CardShadow, styles.center]}>
+                <ActivityIndicator color={Colors.accent} />
+                <ThemedText type="small" themeColor="textSecondary">
+                  {status || 'Working…'}
+                </ThemedText>
+              </ThemedView>
+            </FadeInUp>
           )}
 
           {step === 'review' && data && (
-            <>
+            <FadeInUp delay={0}>
               {error && (
                 <ThemedText type="small" themeColor="silence">
                   {error}
@@ -398,12 +403,12 @@ export default function LabsScreen() {
                   {error}
                 </ThemedText>
               )}
-              <Pressable style={styles.submit} onPress={compute}>
+              <AnimatedPressable style={styles.submit} onPress={compute}>
                 <ThemedText type="smallBold" themeColor="accentText">
                   Compute my PhenoAge
                 </ThemedText>
-              </Pressable>
-              <Pressable
+              </AnimatedPressable>
+              <AnimatedPressable
                 style={styles.linkButton}
                 onPress={() => {
                   resetLabs();
@@ -413,8 +418,8 @@ export default function LabsScreen() {
                 <ThemedText type="smallBold" themeColor="accent">
                   Start over
                 </ThemedText>
-              </Pressable>
-            </>
+              </AnimatedPressable>
+            </FadeInUp>
           )}
         </ScrollView>
       </SafeAreaView>

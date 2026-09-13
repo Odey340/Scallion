@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { CurveBand } from '@/components/curve-band';
 import { ScoreRing } from '@/components/score-ring';
 import { ThemedText } from '@/components/themed-text';
@@ -18,16 +19,18 @@ export default function ScanResultsScreen() {
   if (!result) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={[styles.safeArea, styles.empty]}>
-          <ThemedText type="subtitle">No meal analyzed yet</ThemedText>
-          <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
-            Go back and describe a meal to see its results here.
-          </ThemedText>
-          <Pressable style={styles.backButton} onPress={() => router.replace('/(tabs)/scan')}>
-            <ThemedText type="smallBold" themeColor="accentText">
-              Back to your meal
+        <SafeAreaView style={styles.safeArea}>
+          <FadeInUp delay={0} style={styles.empty}>
+            <ThemedText type="subtitle">No meal analyzed yet</ThemedText>
+            <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
+              Go back and describe a meal to see its results here.
             </ThemedText>
-          </Pressable>
+            <AnimatedPressable style={styles.backButton} onPress={() => router.replace('/(tabs)/scan')}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                Back to your meal
+              </ThemedText>
+            </AnimatedPressable>
+          </FadeInUp>
         </SafeAreaView>
       </ThemedView>
     );
@@ -44,6 +47,7 @@ export default function ScanResultsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
           <View style={styles.scroll}>
+          <FadeInUp delay={0}>
           <View style={styles.hero}>
             <ThemedText type="small" themeColor="textMuted">
               {mealType} • {carbsSource === 'photo' ? 'estimated from your photo' : 'entered manually'}
@@ -77,15 +81,19 @@ export default function ScanResultsScreen() {
               Scroll down for the full breakdown
             </ThemedText>
           </View>
+          </FadeInUp>
 
           <View style={styles.divider} />
 
+          <FadeInUp delay={70}>
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <ThemedText type="smallBold">Eat now</ThemedText>
             <CurveBand series={meal.eatNow.curve} tMin={meal.tMin} basalMgdl={meal.basalMgdl} />
             <SummaryRow summary={meal.eatNow.summary} />
           </ThemedView>
+          </FadeInUp>
 
+          <FadeInUp delay={140}>
           {onMeds ? (
             <ThemedView type="surface" style={[styles.card, CardShadow]}>
               <ThemedText type="smallBold">Exercise timing</ThemedText>
@@ -104,14 +112,16 @@ export default function ScanResultsScreen() {
               </ThemedText>
             </ThemedView>
           )}
+          </FadeInUp>
 
+          <FadeInUp delay={210}>
           <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
             Estimate, not diagnosis. A typical curve for someone with your fasting glucose and weight (ADA Standards
             of Care fasting cut points). The wellbeing score is Lane C&apos;s own composite of glucose peak, exposure,
             and recovery time — not a validated clinical index.
           </ThemedText>
 
-          <Pressable
+          <AnimatedPressable
             style={styles.backButton}
             onPress={() => {
               clearScanResult();
@@ -120,7 +130,8 @@ export default function ScanResultsScreen() {
             <ThemedText type="smallBold" themeColor="accentText">
               Try another meal
             </ThemedText>
-          </Pressable>
+          </AnimatedPressable>
+          </FadeInUp>
           </View>
         </ScrollView>
       </SafeAreaView>

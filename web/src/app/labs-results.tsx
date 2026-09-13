@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Distribution, type Percentiles } from '@/components/distribution';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -41,17 +42,17 @@ export default function LabsResultsScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={styles.scroll}>
+          <FadeInUp delay={0} style={styles.scroll}>
             <ThemedText type="subtitle">No result yet</ThemedText>
             <ThemedText type="default" themeColor="textSecondary">
               Upload or type a blood panel first.
             </ThemedText>
-            <Pressable style={styles.submit} onPress={() => router.replace('/(tabs)/labs')}>
+            <AnimatedPressable style={styles.submit} onPress={() => router.replace('/(tabs)/labs')}>
               <ThemedText type="smallBold" themeColor="accentText">
                 Go to Labs
               </ThemedText>
-            </Pressable>
-          </View>
+            </AnimatedPressable>
+          </FadeInUp>
         </SafeAreaView>
       </ThemedView>
     );
@@ -71,6 +72,7 @@ export default function LabsResultsScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
+          <FadeInUp delay={0}>
           {critical ? (
             <ThemedView type="surface" style={[styles.card, CardShadow]}>
               <ThemedText type="smallBold" themeColor="textSecondary">
@@ -90,9 +92,7 @@ export default function LabsResultsScreen() {
                 Biological age (PhenoAge, Levine 2018)
               </ThemedText>
               <View style={styles.clockRow}>
-                <ThemedText type="numeric" style={styles.bigNumber}>
-                  {Math.round(result.phenoage!)}
-                </ThemedText>
+                <AnimatedNumber value={Math.round(result.phenoage!)} type="numeric" style={styles.bigNumber} duration={900} />
                 <View style={styles.clockMeta}>
                   <ThemedText type="small" themeColor="textSecondary">
                     +/- {result.band.toFixed(1)} years (1 SD)
@@ -122,7 +122,9 @@ export default function LabsResultsScreen() {
               </ThemedText>
             </ThemedView>
           )}
+          </FadeInUp>
 
+          <FadeInUp delay={70}>
           <ThemedView type="surface" style={[styles.card, CardShadow]}>
             <ThemedText type="smallBold">Where the years come from</ThemedText>
             <Waterfall
@@ -137,8 +139,10 @@ export default function LabsResultsScreen() {
               Cohort offset: what the age-sex reference person scores at your exact age, minus your age.
             </ThemedText>
           </ThemedView>
+          </FadeInUp>
 
           {selected && (
+            <FadeInUp delay={0}>
             <ThemedView type="surface" style={[styles.card, CardShadow]}>
               {selPct && nhanes ? (
                 <Distribution
@@ -160,9 +164,11 @@ export default function LabsResultsScreen() {
                 {nhanes?.units[selected]}.
               </ThemedText>
             </ThemedView>
+            </FadeInUp>
           )}
 
           {markers < 9 && (
+            <FadeInUp delay={0}>
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="smallBold">Complete your clock</ThemedText>
               {complete && complete.order.length > 0 ? (
@@ -193,18 +199,21 @@ export default function LabsResultsScreen() {
                 </ThemedText>
               )}
             </ThemedView>
+            </FadeInUp>
           )}
 
-          <Pressable style={styles.submit} onPress={() => router.replace('/(tabs)/labs')}>
+          <FadeInUp delay={140}>
+          <AnimatedPressable style={styles.submit} onPress={() => router.replace('/(tabs)/labs')}>
             <ThemedText type="smallBold" themeColor="accentText">
               Back to the report
             </ThemedText>
-          </Pressable>
-          <Pressable style={styles.linkButton} onPress={() => router.replace('/(tabs)')}>
+          </AnimatedPressable>
+          <AnimatedPressable style={styles.linkButton} onPress={() => router.replace('/(tabs)')}>
             <ThemedText type="smallBold" themeColor="accent">
               See it on Home
             </ThemedText>
-          </Pressable>
+          </AnimatedPressable>
+          </FadeInUp>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
