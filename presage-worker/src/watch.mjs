@@ -6,6 +6,10 @@
 import { describeToken } from './token.mjs';
 
 export const MAX_ATTEMPTS_PER_ARM = 2; // one retry when a capture yields no confident reading
+// Every request from the watcher carries this header: the API stamps worker_seen_at on the arm
+// status (v12 addendum), and the phone reads "no laptop worker is running" from a missing or stale
+// stamp within seconds instead of waiting out a generic timeout.
+export const WORKER_HEADERS = { 'x-scallion-worker': 'watch' };
 
 // Why a capture child failed, from its stderr. The phone shows NOTES[reason] (PATCH /vitals/arm).
 export function classifyCaptureOutput(text) {
@@ -27,14 +31,15 @@ export const NOTES = {
 const RETRYABLE = new Set(['noface', 'lostface']); // the presenter can fix these while the phone still waits
 
 export async function fetchArm(apiUrl, token, fetchImpl = fetch) {
-  const headers = token ? { authorization: `Bearer ${token}` } : {};
+  const headers = { ...WORKER_HEADERS };
+  if (token) headers.authorization = `Bearer ${token}`;
   const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { headers });
   if (!res.ok) throw new Error(`GET /vitals/arm -> ${res.status}`);
   return res.json();
 }
 
 export async function postNote(apiUrl, token, note, final, fetchImpl = fetch) {
-  const headers = { 'content-type': 'application/json' };
+  const headers = { 'content-type': 'application/json', ...WORKER_HEADERS };
   if (token) headers.authorization = `Bearer ${token}`;
   const res = await fetchImpl(`${apiUrl.replace(/\/$/, '')}/vitals/arm`, { method: 'PATCH', headers, body: JSON.stringify({ note, final }) });
   if (!res.ok) throw new Error(`PATCH /vitals/arm -> ${res.status}`);
@@ -63,10 +68,17 @@ export async function watchLoop({
   const handled = new Map(); // token -> armed_at already captured for (see attempts)
   const attempts = new Map(); // `${token}|${armed_at}` -> captures tried for that arm
   const lastErr = new Map(); // token -> last error message, so one bad token logs once, not every poll
+  // A capture that failed for a fixable reason (no face, face lost) is tried once more at once. The
+  // retry must not depend on the API's `pending`: a first attempt can take up to 3 min (2 min waiting
+  // for a face, then the recording), by which time the 120 s arm window has expired and `pending` is
+  // false although the phone is still waiting (Sun H33: "trying once more" was promised, nothing ran).
+  // Only a Cancel (armed_at null) or a new Start (a different armed_at) calls the retry off.
+  let retry = null; // {token, armedAt}
   let captures = 0;
+  const allTokens = tokens.length ? tokens : [''];
   for (let i = 0; i < maxIterations; i += 1) {
     const statuses = [];
-    for (const token of tokens.length ? tokens : ['']) {
+    for (const token of allTokens) {
       try {
         statuses.push({ token, status: await fetchArm(apiUrl, token, fetchImpl) });
         lastErr.delete(token);
@@ -77,13 +89,35 @@ export async function watchLoop({
         lastErr.set(token, e.message);
       }
     }
-    const pick = pickPending(statuses, handled);
+    let pick = null;
+    if (retry) {
+      const st = statuses.find((s) => s.token === retry.token)?.status;
+      if (st && st.armed_at === retry.armedAt) {
+        pick = retry;
+        retry = null;
+      } else if (st) {
+        log(`[presage] retry called off: the phone ${st.armed_at ? 'pressed Start again' : 'cancelled'}`);
+        retry = null;
+      }
+      // st undefined: the API poll failed this round; keep the retry for the next one
+    }
+    if (!pick) pick = pickPending(statuses, handled);
     if (pick) {
       const key = `${pick.token}|${pick.armedAt}`;
       const n = (attempts.get(key) ?? 0) + 1;
       attempts.set(key, n);
       log(`[presage] Start pressed on the phone (${pick.token ? describeToken(pick.token) : 'anonymous'}, armed ${pick.armedAt}); capturing${n > 1 ? ` (retry ${n - 1})` : ''}`);
-      const res = await runCapture(pick);
+      // Keep polling while the child runs (up to 3 min) so worker_seen_at stays fresh and the phone
+      // can tell "the laptop is busy capturing" from "no worker is running".
+      const keepAlive = setInterval(() => {
+        for (const token of allTokens) fetchArm(apiUrl, token, fetchImpl).catch(() => undefined);
+      }, pollMs);
+      let res;
+      try {
+        res = await runCapture(pick);
+      } finally {
+        clearInterval(keepAlive);
+      }
       const code = typeof res === 'number' ? res : res.code;
       const reason = typeof res === 'number' ? null : res.reason;
       captures += 1;
@@ -98,13 +132,14 @@ export async function watchLoop({
         const note = `${NOTES[reason ?? 'failed']}${again ? ' The laptop is trying once more; keep still.' : ''}`;
         await postNote(apiUrl, pick.token, note, !again, fetchImpl).catch((e) => log(`[presage] could not report to the phone: ${e.message}`));
         if (again) {
+          retry = pick;
           log(`[presage] capture exited ${code} (${reason ?? 'unknown'}); retrying while the phone still waits`);
         } else {
           handled.set(pick.token, pick.armedAt);
           log(`[presage] capture exited ${code} (${reason ?? 'unknown'}); told the phone: ${NOTES[reason ?? 'failed']}`);
         }
       }
-      continue; // re-poll at once: the post cleared pending, or a new arm is waiting
+      continue; // re-poll at once: the post cleared pending, a retry is due, or a new arm is waiting
     }
     await sleep(pollMs);
   }

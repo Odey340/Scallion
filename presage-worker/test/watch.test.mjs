@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NOTES, classifyCaptureOutput, pickPending, watchLoop } from '../src/watch.mjs';
+import { NOTES, WORKER_HEADERS, classifyCaptureOutput, pickPending, watchLoop } from '../src/watch.mjs';
 
 const ok = (body) => ({ ok: true, json: async () => body });
 
@@ -33,6 +33,7 @@ test('watchLoop captures once per distinct arm, retries a failed capture once, s
   const fetchImpl = async (url, init) => {
     assert.match(url, /\/vitals\/arm$/);
     assert.equal(init.headers.authorization, 'Bearer tok');
+    assert.equal(init.headers['x-scallion-worker'], WORKER_HEADERS['x-scallion-worker']); // every poll and note stamps worker_seen_at
     if (init.method === 'PATCH') {
       patches.push(JSON.parse(init.body));
       return ok({});
@@ -117,4 +118,79 @@ test('watchLoop polls anonymously when no token is configured', async () => {
     maxIterations: 1,
   });
   assert.equal(auth, undefined);
+});
+
+test('the retry runs even after the arm window expired (pending false), unless the phone cancelled or re-armed', async () => {
+  // Attempt 1 of t1 takes longer than the 120 s window: by the time it fails the API says
+  // pending=false but armed_at is still t1 -> retry at once. Then t2: attempt 1 fails, the phone
+  // cancels (armed_at null) -> no retry. Then t3: attempt 1 fails, the phone re-arms as t4 -> the
+  // retry is called off and t4 gets a fresh attempt 1.
+  const responses = [
+    { armed_at: 't1', pending: true },
+    { armed_at: 't1', pending: false }, // window expired while attempt 1 ran
+    { armed_at: 't1', pending: false }, // after the retry: given up (final note), nothing more for t1
+    { armed_at: 't2', pending: true },
+    { armed_at: null, pending: false }, // cancelled during attempt 1 of t2
+    { armed_at: 't3', pending: true },
+    { armed_at: 't4', pending: true }, // re-armed during attempt 1 of t3
+    { armed_at: 't4', pending: false },
+  ];
+  let calls = 0;
+  const patches = [];
+  const captured = [];
+  const logs = [];
+  await watchLoop({
+    apiUrl: 'http://api.test',
+    tokens: ['tok'],
+    fetchImpl: async (_url, init) => {
+      if (init.method === 'PATCH') {
+        patches.push(JSON.parse(init.body));
+        return ok({});
+      }
+      const r = responses[Math.min(calls, responses.length - 1)];
+      calls += 1;
+      return ok(r);
+    },
+    sleep: async () => undefined,
+    log: (m) => logs.push(m),
+    runCapture: async (pick) => {
+      captured.push(pick.armedAt);
+      return { code: 1, reason: 'lostface' };
+    },
+    maxIterations: responses.length,
+  });
+  assert.deepEqual(captured, ['t1', 't1', 't2', 't3', 't4', 't4']);
+  assert.ok(logs.some((l) => l.includes('retry called off: the phone cancelled')));
+  assert.ok(logs.some((l) => l.includes('retry called off: the phone pressed Start again')));
+  // t1: trying once more, then final; t2: trying once more (then cancelled); t3: trying once more
+  // (then re-armed); t4: trying once more, then final
+  assert.deepEqual(patches.map((p) => p.final), [false, true, false, false, false, true]);
+});
+
+test('a capture keeps the worker seen: polls continue while the child runs', async () => {
+  const gets = [];
+  let armed = { armed_at: 't1', pending: true };
+  let resolveCapture;
+  const loop = watchLoop({
+    apiUrl: 'http://api.test',
+    tokens: ['tok'],
+    pollMs: 5,
+    fetchImpl: async (_url, init) => {
+      if (init.method === 'PATCH') return ok({});
+      gets.push(1);
+      return ok(armed);
+    },
+    sleep: async () => undefined,
+    log: () => undefined,
+    runCapture: () => new Promise((r) => { resolveCapture = r; }),
+    maxIterations: 1,
+  });
+  await new Promise((r) => setTimeout(r, 60)); // the "child" is running: keep-alive polls should land
+  const during = gets.length;
+  assert.ok(during >= 4, `expected keep-alive polls during the capture, got ${during}`);
+  armed = { armed_at: 't1', pending: false };
+  resolveCapture(0);
+  await loop;
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(gets.length, during, 'keep-alive stops when the capture ends');
 });

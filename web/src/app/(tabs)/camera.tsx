@@ -26,14 +26,23 @@ import { updateProfile, useProfile } from '@/state/profile-store';
  * Perceived age (@vladmandic/human) is first in the cut order and is not in this build.
  */
 
-const CAPTURE_SECONDS = 30; // hand-started worker: its 30 s recording is already under way
+const CAPTURE_SECONDS = 30; // un-armed fallback (hand-started worker): its 30 s recording is already under way
+const SETTLE_SECONDS = 75; // un-armed fallback: keep polling past the countdown for the hand-started worker's POST
 // Armed flow (Start told the laptop worker to capture): the laptop needs ~10-20 s to lock the camera
 // and find the face, then records 30 s, so the hold-still countdown runs a full minute.
 const HOLD_SECONDS = 60;
-// The worker (camera lock + face + 30 s + stop + POST) takes 45-60 s from launch; keep polling well
-// past the countdown for a slow face lock or a retry.
-const SETTLE_SECONDS = 75;
+// One laptop attempt can take up to ~3 min (camera lock, up to 2 min waiting for a face, the 30 s
+// recording, stop, POST; the watcher kills a child at 180 s and then reports). The armed screen waits
+// that long for a verdict, and once more from the moment the laptop says it is trying again.
+const ATTEMPT_SECONDS = 190;
+// The watcher polls /vitals/arm every 2 s (also while a capture runs), so worker_seen_at older than
+// this means no worker is running for this account. After the grace, two stale reads end the wait
+// with a message that names the fix instead of a generic timeout minutes later.
+const WORKER_STALE_S = 15;
+const WORKER_GRACE_S = 20;
 const POLL_MS = 3000;
+
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 type Phase = 'idle' | 'capturing' | 'settling' | 'done' | 'timeout';
 
@@ -51,6 +60,7 @@ export default function CameraScreen() {
   const [latestError, setLatestError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
   const [secondsLeft, setSecondsLeft] = useState(CAPTURE_SECONDS);
+  const [elapsed, setElapsed] = useState(0);
   const [reading, setReading] = useState<VitalsOut | null>(null);
   const captureStart = useRef<number>(0);
   // armed_at from POST /vitals/arm (server clock). When set, only a row the API received after it
@@ -68,6 +78,14 @@ export default function CameraScreen() {
     if (timers.current.poll) clearInterval(timers.current.poll);
     if (timers.current.stop) clearTimeout(timers.current.stop);
     timers.current = {};
+  };
+  // (Re)arm the give-up timer: the wait runs from now for `seconds`, whatever it was before.
+  const stopAfter = (seconds: number) => {
+    if (timers.current.stop) clearTimeout(timers.current.stop);
+    timers.current.stop = setTimeout(() => {
+      clearTimers();
+      setPhase((p) => (p === 'done' ? p : 'timeout'));
+    }, seconds * 1000);
   };
 
   const [ageText, setAgeText] = useState(profile.age ? String(profile.age) : inputs ? String(inputs.age) : '');
@@ -112,11 +130,20 @@ export default function CameraScreen() {
   const [armState, setArmState] = useState<'idle' | 'arming' | 'armed' | 'failed'>('idle');
   // The worker's reason when a capture fails (webcam busy, no face), via GET /vitals/arm `note`.
   const [note, setNote] = useState<string | null>(null);
+  // Whether a presage-worker is polling for this account (GET /vitals/arm `worker_seen_at`):
+  // 'unknown' until the first status read, 'alive' while its polls are fresh, 'missing' ends the wait.
+  const [workerState, setWorkerState] = useState<'unknown' | 'alive' | 'missing'>('unknown');
+  const staleReads = useRef(0);
+  const lastNote = useRef<string | null>(null);
 
   const start = async () => {
     setReading(null);
     setFitness(null);
     setNote(null);
+    setWorkerState('unknown');
+    setElapsed(0);
+    staleReads.current = 0;
+    lastNote.current = null;
     // Tell the laptop worker (presage-worker --watch) to capture; a hand-started worker still works.
     armedAt.current = null;
     if (hasToken()) {
@@ -147,12 +174,14 @@ export default function CameraScreen() {
       setPreviewAvailable(granted);
     }
     const holdSeconds = armed ? HOLD_SECONDS : CAPTURE_SECONDS;
-    captureStart.current = Date.now();
+    const startedAt = Date.now();
+    captureStart.current = startedAt;
     setSecondsLeft(holdSeconds);
     setPhase('capturing');
     timers.current.tick = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - captureStart.current) / 1000);
-      const left = Math.max(0, holdSeconds - elapsed);
+      const elapsedS = Math.floor((Date.now() - captureStart.current) / 1000);
+      setElapsed(elapsedS);
+      const left = Math.max(0, holdSeconds - elapsedS);
       setSecondsLeft(left);
       if (left === 0) setPhase((p) => (p === 'capturing' ? 'settling' : p));
     }, 500);
@@ -163,25 +192,48 @@ export default function CameraScreen() {
         return;
       }
       if (!armed) return;
+      const status = await api.armStatus().catch(() => null);
+      if (!status) return; // an API hiccup says nothing about the laptop
       // The worker says why a capture failed (webcam busy, no face). A final note ends the arm on the
       // API (armed_at null), so stop waiting and show it instead of the generic timeout.
-      const status = await api.armStatus().catch(() => null);
-      if (status?.note) setNote(status.note);
-      if (status?.note && status.armed_at === null) {
+      if (status.note) setNote(status.note);
+      if (status.note && status.armed_at === null) {
+        clearTimers();
+        setPhase('timeout');
+        return;
+      }
+      if (status.note && status.note !== lastNote.current) {
+        // "Trying once more": the laptop is starting another attempt now, so wait for it in full.
+        lastNote.current = status.note;
+        stopAfter(ATTEMPT_SECONDS);
+      }
+      // Liveness. armed_at and worker_seen_at are both server clock, so compare them to each other:
+      // the server's "now" is armed_at plus the time since Start, whatever this device's clock says.
+      const seen = status.worker_seen_at ? new Date(status.worker_seen_at).getTime() : null;
+      const serverNow = (armedAt.current ?? 0) + (Date.now() - captureStart.current);
+      const alive = seen != null && serverNow - seen < WORKER_STALE_S * 1000;
+      if (alive) {
+        staleReads.current = 0;
+        setWorkerState('alive');
+        return;
+      }
+      if (Date.now() - captureStart.current < WORKER_GRACE_S * 1000) return;
+      staleReads.current += 1;
+      if (staleReads.current >= 2) {
+        // Nothing on the laptop is polling for this account: say so now, not after minutes of waiting.
+        setWorkerState('missing');
         clearTimers();
         setPhase('timeout');
       }
     }, POLL_MS);
-    timers.current.stop = setTimeout(() => {
-      clearTimers();
-      setPhase((p) => (p === 'done' ? p : 'timeout'));
-    }, (holdSeconds + SETTLE_SECONDS) * 1000);
+    stopAfter(armed ? ATTEMPT_SECONDS : holdSeconds + SETTLE_SECONDS);
   };
 
   const stop = () => {
     clearTimers();
     setPhase('idle');
     setArmState('idle');
+    setWorkerState('unknown');
     if (hasToken()) api.disarmVitals().catch(() => undefined);
   };
 
@@ -256,9 +308,13 @@ export default function CameraScreen() {
                 )}
                 {phase === 'timeout' && (
                   <ThemedText type="small" themeColor="silence">
-                    {note
-                      ? `The laptop reported: ${note}`
-                      : `No reading arrived${account ? ` for ${account}` : ''}. On the demo laptop the worker must be running (node index.mjs --watch; add --replay test/fixtures/capture_real.json when there is no camera) and its terminal must list this account. Then press Start again.`}
+                    {workerState === 'missing'
+                      ? `No laptop worker is polling for ${account ?? 'this account'}. On the demo laptop run node index.mjs --watch in presage-worker (its terminal must list this account; add --replay test/fixtures/capture_real.json when there is no camera), then press Start again.${note ? ` Its last report: ${note}` : ''}`
+                      : note
+                        ? `The laptop reported: ${note}`
+                        : workerState === 'alive'
+                          ? `No reading arrived${account ? ` for ${account}` : ''} in ${mmss(elapsed)}, although the laptop worker was running. Check its terminal, then press Start again.`
+                          : `No reading arrived${account ? ` for ${account}` : ''}. On the demo laptop the worker must be running (node index.mjs --watch; add --replay test/fixtures/capture_real.json when there is no camera) and its terminal must list this account. Then press Start again.`}
                   </ThemedText>
                 )}
                 <Pressable style={styles.primaryButton} onPress={start}>
@@ -288,22 +344,26 @@ export default function CameraScreen() {
                     </ThemedText>
                   </View>
                 </View>
-                <QualityBar phase={phase} confidence={latest && accepts(latest) ? latest.confidence : null} />
+                <QualityBar phase={phase} confidence={reading?.confidence ?? null} />
                 <ThemedText type="small" themeColor="textSecondary">
                   {armState === 'armed'
                     ? phase === 'capturing'
                       ? 'Face the laptop webcam and hold still. It records for 30 seconds once it finds your face.'
-                      : 'Keep still a little longer. Waiting for the reading to arrive…'
+                      : `Keep still a little longer. Waiting for the laptop's reading (${mmss(elapsed)} since Start; a slow face lock can take a while).`
                     : phase === 'capturing'
                       ? 'Hold still. Breathe normally.'
                       : 'Capture finished. Waiting for the reading to arrive…'}
                 </ThemedText>
                 {armState !== 'idle' && (
-                  <ThemedText type="small" themeColor={armState === 'failed' ? 'silence' : 'textMuted'}>
+                  <ThemedText
+                    type="small"
+                    themeColor={armState === 'failed' ? 'silence' : armState === 'armed' && workerState === 'alive' ? 'connection' : 'textMuted'}>
                     {armState === 'arming'
                       ? 'Telling the laptop worker to capture…'
                       : armState === 'armed'
-                        ? 'Laptop worker told to capture (needs node index.mjs --watch running there).'
+                        ? workerState === 'alive'
+                          ? 'Laptop worker: connected and capturing for this account.'
+                          : 'Laptop worker: not seen yet. It needs node index.mjs --watch running on the demo laptop with this account in its list.'
                         : 'Could not reach the API to start the laptop worker; run node index.mjs there by hand.'}
                   </ThemedText>
                 )}

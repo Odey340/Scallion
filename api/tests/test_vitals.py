@@ -75,7 +75,7 @@ def test_health_reports_memory_db(client):
 
 def test_arm_is_idle_by_default(client):
     body = client.get("/vitals/arm").json()
-    assert body == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": None}
+    assert body == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": None, "worker_seen_at": None}
 
 
 def test_arm_then_post_clears_pending(client):
@@ -129,7 +129,8 @@ def test_worker_note_reaches_the_phone_and_final_ends_the_arm(client):
     assert r.status_code == 200 and r.json()["note"] == "Face lost; trying once more." and r.json()["pending"] is True
     assert client.get("/vitals/arm").json()["note"] == "Face lost; trying once more."
     r = client.patch("/vitals/arm", json={"note": "Webcam busy. Press Start again.", "final": True})
-    assert r.json() == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S, "note": "Webcam busy. Press Start again."}
+    assert r.json()["armed_at"] is None and r.json()["pending"] is False and r.json()["note"] == "Webcam busy. Press Start again."
+    assert r.json()["worker_seen_at"]  # the note came from the worker, so it counts as seen
     # the next Start clears the old reason
     assert client.post("/vitals/arm").json()["note"] is None
     client.patch("/vitals/arm", json={"note": "x"})
@@ -139,3 +140,25 @@ def test_worker_note_reaches_the_phone_and_final_ends_the_arm(client):
 @pytest.mark.parametrize("bad", [{"note": ""}, {"note": "x" * 301}, {}])
 def test_note_validation(client, bad):
     assert client.patch("/vitals/arm", json=bad).status_code == 422
+
+
+def test_worker_polls_stamp_worker_seen_at_but_phone_polls_do_not(client, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    t0 = datetime(2026, 9, 13, 14, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0)
+    # the phone's own status polls never count as a worker
+    assert client.get("/vitals/arm").json()["worker_seen_at"] is None
+    assert client.post("/vitals/arm").json()["worker_seen_at"] is None
+    # the watcher's poll (header) does, and the stamp is visible to the phone on every later read
+    r = client.get("/vitals/arm", headers={vitals_routes.WORKER_HEADER: "watch"})
+    assert r.json()["worker_seen_at"].startswith("2026-09-13T14:00:00")
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0 + timedelta(seconds=9))
+    body = client.get("/vitals/arm").json()
+    assert body["worker_seen_at"].startswith("2026-09-13T14:00:00") and body["pending"] is True
+    # Cancel keeps the stamp (the worker is still there), a new Start keeps it too
+    assert client.delete("/vitals/arm").json()["worker_seen_at"].startswith("2026-09-13T14:00:00")
+    assert client.post("/vitals/arm").json()["worker_seen_at"].startswith("2026-09-13T14:00:00")
+    # a note from the worker refreshes it
+    client.patch("/vitals/arm", json={"note": "Face lost; trying once more."})
+    assert client.get("/vitals/arm").json()["worker_seen_at"].startswith("2026-09-13T14:00:09")

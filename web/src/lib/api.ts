@@ -107,6 +107,8 @@ export interface VitalsArm {
   window_s: number;
   /** The worker's reason when a capture failed (webcam busy, no face); null until then. */
   note: string | null;
+  /** Last poll or note from a presage-worker for this account (server clock); null when none has ever polled. */
+  worker_seen_at: string | null;
 }
 
 export type ClockName = 'phenoage' | 'fitness' | 'social_risk';

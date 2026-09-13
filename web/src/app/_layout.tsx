@@ -12,6 +12,7 @@ import { View } from 'react-native';
 
 import { HeaderAuthButton } from '@/components/header-auth-button';
 import { PageGradient } from '@/components/page-gradient';
+import { UpdateBanner } from '@/components/update-banner';
 import { Wordmark } from '@/components/wordmark';
 import { Colors } from '@/constants/theme';
 
@@ -42,6 +43,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <View style={{ flex: 1 }}>
         <PageGradient />
+        <UpdateBanner />
         <Stack
           screenOptions={{
             headerShown: true,
