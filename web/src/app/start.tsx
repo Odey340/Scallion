@@ -15,7 +15,7 @@ import {
   type Sex,
 } from '@/engine/fitness-age';
 import { api, hasToken } from '@/lib/api';
-import { setLocalClock } from '@/state/clock-store';
+import { setFitnessInputs, setLocalClock } from '@/state/clock-store';
 
 /**
  * QR landing: fitness age in ten seconds, no login. docs/lanes/C.md Block 1.
@@ -71,6 +71,7 @@ export default function StartScreen() {
       const computed = computeFitnessAge({ age: ageNum, sex, waistCm: waistNum, rhr: rhrNum, pai: paiOptions[paiIndex].pai }, hunt);
       setResult(computed);
       // Home shows this clock until labs replace it (clock-store); the API row lets the coach speak about it.
+      setFitnessInputs({ age: ageNum, sex, waistCm: waistNum, pai: paiOptions[paiIndex].pai, paiKey: paiOptions[paiIndex].key });
       setLocalClock({
         clock: 'fitness',
         years: computed.fitnessAge,

@@ -18,17 +18,32 @@ export interface LocalClock {
   imputed?: string[];
 }
 
-const KEY = 'scallion.clock.v1';
-let current: Partial<Record<LocalClock['clock'], LocalClock>> = load();
+/** What /start asked, kept so the Camera screen can turn a measured pulse into a fitness age. */
+export interface FitnessInputs {
+  age: number;
+  sex: 'M' | 'F';
+  waistCm: number;
+  pai: number;
+  paiKey: string;
+}
+
+interface Stored {
+  clocks: Partial<Record<LocalClock['clock'], LocalClock>>;
+  fitnessInputs: FitnessInputs | null;
+}
+
+const KEY = 'scallion.clock.v2';
+let current: Stored = load();
 const listeners = new Set<() => void>();
 
-function load(): Partial<Record<LocalClock['clock'], LocalClock>> {
+function load(): Stored {
   try {
-    if (typeof localStorage === 'undefined') return {};
+    if (typeof localStorage === 'undefined') return { clocks: {}, fitnessInputs: null };
     const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Partial<Record<LocalClock['clock'], LocalClock>>) : {};
+    const parsed = raw ? (JSON.parse(raw) as Partial<Stored>) : {};
+    return { clocks: parsed.clocks ?? {}, fitnessInputs: parsed.fitnessInputs ?? null };
   } catch {
-    return {};
+    return { clocks: {}, fitnessInputs: null };
   }
 }
 
@@ -41,16 +56,26 @@ function persist() {
 }
 
 export function setLocalClock(clock: LocalClock) {
-  current = { ...current, [clock.clock]: clock };
+  current = { ...current, clocks: { ...current.clocks, [clock.clock]: clock } };
+  persist();
+  listeners.forEach((listener) => listener());
+}
+
+export function setFitnessInputs(inputs: FitnessInputs) {
+  current = { ...current, fitnessInputs: inputs };
   persist();
   listeners.forEach((listener) => listener());
 }
 
 export function getLocalClocks() {
-  return current;
+  return current.clocks;
 }
 
-export function useLocalClocks() {
+export function getFitnessInputs() {
+  return current.fitnessInputs;
+}
+
+function useStore(): Stored {
   const [, forceRender] = useState(0);
   useEffect(() => {
     const listener = () => forceRender((n) => n + 1);
@@ -60,4 +85,12 @@ export function useLocalClocks() {
     };
   }, []);
   return current;
+}
+
+export function useLocalClocks() {
+  return useStore().clocks;
+}
+
+export function useFitnessInputs() {
+  return useStore().fitnessInputs;
 }
