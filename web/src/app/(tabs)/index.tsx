@@ -204,7 +204,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollOuter}
@@ -225,7 +225,7 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </ThemedView>
   );
 }
 
