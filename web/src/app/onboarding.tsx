@@ -12,6 +12,24 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { useSession } from '@/state/auth-store';
 
 const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
+const RESEND_COOLDOWN_S = 60;
+
+/**
+ * Supabase's raw auth errors are terse. The two we hit in practice:
+ *  - "email rate limit exceeded": the PROJECT-wide cap on auth emails (2/hour on Supabase's
+ *    built-in sender, shared by every user) — fixed in the dashboard by adding custom SMTP and
+ *    raising Auth > Rate Limits > "emails sent"; nothing the app can do but wait.
+ *  - "For security purposes, you can only request this after N seconds": per-address 60 s cooldown.
+ */
+function describeAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('rate limit')) {
+    return 'Too many sign-in emails were sent from this project in the last hour (Supabase caps them). Wait an hour, or ask the team to enable custom SMTP in the Supabase dashboard.';
+  }
+  const wait = /after (\d+) seconds/.exec(m);
+  if (wait) return `Please wait ${wait[1]} seconds before requesting another code.`;
+  return message;
+}
 
 /**
  * What leaves your phone; the medication question; the two LSNS questions; sign-in (Supabase,
@@ -26,6 +44,13 @@ export default function OnboardingScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   const [onMeds, setOnMeds] = useState<boolean | null>(null);
   const [helpFamily, setHelpFamily] = useState<(typeof HELP_SCALE)[number] | null>(null);
@@ -53,7 +78,7 @@ export default function OnboardingScreen() {
   }, [session]);
 
   const sendCode = async () => {
-    if (!supabase || !email) return;
+    if (!supabase || !email || cooldown > 0) return;
     setAuthBusy(true);
     setAuthError(null);
     // Supabase's default email template is a clickable link, not a typed code — emailRedirectTo
@@ -61,13 +86,19 @@ export default function OnboardingScreen() {
     // Supabase project's Redirect URLs allowlist), Supabase falls back to its default Site URL,
     // which is why the email link was landing on an inaccessible localhost address.
     const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: redirectTo },
+    });
     setAuthBusy(false);
     if (error) {
-      setAuthError(error.message);
+      setAuthError(describeAuthError(error.message));
+      // Supabase refuses repeat sends for 60 s per address; don't let the button hammer it.
+      setCooldown(RESEND_COOLDOWN_S);
       return;
     }
     setOtpSent(true);
+    setCooldown(RESEND_COOLDOWN_S);
   };
 
   const verifyCode = async () => {
@@ -164,9 +195,13 @@ export default function OnboardingScreen() {
                   <TextField value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
                 </Field>
                 {!otpSent ? (
-                  <AnimatedPressable style={styles.submit} onPress={sendCode} disabled={authBusy}>
+                  <AnimatedPressable
+                    style={[styles.submit, (authBusy || cooldown > 0) && styles.submitDisabled]}
+                    onPress={sendCode}
+                    disabled={authBusy || cooldown > 0}
+                  >
                     <ThemedText type="smallBold" themeColor="accentText">
-                      {authBusy ? 'Sending…' : 'Send sign-in code'}
+                      {authBusy ? 'Sending…' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send sign-in code'}
                     </ThemedText>
                   </AnimatedPressable>
                 ) : (
@@ -303,6 +338,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  submitDisabled: {
+    opacity: 0.6,
   },
   secondaryButton: {
     borderWidth: 1,

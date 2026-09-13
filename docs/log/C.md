@@ -236,3 +236,18 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Coach (push-to-talk via `/coach/session`, captions, text fallback, read-aloud via `/tts`), then Spanish + large type.
 
 **Contract changes needed:** None.
+
+## Session 15 (2026-09-12): "email rate limit exceeded" on sign-in
+
+**Human report:** "Send sign-in code" fails with `email rate limit exceeded`.
+
+**Diagnosis:** Not a code bug. Supabase's built-in email sender caps a *project* at 2 auth emails per hour (shared by every user, every address), and since 2024 it only delivers to email addresses of the Supabase org's members at all. Sessions 14 and this one used up the hourly budget testing the magic link. The anon key cannot change project settings, and the Supabase MCP server in this environment is not authenticated, so the real fix is a human dashboard step.
+
+**Done in code (`onboarding.tsx`):** `describeAuthError` maps the raw Supabase message to a plain-English one (rate limit -> "wait an hour or enable custom SMTP"; "after N seconds" -> countdown text); 60 s resend cooldown with a `Resend in Ns` label so the button cannot hammer the endpoint; email is trimmed. tsc + eslint clean.
+
+**Needs the human, Supabase dashboard (in addition to Session 14's three URL steps):**
+1. Authentication -> SMTP Settings -> enable Custom SMTP. Resend (free, ~2 min: verify domain or use their onboarding sender, create an API key; host `smtp.resend.com`, port 465, user `resend`, password = API key). Any provider works.
+2. Authentication -> Rate Limits -> "Rate limit for sending emails": raise from 2/hour to e.g. 60/hour (only editable once custom SMTP is on).
+3. Until then: wait an hour, or add the tester's email as an org member; or use `EXPO_PUBLIC_DEMO_TOKEN` for the judged demo account, which skips sign-in entirely.
+
+**Blocked:** the two dashboard steps above. **Contract changes needed:** None.
