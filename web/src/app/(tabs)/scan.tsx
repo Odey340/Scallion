@@ -157,7 +157,8 @@ export default function ScanScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.scroll}>
           <ThemedText type="subtitle">Your meal</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Breakfast, lunch, dinner, or a snack — estimate, not diagnosis.
@@ -253,6 +254,7 @@ export default function ScanScreen() {
               See results
             </ThemedText>
           </Pressable>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -262,7 +264,8 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

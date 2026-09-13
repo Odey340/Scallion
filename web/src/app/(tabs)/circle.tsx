@@ -174,7 +174,8 @@ export default function CircleScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.scroll}>
           <ThemedText type="subtitle">Your circle</ThemedText>
           <ThemedText type="default" themeColor="textSecondary">
             Connect Gmail and upload WhatsApp exports — message text never leaves this device, only a one-way hash of who
@@ -293,6 +294,7 @@ export default function CircleScreen() {
               Clear everything (session + saved names + salt)
             </ThemedText>
           </Pressable>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -325,7 +327,8 @@ function Chip({ label }: { label: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

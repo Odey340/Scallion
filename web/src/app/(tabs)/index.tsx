@@ -100,45 +100,47 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollOuter}
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.accent} />}>
-          <View style={styles.hero}>
-            <Wordmark size="large" />
-            <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
-              Know your biological age. Know your circle. Then move both.
-            </ThemedText>
-          </View>
+          <View style={styles.scroll}>
+            <View style={styles.hero}>
+              <Wordmark size="large" />
+              <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
+                Know your biological age. Know your circle. Then move both.
+              </ThemedText>
+            </View>
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          <View style={styles.headerRow}>
-            <ThemedText type="subtitle">Today</ThemedText>
-            {circleAvailable && (
-              <StatePill state={alerts.includes('distancing') ? 'distancing' : alerts.includes('active') ? 'active' : 'steady'} />
+            <View style={styles.headerRow}>
+              <ThemedText type="subtitle">Today</ThemedText>
+              {circleAvailable && (
+                <StatePill state={alerts.includes('distancing') ? 'distancing' : alerts.includes('active') ? 'active' : 'steady'} />
+              )}
+            </View>
+
+            {offline && (
+              <ThemedText type="small" themeColor="silence">
+                Could not reach the API. Showing what this device computed.
+              </ThemedText>
+            )}
+
+            <ClockCard clock={clock} critical={critical} labels={labels} />
+
+            <NudgeCard nudge={nudge} circleAvailable={circleAvailable} hasSession={context !== null} />
+
+            {caffeine?.last_coffee_by && (
+              <ThemedView type="surfaceRaised" style={styles.line}>
+                <ThemedText type="small">
+                  Last coffee by <ThemedText type="smallBold">{caffeine.last_coffee_by}</ThemedText>
+                  {caffeine.bedtime ? ` for a ${caffeine.bedtime} bedtime` : ''}.
+                </ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  {caffeine.dose_assumption ? `${caffeine.dose_assumption}. ` : ''}Source: {caffeine.source}.
+                </ThemedText>
+              </ThemedView>
             )}
           </View>
-
-          {offline && (
-            <ThemedText type="small" themeColor="silence">
-              Could not reach the API. Showing what this device computed.
-            </ThemedText>
-          )}
-
-          <ClockCard clock={clock} critical={critical} labels={labels} />
-
-          <NudgeCard nudge={nudge} circleAvailable={circleAvailable} hasSession={context !== null} />
-
-          {caffeine?.last_coffee_by && (
-            <ThemedView type="surfaceRaised" style={styles.line}>
-              <ThemedText type="small">
-                Last coffee by <ThemedText type="smallBold">{caffeine.last_coffee_by}</ThemedText>
-                {caffeine.bedtime ? ` for a ${caffeine.bedtime} bedtime` : ''}.
-              </ThemedText>
-              <ThemedText type="small" themeColor="textMuted">
-                {caffeine.dose_assumption ? `${caffeine.dose_assumption}. ` : ''}Source: {caffeine.source}.
-              </ThemedText>
-            </ThemedView>
-          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -331,7 +333,8 @@ function NudgeCard({ nudge, circleAvailable, hasSession }: { nudge: Nudge | null
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

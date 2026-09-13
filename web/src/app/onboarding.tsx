@@ -101,7 +101,8 @@ export default function OnboardingScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.scroll}>
           <ThemedText type="subtitle">Onboarding</ThemedText>
 
           <ThemedView type="surfaceRaised" style={styles.card}>
@@ -244,6 +245,7 @@ export default function OnboardingScreen() {
               </>
             )}
           </ThemedView>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -253,7 +255,8 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   scroll: {
     width: '100%',
     maxWidth: MaxContentWidth,

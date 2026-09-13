@@ -42,7 +42,8 @@ export default function ScanResultsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.scroll}>
           <View style={styles.hero}>
             <ThemedText type="small" themeColor="textMuted">
               {mealType} • {carbsSource === 'photo' ? 'estimated from your photo' : 'entered manually'}
@@ -120,6 +121,7 @@ export default function ScanResultsScreen() {
               Try another meal
             </ThemedText>
           </Pressable>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -152,7 +154,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
-  scrollOuter: { flex: 1, width: '100%', alignItems: 'center' },
+  scrollOuter: { flex: 1, width: '100%' },
+  scrollContent: { alignItems: 'center' },
   empty: { justifyContent: 'center', gap: Spacing.three, paddingHorizontal: Spacing.four },
   emptyText: { textAlign: 'center' },
   scroll: {
