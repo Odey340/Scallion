@@ -547,6 +547,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   secondaryButton: {
     borderWidth: 1,
@@ -554,6 +556,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   submit: {
     backgroundColor: Colors.accent,

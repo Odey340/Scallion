@@ -1,6 +1,6 @@
 import { Link, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
@@ -227,6 +227,17 @@ export default function HomeScreen() {
 function Welcome() {
   return (
     <View style={styles.welcome}>
+      <View style={styles.welcomePhotoWrap}>
+        <Image
+          source={require('@/assets/images/welcome-consultation.jpg')}
+          style={styles.welcomePhoto}
+          resizeMode="cover"
+          accessibilityLabel="A doctor reviewing results with a patient"
+        />
+      </View>
+      <ThemedText type="small" themeColor="textMuted" style={styles.photoCredit}>
+        Photo: National Cancer Institute
+      </ThemedText>
       <Wordmark size="large" linkToHome={false} />
       <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
         Know your biological age. Know your circle. Then move both.
@@ -636,6 +647,16 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 1.2 },
   todayRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   welcome: { alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.four },
+  welcomePhotoWrap: {
+    width: '100%',
+    maxWidth: 480,
+    aspectRatio: 1.6,
+    borderRadius: Radius.large,
+    overflow: 'hidden',
+    backgroundColor: Colors.surfaceRaised,
+  },
+  welcomePhoto: { width: '100%', height: '100%' },
+  photoCredit: { alignSelf: 'flex-end', maxWidth: 480, width: '100%', textAlign: 'right', marginTop: -Spacing.two },
   welcomeActions: { gap: Spacing.two, alignItems: 'center' },
   tagline: { textAlign: 'center', maxWidth: 360 },
   hero: { gap: Spacing.two },

@@ -13,6 +13,7 @@ import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constant
 import { ANALYTES, type AnalyteKey } from '@/engine/phenoage';
 import { ApiError, api, hasToken, type Checkin, type CoachContext, type Explain } from '@/lib/api';
 import { startVoice, voiceSupported, type VoiceMode, type VoiceStatus } from '@/lib/coach-voice';
+import { formatBand } from '@/lib/format';
 import { useSession } from '@/state/auth-store';
 
 /**
@@ -331,7 +332,7 @@ export default function CoachScreen() {
                     <ThemedText key={name} type="default">
                       {name === 'phenoage' ? t('Biological age', 'Edad biológica') : name === 'fitness' ? t('Fitness age', 'Edad física') : name}:{' '}
                       <ThemedText type="smallBold">{Math.round(row.years)}</ThemedText>
-                      {row.band != null ? ` +/- ${Math.round(row.band)}` : ''}
+                      {row.band != null ? ` ${formatBand(row.band)}` : ''}
                       {row.delta_years != null ? ` (${row.delta_years > 0 ? '+' : ''}${row.delta_years} ${t('vs calendar age', 'vs edad calendario')})` : ''}
                     </ThemedText>
                   ))
@@ -535,6 +536,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   secondaryButton: {
@@ -543,6 +546,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-start',
   },

@@ -9,6 +9,7 @@ import { ANALYTE_LABELS, Waterfall } from '@/components/waterfall';
 import { CardShadow, Colors, Radius, Spacing } from '@/constants/theme';
 import { ANALYTES, type AnalyteKey, type PhenoAgeData, type PhenoAgeResult, type Sex } from '@/engine/phenoage';
 import type { ExtractResponse } from '@/lib/api';
+import { formatBand } from '@/lib/format';
 
 export interface NhanesPercentiles {
   source?: string;
@@ -77,7 +78,7 @@ export function LabsResultsPanel({
               <AnimatedNumber value={Math.round(result.phenoage!)} type="numeric" style={styles.bigNumber} duration={900} />
               <View style={styles.clockMeta}>
                 <ThemedText type="small" themeColor="textSecondary">
-                  +/- {result.band.toFixed(1)} years (1 SD)
+                  {formatBand(result.band)} (1 SD)
                 </ThemedText>
                 {accel !== null && (
                   <ThemedText type="small" themeColor={accel < 0 ? 'connection' : accel > 0 ? 'silence' : 'textSecondary'}>

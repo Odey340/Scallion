@@ -476,3 +476,22 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Phase 8 (visual consistency and accessibility pass across all screens) — ask the human first, per the established one-phase-at-a-time agreement.
 
 **Contract changes needed:** None.
+
+## Session 26 (2026-09-13): Phase 8 — consistency/accessibility audit; one deliberate trust photo on Home's first visit
+
+**Human approved Phase 8, plus asked for royalty-free photos** ("images of doctors taking care of patients... to show trust... don't randomly place") — an explicit, deliberate departure from the redesign brief's own original "avoid stock-health imagery" instruction, at the human's request, so implemented narrowly rather than sprinkled around.
+
+**Phase 8 audit found three real, concrete gaps** (most consistency work had already happened incidentally across Phases 1-7 by reusing shared components — `ChoiceGroup`, `ProfileValue`, `Disclosure`, `formatSigned`/`formatYears`, 44px targets):
+1. **One icon-only button had no accessible name**: Circle's contact-detail "×" close button. Added `accessibilityRole="button"` + `accessibilityLabel="Close"`. Grepped the whole tree for the same pattern (a `Pressable` whose only child is a bare `Ionicons`, no adjacent text) — nothing else matched.
+2. **Uncertainty-band notation was inconsistent across five files**: four used ASCII `+/-` (camera.tsx, coach.tsx, start.tsx, labs-results-panel.tsx) while Home (Phase 3) used the proper `±` via `lib/format.ts`'s `formatBand()`. Routed all four through the same helper — same symbol, same one-decimal precision, everywhere a model's uncertainty band is shown.
+3. **Six buttons across five screens were under the 44px minimum touch target** (`camera.tsx`, `coach.tsx`, `labs.tsx`'s primary/secondary buttons, `scan.tsx`'s photo buttons, `onboarding.tsx`'s secondary button, `start.tsx`'s secondary button) — all used `paddingVertical: Spacing.two` (8px) with no `minHeight`, landing around 36px. Added `minHeight: 44` + `justifyContent: 'center'` to match the convention already used elsewhere (`SegmentButton`, Home's buttons, Circle's Phase 6 additions).
+
+**One deliberately placed trust photo, not decoration scattered around the app.** Sourced a real photo from Unsplash (`National Cancer Institute` account, "Medical consultation" — a physician reviewing results with a patient, published under the Unsplash License, free for commercial use, verified the license text on the actual photo page before using it) and downloaded it locally to `web/assets/images/welcome-consultation.jpg` rather than hotlinking, so it's stable and the license claim is checkable. Placed in exactly one spot: `(tabs)/index.tsx`'s `Welcome()` block — the first-visit-only screen shown before any real data exists. Chosen deliberately over any other option because it's the only place in the app that's already a "front door" moment rather than a working instrument screen a returning user relies on; it never appears again once a clock, labs, or circle exist, so it can't clutter the data-dense screens the rest of the redesign spent seven phases making calmer. Small credit line under the photo ("Photo: National Cancer Institute") — not legally required by the license, but matches the app's own house style of citing every source (Levine 2018, NHANES, Buffey 2022, etc.) rather than making an unsourced claim.
+
+**Verified:** `tsc` clean, 77/77 tests, lint clean except the pre-existing `animated.tsx` false positive, `expo export` clean (183 KB image, no bundling issues). Live-browser-verified: the photo renders correctly at desktop width and at a 390px mobile width with proper gutters (no overflow, no stretching), and — the important check — disappears the moment real data exists (set a fake local clock and reloaded; the working "Today" fitness-age card replaced the welcome block immediately, confirming the photo truly never shows again for a returning user).
+
+**Blocked:** Nothing.
+
+**Next:** All eight phases of the redesign brief are now done. Worth a final full-app walkthrough per the brief's own section 120 quality gate (first-time user, returning user, scientific user, privacy-conscious user, technical reviewer) before calling the initiative complete — propose this to the human rather than assuming the phased work is finished just because the list ran out.
+
+**Contract changes needed:** None.

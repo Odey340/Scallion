@@ -958,6 +958,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });

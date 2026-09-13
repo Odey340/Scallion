@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { computeFitnessAge, FALLBACK_PAI_OPTIONS, type FitnessAgeResult, type HuntData, type Sex } from '@/engine/fitness-age';
 import { ApiError, api, hasToken, type VitalsOut } from '@/lib/api';
+import { formatBand } from '@/lib/format';
 import { setFitnessInputs, setLocalClock, useFitnessInputs } from '@/state/clock-store';
 import { useSession } from '@/state/auth-store';
 import { updateProfile, useProfile } from '@/state/profile-store';
@@ -298,7 +299,7 @@ export default function CameraScreen() {
                     </ThemedText>
                     <View style={styles.clockMeta}>
                       <ThemedText type="small" themeColor="textSecondary">
-                        +/- {Math.round(fitness.band)} years
+                        {formatBand(fitness.band)}
                       </ThemedText>
                       <ThemedText type="small" themeColor="textSecondary">
                         fitness age, estimate not diagnosis
@@ -432,6 +433,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   secondaryButton: {
@@ -440,6 +443,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-start',
   },

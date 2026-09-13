@@ -510,7 +510,7 @@ export default function CircleScreen() {
                       <ThemedText type="smallBold" style={{ flex: 1 }}>
                         {displayContact(selected)}
                       </ThemedText>
-                      <AnimatedPressable onPress={() => setSelected(null)} hitSlop={8}>
+                      <AnimatedPressable onPress={() => setSelected(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
                         <Ionicons name="close" size={16} color={Colors.textMuted} />
                       </AnimatedPressable>
                     </View>

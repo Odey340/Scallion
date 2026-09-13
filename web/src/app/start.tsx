@@ -15,6 +15,7 @@ import {
   type Sex,
 } from '@/engine/fitness-age';
 import { api, hasToken } from '@/lib/api';
+import { formatBand } from '@/lib/format';
 import { setFitnessInputs, setLocalClock } from '@/state/clock-store';
 import { updateProfile, useProfile } from '@/state/profile-store';
 
@@ -207,7 +208,7 @@ export default function StartScreen() {
               <ThemedView type="surface" style={styles.resultCard}>
                 <AnimatedNumber value={Math.round(result.fitnessAge)} type="numeric" />
                 <ThemedText type="small" themeColor="textSecondary">
-                  fitness age, +/- {Math.round(result.band)} years
+                  fitness age, {formatBand(result.band)}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textMuted" style={styles.disclaimer}>
                   Estimate, not diagnosis. {hunt?.label ?? 'From age, waist, resting pulse and activity.'}
@@ -260,6 +261,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.two,
   },

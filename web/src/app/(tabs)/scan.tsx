@@ -459,6 +459,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   thumbnail: {
