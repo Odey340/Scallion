@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Line, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -23,6 +24,9 @@ interface Props {
   source?: string;
 }
 
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
+
 export function Distribution({ label, unit, pct, value, imputed, source }: Props) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
@@ -35,6 +39,29 @@ export function Distribution({ label, unit, pct, value, imputed, source }: Props
   const xOf = (v: number) => ((v - xMin) / (xMax - xMin)) * width;
   const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1));
 
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = 0;
+    progress.value = withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, pct.p5, pct.p95]);
+
+  const bandProps = useAnimatedProps(() => ({
+    width: (xOf(pct.p95) - xOf(pct.p5)) * progress.value,
+  }));
+  const hasIqr = pct.p25 !== undefined && pct.p75 !== undefined;
+  const iqrProps = useAnimatedProps(() => ({
+    width: hasIqr ? (xOf(pct.p75!) - xOf(pct.p25!)) * progress.value : 0,
+  }));
+  const markerProps = useAnimatedProps(() => {
+    const shift = (1 - progress.value) * -8; // starts 8px above, drops into place
+    const x = xOf(value);
+    return {
+      points: `${x},${20 + shift} ${x - 6},${10 + shift} ${x + 6},${10 + shift}`,
+      opacity: progress.value,
+    };
+  });
+
   return (
     <View onLayout={onLayout} style={styles.wrap}>
       <ThemedText type="smallBold">
@@ -42,12 +69,10 @@ export function Distribution({ label, unit, pct, value, imputed, source }: Props
       </ThemedText>
       {width > 0 && (
         <Svg width={width} height={H}>
-          <Rect x={xOf(pct.p5)} y={22} width={xOf(pct.p95) - xOf(pct.p5)} height={12} fill={Colors.surfaceRaised} rx={6} />
-          {pct.p25 !== undefined && pct.p75 !== undefined && (
-            <Rect x={xOf(pct.p25)} y={22} width={xOf(pct.p75) - xOf(pct.p25)} height={12} fill={Colors.border} rx={6} />
-          )}
+          <AnimatedRect x={xOf(pct.p5)} y={22} height={12} fill={Colors.surfaceRaised} rx={6} animatedProps={bandProps} />
+          {hasIqr && <AnimatedRect x={xOf(pct.p25!)} y={22} height={12} fill={Colors.border} rx={6} animatedProps={iqrProps} />}
           <Line x1={xOf(pct.p50)} y1={20} x2={xOf(pct.p50)} y2={36} stroke={Colors.textSecondary} strokeWidth={2} />
-          <Polygon points={`${xOf(value)},20 ${xOf(value) - 6},10 ${xOf(value) + 6},10`} fill={imputed ? Colors.textMuted : Colors.accent} />
+          <AnimatedPolygon fill={imputed ? Colors.textMuted : Colors.accent} animatedProps={markerProps} />
           <SvgText x={xOf(pct.p5)} y={50} fontSize={10} fontFamily={Fonts.body} fill={Colors.textMuted} textAnchor="start">
             {`p5 ${fmt(pct.p5)}`}
           </SvgText>

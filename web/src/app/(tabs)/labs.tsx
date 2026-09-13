@@ -1,11 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, FadeInUp } from '@/components/animated';
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
+import { LabsResultsPanel, type NhanesPercentiles } from '@/components/labs-results-panel';
 import { ALT_UNITS, ReviewTable } from '@/components/review-table';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -17,6 +18,9 @@ import { loadRules, type RawRules, type RuleSet } from '@/lib/redaction';
 import { setLocalClock } from '@/state/clock-store';
 import { resetLabs, setLabs, useLabs } from '@/state/labs-store';
 import { updateProfile, useProfile } from '@/state/profile-store';
+
+const SPLIT_BREAKPOINT = 900;
+const SPLIT_MAX_WIDTH = 1080;
 
 /**
  * Labs: upload -> review -> waterfall (docs/lanes/C.md Blocks 2-3).
@@ -30,12 +34,13 @@ import { updateProfile, useProfile } from '@/state/profile-store';
 type Step = 'pick' | 'working' | 'review';
 
 export default function LabsScreen() {
-  const router = useRouter();
   const labs = useLabs();
   const profile = useProfile();
   const { width: windowWidth } = useWindowDimensions();
+  const isWide = windowWidth >= SPLIT_BREAKPOINT;
 
   const [data, setData] = useState<PhenoAgeData | null>(null);
+  const [nhanes, setNhanes] = useState<NhanesPercentiles | null>(null);
   const [rules, setRules] = useState<RuleSet | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -62,6 +67,10 @@ export default function LabsScreen() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((raw: RawRules) => setRules(loadRules(raw)))
       .catch(() => setRules(null));
+    fetch('/engine/nhanes_percentiles.json')
+      .then((r) => r.json())
+      .then(setNhanes)
+      .catch(() => undefined);
   }, []);
 
   // Prefill age/sex from the verified profile when signed in (Persona-verified age only).
@@ -235,7 +244,6 @@ export default function LabsScreen() {
           .catch(() => undefined);
       }
     }
-    router.push('/labs-results');
   };
 
   const crpAcute = data && typeof labs.values.crp === 'number' && labs.values.crp > data.crp_acute_mgdL;
@@ -244,7 +252,10 @@ export default function LabsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.scrollOuter}
+          contentContainerStyle={[styles.scroll, step === 'review' && isWide && styles.scrollWide]}
+          keyboardShouldPersistTaps="handled">
           <FadeInUp delay={0}>
             <ThemedText type="subtitle">Your labs</ThemedText>
             <ThemedText type="default" themeColor="textSecondary">
@@ -310,133 +321,174 @@ export default function LabsScreen() {
           )}
 
           {step === 'review' && data && (
-            <FadeInUp delay={0}>
+            <>
               {error && (
                 <ThemedText type="small" themeColor="silence">
                   {error}
                 </ThemedText>
               )}
               {labs.pages.length > 0 && (
-                <View style={styles.pages}>
-                  {labs.pages.map((p) => {
-                    const scale = pageW / p.width;
-                    return (
-                      <View key={p.index} style={[styles.page, { width: pageW, height: p.height * scale }]}>
-                        <Image source={{ uri: p.dataUrl }} style={{ width: pageW, height: p.height * scale }} resizeMode="contain" />
-                        {highlights
-                          .filter((h) => h.page === p.index)
-                          .map((h) => (
-                            <Pressable
-                              key={h.key}
-                              onPress={() => setSelected(h.key)}
-                              style={[
-                                styles.highlight,
-                                selected === h.key && styles.highlightSelected,
-                                { left: h.box.x * scale - 2, top: h.box.y * scale - 1, width: h.box.w * scale + 4, height: h.box.h * scale + 2 },
-                              ]}
-                            />
-                          ))}
-                      </View>
-                    );
-                  })}
-                  <ThemedText type="small" themeColor="textMuted">
-                    {labs.redaction
-                      ? labs.redaction.dropped + labs.redaction.masked > 0
-                        ? `Identifiers stripped on this device: ${labs.redaction.dropped} line(s) removed, ${labs.redaction.masked} field(s) masked (${labs.redaction.ruleIds.join(', ')}). Only this redacted image was uploaded.`
-                        : 'Identifiers stripped: nothing matched the redaction rules, so this report was already free of them.'
-                      : 'Photo uploaded as-is; check it carries no name or record number.'}
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textMuted">
-                    Highlights mark the printed line each value came from. Tap one to select it.
-                  </ThemedText>
-                </View>
+                <FadeInUp delay={0}>
+                  <View style={styles.pages}>
+                    {labs.pages.map((p) => {
+                      const scale = pageW / p.width;
+                      return (
+                        <View key={p.index} style={[styles.page, { width: pageW, height: p.height * scale }]}>
+                          <Image source={{ uri: p.dataUrl }} style={{ width: pageW, height: p.height * scale }} resizeMode="contain" />
+                          {highlights
+                            .filter((h) => h.page === p.index)
+                            .map((h) => (
+                              <Pressable
+                                key={h.key}
+                                onPress={() => setSelected(h.key)}
+                                style={[
+                                  styles.highlight,
+                                  selected === h.key && styles.highlightSelected,
+                                  { left: h.box.x * scale - 2, top: h.box.y * scale - 1, width: h.box.w * scale + 4, height: h.box.h * scale + 2 },
+                                ]}
+                              />
+                            ))}
+                        </View>
+                      );
+                    })}
+                    <ThemedText type="small" themeColor="textMuted">
+                      {labs.redaction
+                        ? labs.redaction.dropped + labs.redaction.masked > 0
+                          ? `Identifiers stripped on this device: ${labs.redaction.dropped} line(s) removed, ${labs.redaction.masked} field(s) masked (${labs.redaction.ruleIds.join(', ')}). Only this redacted image was uploaded.`
+                          : 'Identifiers stripped: nothing matched the redaction rules, so this report was already free of them.'
+                        : 'Photo uploaded as-is; check it carries no name or record number.'}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textMuted">
+                      Highlights mark the printed line each value came from. Tap one to select it.
+                    </ThemedText>
+                  </View>
+                </FadeInUp>
               )}
 
-              {labs.extract && labs.extract.missing.length > 0 && (
-                <ThemedText type="small" themeColor="textSecondary">
-                  Not on this report: {labs.extract.missing.map((k) => k.replace('_', ' ')).join(', ')}. They will be imputed from
-                  age-sex norms ({9 - labs.extract.missing.length} of 9 markers).
-                </ThemedText>
-              )}
+              <View style={[styles.splitRow, isWide && styles.splitRowWide]}>
+                <View style={[styles.column, isWide && styles.leftColumnWide]}>
+                  <FadeInUp delay={70} style={styles.leftColumnGap}>
+                    {labs.extract && labs.extract.missing.length > 0 && (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Not on this report: {labs.extract.missing.map((k) => k.replace('_', ' ')).join(', ')}. They will be
+                        imputed from age-sex norms ({9 - labs.extract.missing.length} of 9 markers).
+                      </ThemedText>
+                    )}
 
-              <ReviewTable
-                units={data.units}
-                analytes={labs.extract?.analytes ?? []}
-                values={labs.values}
-                onChange={(key, v) => {
-                  const alt = altUnits[key] ? ALT_UNITS[key] : undefined;
-                  setLabs({ values: { ...labs.values, [key]: v === null ? null : alt ? v * alt.toSi : v } });
-                }}
-                selected={selected}
-                onSelect={setSelected}
-                located={labs.extract ? located : undefined}
-              />
-              {labs.source === 'typed' && (
-                <View style={styles.wrap}>
-                  <ThemedText type="small" themeColor="textMuted">
-                    Type in US units instead (converted to the paper&apos;s units):
-                  </ThemedText>
-                  {(Object.keys(ALT_UNITS) as AnalyteKey[]).map((k) => (
-                    <SegmentButton
-                      key={k}
-                      label={`${k.replace('_', ' ')} in ${ALT_UNITS[k]!.unit}`}
-                      active={!!altUnits[k]}
-                      onPress={() => setAltUnits((u) => ({ ...u, [k]: !u[k] }))}
+                    <ReviewTable
+                      units={data.units}
+                      analytes={labs.extract?.analytes ?? []}
+                      values={labs.values}
+                      onChange={(key, v) => {
+                        const alt = altUnits[key] ? ALT_UNITS[key] : undefined;
+                        setLabs({ values: { ...labs.values, [key]: v === null ? null : alt ? v * alt.toSi : v } });
+                      }}
+                      selected={selected}
+                      onSelect={setSelected}
+                      located={labs.extract ? located : undefined}
                     />
-                  ))}
+                    {labs.source === 'typed' && (
+                      <View style={styles.wrap}>
+                        <ThemedText type="small" themeColor="textMuted">
+                          Type in US units instead (converted to the paper&apos;s units):
+                        </ThemedText>
+                        {(Object.keys(ALT_UNITS) as AnalyteKey[]).map((k) => (
+                          <SegmentButton
+                            key={k}
+                            label={`${k.replace('_', ' ')} in ${ALT_UNITS[k]!.unit}`}
+                            active={!!altUnits[k]}
+                            onPress={() => setAltUnits((u) => ({ ...u, [k]: !u[k] }))}
+                          />
+                        ))}
+                      </View>
+                    )}
+
+                    <Field label="Was this a fasting draw? (non-fasting glucose is imputed, 8 of 9 markers)">
+                      <View style={styles.row}>
+                        <SegmentButton label="Yes" active={labs.fasting === true} onPress={() => setLabs({ fasting: true })} />
+                        <SegmentButton label="No" active={labs.fasting === false} onPress={() => setLabs({ fasting: false })} />
+                        <SegmentButton label="Not sure" active={labs.fasting === null} onPress={() => setLabs({ fasting: null })} />
+                      </View>
+                    </Field>
+
+                    {crpAcute && (
+                      <ThemedView type="surfaceRaised" style={styles.note}>
+                        <ThemedText type="smallBold">hs-CRP above {data.crp_acute_mgdL * 10} mg/L</ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          That level often reflects a recent infection or injury rather than a steady state. The clock still
+                          runs, but a repeat draw in a few weeks gives a fairer number.
+                        </ThemedText>
+                      </ThemedView>
+                    )}
+
+                    <Field label="Age (years)">
+                      <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
+                    </Field>
+                    <Field label="Sex (the norms are by age band and sex)">
+                      <View style={styles.row}>
+                        <SegmentButton label="Male" active={labs.sex === 'M'} onPress={() => setLabs({ sex: 'M' as Sex })} />
+                        <SegmentButton label="Female" active={labs.sex === 'F'} onPress={() => setLabs({ sex: 'F' as Sex })} />
+                      </View>
+                    </Field>
+
+                    {error && (
+                      <ThemedText type="small" themeColor="silence">
+                        {error}
+                      </ThemedText>
+                    )}
+                    <AnimatedPressable style={styles.submit} onPress={compute}>
+                      <ThemedText type="smallBold" themeColor="accentText">
+                        {labs.result ? 'Recompute my PhenoAge' : 'Compute my PhenoAge'}
+                      </ThemedText>
+                    </AnimatedPressable>
+                    <AnimatedPressable
+                      style={styles.linkButton}
+                      onPress={() => {
+                        resetLabs();
+                        setSelected(null);
+                        setStep('pick');
+                      }}>
+                      <ThemedText type="smallBold" themeColor="accent">
+                        Start over
+                      </ThemedText>
+                    </AnimatedPressable>
+                  </FadeInUp>
                 </View>
-              )}
 
-              <Field label="Was this a fasting draw? (non-fasting glucose is imputed, 8 of 9 markers)">
-                <View style={styles.row}>
-                  <SegmentButton label="Yes" active={labs.fasting === true} onPress={() => setLabs({ fasting: true })} />
-                  <SegmentButton label="No" active={labs.fasting === false} onPress={() => setLabs({ fasting: false })} />
-                  <SegmentButton label="Not sure" active={labs.fasting === null} onPress={() => setLabs({ fasting: null })} />
+                <View style={[styles.column, isWide && styles.rightColumnWide]}>
+                  <FadeInUp delay={labs.result ? 0 : 210}>
+                    <View style={styles.resultsHeaderRow}>
+                      <Ionicons name="analytics-outline" size={16} color={Colors.accent} />
+                      <ThemedText type="smallBold">Your results</ThemedText>
+                    </View>
+                  </FadeInUp>
+
+                  {labs.result && labs.age !== null && labs.sex ? (
+                    <LabsResultsPanel
+                      age={labs.age}
+                      sex={labs.sex}
+                      fasting={labs.fasting}
+                      result={labs.result}
+                      data={data}
+                      nhanes={nhanes}
+                      complete={labs.extract?.complete ?? null}
+                      selected={selected}
+                      onSelect={setSelected}
+                    />
+                  ) : (
+                    <FadeInUp delay={210}>
+                      <View style={[styles.card, CardShadow, styles.resultsEmpty]}>
+                        <Ionicons name="pulse-outline" size={26} color={Colors.textMuted} />
+                        <ThemedText type="small" themeColor="textMuted" style={styles.resultsEmptyText}>
+                          Fill in your stats on the left and tap &quot;Compute my PhenoAge&quot; to see your biological age,
+                          the years-breakdown chart, and what to do next here.
+                        </ThemedText>
+                      </View>
+                    </FadeInUp>
+                  )}
                 </View>
-              </Field>
-
-              {crpAcute && (
-                <ThemedView type="surfaceRaised" style={styles.note}>
-                  <ThemedText type="smallBold">hs-CRP above {data.crp_acute_mgdL * 10} mg/L</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    That level often reflects a recent infection or injury rather than a steady state. The clock still runs, but a
-                    repeat draw in a few weeks gives a fairer number.
-                  </ThemedText>
-                </ThemedView>
-              )}
-
-              <Field label="Age (years)">
-                <NumberInput value={ageText} onChangeText={setAgeText} placeholder="34" />
-              </Field>
-              <Field label="Sex (the norms are by age band and sex)">
-                <View style={styles.row}>
-                  <SegmentButton label="Male" active={labs.sex === 'M'} onPress={() => setLabs({ sex: 'M' as Sex })} />
-                  <SegmentButton label="Female" active={labs.sex === 'F'} onPress={() => setLabs({ sex: 'F' as Sex })} />
-                </View>
-              </Field>
-
-              {error && (
-                <ThemedText type="small" themeColor="silence">
-                  {error}
-                </ThemedText>
-              )}
-              <AnimatedPressable style={styles.submit} onPress={compute}>
-                <ThemedText type="smallBold" themeColor="accentText">
-                  Compute my PhenoAge
-                </ThemedText>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={styles.linkButton}
-                onPress={() => {
-                  resetLabs();
-                  setSelected(null);
-                  setStep('pick');
-                }}>
-                <ThemedText type="smallBold" themeColor="accent">
-                  Start over
-                </ThemedText>
-              </AnimatedPressable>
-            </FadeInUp>
+              </View>
+            </>
           )}
         </ScrollView>
       </SafeAreaView>
@@ -455,6 +507,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.five,
     gap: Spacing.four,
   },
+  scrollWide: { maxWidth: SPLIT_MAX_WIDTH },
+  splitRow: { width: '100%', gap: Spacing.three },
+  splitRowWide: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.four },
+  column: { width: '100%', gap: Spacing.three },
+  leftColumnWide: { flex: 5 },
+  leftColumnGap: { gap: Spacing.four },
+  rightColumnWide: { flex: 6 },
+  resultsHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  resultsEmpty: { alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.six },
+  resultsEmptyText: { textAlign: 'center', maxWidth: 300 },
   card: {
     borderRadius: Radius.medium,
     borderWidth: 1,

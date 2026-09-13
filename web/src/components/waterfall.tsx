@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Animated, { Easing, useAnimatedProps, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import Svg, { G, Line, Rect, Text as SvgText } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -10,6 +11,7 @@ import { ANALYTES, type AnalyteKey, type Waterfall as WaterfallData } from '@/en
  * The PhenoAge waterfall: chronological age -> cohort offset -> nine analyte bars -> PhenoAge.
  * Bars are the exact per-analyte years from phenoage.ts (affine identity), so the chart
  * reconciles on screen: the last bar lands on the PhenoAge value. Tap a bar to select it.
+ * Bars grow in from zero width, staggered top to bottom, so the reconciliation reads as it builds.
  */
 
 export const ANALYTE_LABELS: Record<AnalyteKey, string> = {
@@ -36,6 +38,8 @@ interface Props {
 const ROW_H = 26;
 const LABEL_W = 120;
 const VALUE_W = 54;
+
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 export function Waterfall({ age, waterfall, phenoage, imputed, selected, onSelect }: Props) {
   const [width, setWidth] = useState(0);
@@ -91,7 +95,7 @@ export function Waterfall({ age, waterfall, phenoage, imputed, selected, onSelec
                 <SvgText x={0} y={y + ROW_H * 0.7} fontFamily={isSel ? Fonts.bodySemiBold : Fonts.body} fontSize={12} fill={isImputed ? Colors.textMuted : Colors.text}>
                   {r.label + (isImputed ? ' (imputed)' : '')}
                 </SvgText>
-                <Rect x={x0} y={y + ROW_H * 0.2} width={w} height={ROW_H * 0.6} fill={color} opacity={isImputed ? 0.35 : isSel ? 1 : 0.85} rx={2} />
+                <WaterfallBar x0={x0} y={y + ROW_H * 0.2} width={w} height={ROW_H * 0.6} color={color} opacity={isImputed ? 0.35 : isSel ? 1 : 0.85} index={i} />
                 {isSel && <Rect x={x0 - 2} y={y + ROW_H * 0.1} width={w + 4} height={ROW_H * 0.8} fill="none" stroke={Colors.accent} strokeWidth={1.5} rx={3} />}
                 <SvgText x={width - VALUE_W + 4} y={y + ROW_H * 0.7} fontFamily={Fonts.display} fontSize={12} fill={color}>
                   {(r.delta >= 0 ? '+' : '') + r.delta.toFixed(1)}
@@ -116,6 +120,38 @@ export function Waterfall({ age, waterfall, phenoage, imputed, selected, onSelec
       </ThemedText>
     </View>
   );
+}
+
+function WaterfallBar({
+  x0,
+  y,
+  width,
+  height,
+  color,
+  opacity,
+  index,
+}: {
+  x0: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  opacity: number;
+  index: number;
+}) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withDelay(index * 45, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  const animatedProps = useAnimatedProps(() => ({
+    width: width * progress.value,
+    opacity: opacity * progress.value,
+  }));
+
+  return <AnimatedRect x={x0} y={y} height={height} fill={color} rx={2} animatedProps={animatedProps} />;
 }
 
 const styles = StyleSheet.create({
