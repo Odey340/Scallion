@@ -199,7 +199,7 @@ export async function startVoice(lang: 'en' | 'es', handlers: VoiceHandlers): Pr
     onDisconnect: () => handlers.onStatus('disconnected'),
     onError: (message: string) => handlers.onStatus('error', message),
     onModeChange: ({ mode }: { mode: string }) => handlers.onMode(mode === 'speaking' ? 'speaking' : 'listening'),
-    onMessage: ({ message, source }: { message: string; source: string }) => handlers.onMessage(source === 'agent' ? 'ai' : 'user', message),
+    onMessage: ({ message, source }: { message: string; source: 'user' | 'ai' }) => handlers.onMessage(source, message),
   });
   // Push-to-talk: start muted; the button unmutes while held.
   conversation.setMicMuted(true);

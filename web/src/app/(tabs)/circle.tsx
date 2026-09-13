@@ -92,8 +92,15 @@ export default function CircleScreen() {
   // Who to reach out to: the server's nudges (real thresholds) once synced, else the same
   // "quietest active/close tie" signal computed locally so the panel is never empty.
   const advice: AdviceItem[] = useMemo(() => {
-    if (summary && summary.nudges.length > 0) {
-      return summary.nudges.map((n) => ({ contact: n.contact, text: n.text }));
+    // The server's history can outlive what's loaded locally this session — a contact hashed
+    // under a device salt from before a "Clear everything," or from data connected earlier and
+    // never re-uploaded this load, has no way to resolve a name and no meaningful "usual gap" in
+    // the context of what's on screen. Only show a server nudge for a contact this session's own
+    // events actually recognize (strengths, above, is computed from the same allEvents).
+    const known = new Set(strengths.map((s) => s.contact));
+    const serverNudges = summary?.nudges.filter((n) => known.has(n.contact)) ?? [];
+    if (serverNudges.length > 0) {
+      return serverNudges.map((n) => ({ contact: n.contact, text: n.text }));
     }
     return [...strengths]
       .filter((s) => s.tier !== 'weak')
