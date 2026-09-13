@@ -52,8 +52,10 @@ function isClockRow(v: unknown): v is ClockRow {
 }
 
 export default function CoachScreen() {
-  // Subscribing re-renders this screen when the session (and so hasToken()) changes.
-  useSession();
+  // The session resolves asynchronously (getSession + a token refresh); until then hasToken() is
+  // false even for a signed-in user, so gate the sign-in card on authLoading and reload the
+  // context once the session lands.
+  const { session, loading: authLoading } = useSession();
   const [lang, setLang] = useState<Lang>('en');
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const [context, setContext] = useState<CoachContext | null>(null);
@@ -67,7 +69,7 @@ export default function CoachScreen() {
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [toolCalls, setToolCalls] = useState<string[]>([]);
   const [holding, setHolding] = useState(false);
-  const session = useRef<Awaited<ReturnType<typeof startVoice>> | null>(null);
+  const voiceSession = useRef<Awaited<ReturnType<typeof startVoice>> | null>(null);
   const pendingQuestion = useRef<string | null>(null);
   const nextId = useRef(1);
 
@@ -98,12 +100,17 @@ export default function CoachScreen() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
+  }, [load, authLoading, session]);
+
+  useEffect(() => {
+    const voice = voiceSession;
     return () => {
-      session.current?.endSession().catch(() => undefined);
+      voice.current?.endSession().catch(() => undefined);
     };
-  }, [load]);
+  }, []);
 
   const addCaption = (source: 'user' | 'ai', text: string) => {
     const id = nextId.current++;
@@ -121,7 +128,7 @@ export default function CoachScreen() {
     setCaptions([]);
     setToolCalls([]);
     try {
-      session.current = await startVoice(lang, {
+      voiceSession.current = await startVoice(lang, {
         onStatus: (s, d) => {
           setStatus(s);
           if (d) {
@@ -137,7 +144,7 @@ export default function CoachScreen() {
         onToolCall: (name) => setToolCalls((t) => [...t, name]),
       });
       if (pendingQuestion.current) {
-        session.current.sendText(pendingQuestion.current);
+        voiceSession.current.sendText(pendingQuestion.current);
         pendingQuestion.current = null;
       }
     } catch (e) {
@@ -147,15 +154,15 @@ export default function CoachScreen() {
   };
 
   const stop = async () => {
-    await session.current?.endSession().catch(() => undefined);
-    session.current = null;
+    await voiceSession.current?.endSession().catch(() => undefined);
+    voiceSession.current = null;
     setStatus('idle');
     setHolding(false);
   };
 
   const ask = (text: string) => {
-    if (session.current && status === 'connected') {
-      session.current.sendText(text);
+    if (voiceSession.current && status === 'connected') {
+      voiceSession.current.sendText(text);
     } else if (status !== 'connecting') {
       pendingQuestion.current = text;
       start();
@@ -164,11 +171,11 @@ export default function CoachScreen() {
 
   const pressIn = () => {
     setHolding(true);
-    session.current?.setMicMuted(false);
+    voiceSession.current?.setMicMuted(false);
   };
   const pressOut = () => {
     setHolding(false);
-    session.current?.setMicMuted(true);
+    voiceSession.current?.setMicMuted(true);
   };
 
   const pickExplain = async (key: AnalyteKey) => {
@@ -218,7 +225,12 @@ export default function CoachScreen() {
             )}
           </ThemedText>
 
-          {!hasToken() && (
+          {authLoading && !hasToken() && (
+            <ThemedText type="small" themeColor="textMuted">
+              {t('Checking your sign-in…', 'Comprobando tu sesión…')}
+            </ThemedText>
+          )}
+          {!authLoading && !hasToken() && (
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="small" themeColor="textSecondary">
                 {t('The coach reads your stored clock, circle and plan, so it needs you signed in.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita que inicies sesión.')}

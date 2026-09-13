@@ -94,14 +94,53 @@ function buildClientTools(lang: 'en' | 'es', handlers: VoiceHandlers, getContext
   return {
     get_clock: (p: unknown) => call('get_clock', p, async () => {
       const c = await getContext();
-      const drivers = c.flags.show_age ? await ageDrivers(c) : null;
-      return { clock: c.clock, show_age: c.flags.show_age, critical: c.flags.critical, ...(drivers ?? {}) };
+      // Only the clock rows: the `labels` strings ("See a clinician first") are UI copy, not state,
+      // and the agent read them as the user's situation.
+      const { labels: _labels, ...rows } = c.clock as Record<string, unknown>;
+      const hasPheno = 'phenoage' in rows;
+      const hasFitness = 'fitness' in rows;
+      if (!hasPheno && !hasFitness) {
+        return {
+          status: 'no_clock_yet',
+          what_is_missing: 'No biological age or fitness age has been computed for this account.',
+          how_to_get_one: {
+            biological_age: lang === 'es' ? 'Sube un panel de sangre en la pestaña Labs, o prueba el informe de muestra.' : 'Upload a blood panel on the Labs tab, or tap "Try the sample report" there.',
+            fitness_age: lang === 'es' ? 'Usa la pestaña Cámara: treinta segundos frente a la cámara.' : 'Use the Camera tab: thirty seconds facing the camera.',
+          },
+          critical: false,
+        };
+      }
+      const drivers = hasPheno && c.flags.show_age ? await ageDrivers(c) : null;
+      return {
+        clock: rows,
+        show_age: c.flags.show_age,
+        critical: c.flags.critical,
+        critical_reasons: c.flags.critical_reasons,
+        ...(hasPheno ? {} : { biological_age: 'not computed yet: upload a blood panel on the Labs tab' }),
+        ...(hasFitness ? {} : { fitness_age: 'not computed yet: use the Camera tab' }),
+        ...(drivers ?? {}),
+      };
     }),
-    get_circle: (p: unknown) => call('get_circle', p, async () => (await getContext()).circle),
+    get_circle: (p: unknown) => call('get_circle', p, async () => {
+      const c = await getContext();
+      if (!c.circle.available) {
+        return {
+          status: 'no_inbox_connected',
+          what_is_missing: 'No messaging metadata yet, so there are no ties, no drifting contacts and no isolation proxy.',
+          how_to_connect: lang === 'es' ? 'En la pestaña Círculo: conecta Gmail o sube una exportación de WhatsApp. Solo se usan metadatos, nunca el contenido.' : 'On the Circle tab: connect Gmail or upload a WhatsApp export. Only metadata is used, never message content.',
+        };
+      }
+      return c.circle;
+    }),
     explain_analyte: (p: { name: CanonicalKey }) => call('explain_analyte', p, () => api.explain(p.name, lang)),
     get_today_plan: (p: unknown) => call('get_today_plan', p, async () => {
       const c = await getContext();
-      return { today: c.today, levers: c.levers, flags: c.flags, last_plan: c.last_plan };
+      const missing: string[] = [];
+      if (!c.today.nudge) missing.push(c.circle.available ? 'nobody is overdue in the circle today' : 'no nudge: no inbox connected yet (Circle tab)');
+      if (c.today.caffeine && !c.today.caffeine.last_coffee_by) missing.push('no clock time for the last coffee: bedtime is not set yet (Profile in onboarding); only the hours-before-bed rule is known');
+      if (!c.today.meal) missing.push('no meal logged today: the Scan tab or log_meal gives the plate decision');
+      if (!c.today.vitals) missing.push('no pulse yet: Camera tab');
+      return { today: c.today, levers: c.levers, flags: c.flags, last_plan: c.last_plan, missing };
     }),
     log_meal: (p: { carbs_g: number }) => call('log_meal', p, () => api.logMeal(Number(p.carbs_g))),
     share_with_circle: (p: { target_contact: string }) => call('share_with_circle', p, async () => {
