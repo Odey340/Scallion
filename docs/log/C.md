@@ -495,3 +495,15 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** All eight phases of the redesign brief are now done. Worth a final full-app walkthrough per the brief's own section 120 quality gate (first-time user, returning user, scientific user, privacy-conscious user, technical reviewer) before calling the initiative complete — propose this to the human rather than assuming the phased work is finished just because the list ran out.
 
 **Contract changes needed:** None.
+
+## Session 27 (2026-09-13): removed the trust photo
+
+**Human asked to remove the picture** added last session. Reverted cleanly: deleted `web/assets/images/welcome-consultation.jpg`, removed the `Image`/credit-line JSX from `(tabs)/index.tsx`'s `Welcome()` block, the now-unused `welcomePhotoWrap`/`welcomePhoto`/`photoCredit` styles, and the now-unused `Image` import. Grepped for any other reference (none). Home's first-visit welcome is back to exactly its pre-photo state: wordmark, tagline, two CTAs, disclaimer.
+
+**Verified:** `tsc` clean, 77/77 tests, lint clean except the pre-existing `animated.tsx` false positive, `expo export` clean. Live-browser-verified the welcome screen renders identically to before the photo was ever added, with no leftover spacing gap.
+
+**Blocked:** Nothing.
+
+**Next:** Same as last session — a final full-app walkthrough (first-time/returning/scientific/privacy-conscious/technical-reviewer) before calling the eight-phase redesign complete, pending the human's go-ahead.
+
+**Contract changes needed:** None.
