@@ -12,6 +12,7 @@ import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constant
 import { ANALYTES, type AnalyteKey } from '@/engine/phenoage';
 import { ApiError, api, hasToken, type Checkin, type CoachContext, type Explain } from '@/lib/api';
 import { startVoice, voiceSupported, type VoiceMode, type VoiceStatus } from '@/lib/coach-voice';
+import { useLocalUser } from '@/state/local-identity';
 
 /**
  * Coach (docs/lanes/C.md Block 4): push-to-talk to D's ElevenLabs agent with captions, every
@@ -39,6 +40,7 @@ function isClockRow(v: unknown): v is ClockRow {
 }
 
 export default function CoachScreen() {
+  const localUser = useLocalUser();
   const [lang, setLang] = useState<Lang>('en');
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const [context, setContext] = useState<CoachContext | null>(null);
@@ -191,15 +193,22 @@ export default function CoachScreen() {
           {!hasToken() && (
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('The coach reads your stored clock, circle and plan, so it needs a sign-in.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita iniciar sesión.')}
+                {localUser
+                  ? t(
+                      "The coach reads your stored clock, circle and plan from a real account, which this device doesn't have. Setting up your local Scallion profile doesn't unlock this — it needs a demo account for this build.",
+                      'El coach lee tu reloj, círculo y plan de una cuenta real, y este dispositivo no tiene una. Configurar tu perfil local de Scallion no habilita esto: necesita una cuenta de demostración para esta versión.',
+                    )
+                  : t('The coach reads your stored clock, circle and plan, so it needs an account.', 'El coach lee tu reloj, círculo y plan guardados, así que necesita una cuenta.')}
               </ThemedText>
-              <Link href="/onboarding" asChild>
-                <Pressable style={styles.secondaryButton}>
-                  <ThemedText type="smallBold" themeColor="accent">
-                    {t('Sign in', 'Iniciar sesión')}
-                  </ThemedText>
-                </Pressable>
-              </Link>
+              {!localUser && (
+                <Link href="/onboarding" asChild>
+                  <Pressable style={styles.secondaryButton}>
+                    <ThemedText type="smallBold" themeColor="accent">
+                      {t('Set up your profile', 'Configura tu perfil')}
+                    </ThemedText>
+                  </Pressable>
+                </Link>
+              )}
             </ThemedView>
           )}
 
@@ -394,7 +403,7 @@ export default function CoachScreen() {
               </>
             ) : explainKey && !hasToken() ? (
               <ThemedText type="small" themeColor="textSecondary">
-                {t('Sign in to read the explanations.', 'Inicia sesión para leer las explicaciones.')}
+                {t('This needs a demo account for this build.', 'Esto necesita una cuenta de demostración para esta versión.')}
               </ThemedText>
             ) : null}
           </Card>
