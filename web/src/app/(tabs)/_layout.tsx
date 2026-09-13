@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { HeaderAuthButton } from '@/components/header-auth-button';
 import { Wordmark } from '@/components/wordmark';
 import { Colors, Fonts } from '@/constants/theme';
 
@@ -21,6 +22,7 @@ export default function TabsLayout() {
       screenOptions={({ route }) => ({
         headerShown: true,
         headerTitle: () => <Wordmark />,
+        headerRight: () => <HeaderAuthButton />,
         headerStyle: { backgroundColor: Colors.surface },
         headerShadowVisible: false,
         headerTintColor: Colors.text,

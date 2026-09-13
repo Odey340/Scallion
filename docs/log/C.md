@@ -190,3 +190,19 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Next:** Whoever picks up Circle's "Next" items above (Gmail OAuth client id, live end-to-end pass). Separately: `social/`'s canonical source and `web/src/lib/social/`'s vendored copy will drift if anyone edits one without the other — worth deciding whether to accept that as a hackathon-scale tradeoff or set up a small sync script.
 
 **Contract changes needed:** None.
+
+## Session 13 (2026-09-12): the sign-in button was screen-scoped, not global — fixed; Home polish
+
+**Done:** Human's previous ask ("button on the header, right side, opposite the logo, to sign in") only got wired onto `onboarding.tsx` last session via a screen-local `navigation.setOptions` — every other screen's header still had nothing on the right, so from the human's point of view the button "still" didn't exist. Fixed properly this time: a new `src/components/header-auth-button.tsx` (shows "Sign in" or "Account", always `router.push('/onboarding')` — a plain teleport, no signed-in-only logic needed) wired once into both `_layout.tsx`'s Stack `screenOptions` and `(tabs)/_layout.tsx`'s Tabs `screenOptions`, so it's on every screen without per-screen code. Removed the now-redundant screen-local version from `onboarding.tsx` (the `useLayoutEffect`/`navigation.setOptions`/`scrollRef`/two header-button styles) rather than leaving two competing implementations.
+
+**Done:** Home's hero `Wordmark` bumped from `fontSize: 34` to `52` (dot 14->20, gap 10->14) — a real, visible size increase, not a token tweak that reads the same.
+
+**Done:** Removed the Levers ledger from Home entirely per direct request — the `LeversLedger` component, its call site, the `ledger` state and the `/engine/risk_years.json` fetch fallback in `load()`, and the `NEEDS`/`RISK_LABEL` constants and `chip*`/`section`/`tabular` styles that only it used. Kept `humanize()` — `ClockCard`'s imputed-markers line still calls it. `context?.levers`/`context?.levers_unknown` are no longer read anywhere in this file; the API still returns them, nothing else currently reads them.
+
+**Verified:** `tsc --noEmit`, lint, 44 tests, `expo export` clean; checked in a real browser, not just assumed — the button appears identically on Home and Scan (previously it appeared nowhere outside onboarding), clicking it from Home actually navigates to `/onboarding`, the wordmark is visibly larger, and the Levers section is gone with nothing broken above or below where it was. Deployed and re-verified against `scallion.us` directly, since "looks right locally" was insufficient evidence before this exact kind of miss (screen-scoped instead of global) already happened once this session.
+
+**Blocked:** Nothing.
+
+**Next:** Whoever revisits Home might want something in place of Levers eventually (the human only asked to remove it, not what replaces it, if anything).
+
+**Contract changes needed:** None.

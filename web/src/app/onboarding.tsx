@@ -1,5 +1,4 @@
-import { useNavigation } from 'expo-router';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,8 +19,6 @@ const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
  */
 export default function OnboardingScreen() {
   const { session, loading } = useSession();
-  const navigation = useNavigation();
-  const scrollRef = useRef<ScrollView>(null);
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -85,27 +82,6 @@ export default function OnboardingScreen() {
     setMe(null);
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable
-          style={session ? styles.headerButtonSecondary : styles.headerButtonPrimary}
-          disabled={loading}
-          onPress={() => {
-            if (session) {
-              signOut();
-            } else {
-              scrollRef.current?.scrollTo({ y: 0, animated: true });
-            }
-          }}>
-          <ThemedText type="small" themeColor={session ? 'text' : 'accentText'}>
-            {loading ? '' : session ? 'Sign out' : 'Sign in'}
-          </ThemedText>
-        </Pressable>
-      ),
-    });
-  }, [navigation, session, loading]);
-
   const saveAnswers = async () => {
     if (!session) return;
     setSaveStatus(null);
@@ -125,7 +101,7 @@ export default function OnboardingScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView ref={scrollRef} style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
+        <ScrollView style={styles.scrollOuter} contentContainerStyle={styles.scroll}>
           <ThemedText type="subtitle">Onboarding</ThemedText>
 
           <ThemedView type="surfaceRaised" style={styles.card}>
@@ -309,20 +285,5 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.two,
     alignItems: 'center',
-  },
-  headerButtonPrimary: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    marginRight: Spacing.three,
-  },
-  headerButtonSecondary: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    marginRight: Spacing.three,
   },
 });

@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 
 const SIZES = {
   small: { dot: 8, gap: 6, fontSize: 18 },
-  large: { dot: 14, gap: 10, fontSize: 34 },
+  large: { dot: 20, gap: 14, fontSize: 52 },
 } as const;
 
 export function Wordmark({ size = 'small' }: { size?: keyof typeof SIZES }) {

@@ -7,18 +7,16 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Wordmark } from '@/components/wordmark';
 import { CardShadow, Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { api, hasToken, type ClockOut, type CoachContext, type Lever, type Nudge } from '@/lib/api';
+import { api, hasToken, type ClockOut, type CoachContext, type Nudge } from '@/lib/api';
 import { useLocalClocks, type LocalClock } from '@/state/clock-store';
 
 /**
- * Home: the clock (PhenoAge if labs, else fitness age) with its band; the levers ledger from
- * risk_years.json; today's one nudge; the distancing / active state. docs/lanes/C.md Block 2.
+ * Home: the clock (PhenoAge if labs, else fitness age) with its band; today's one nudge; the
+ * distancing / active state. docs/lanes/C.md Block 2.
  *
  * Numbers: the clock is what C computed from A's exports (phenoage.ts / fitness-age.ts), either
- * stored by the API (`/coach/context`, `POST /clock`) or kept on this device (clock-store). Lever
- * years are rows of risk_years.json, served by the API when the user's answers decide them, or
- * read from /engine/risk_years.json as an unassessed ledger when there is no session. Nudge and
- * state come from the circle summary (B's thresholds; D's stand-in until social/ lands).
+ * stored by the API (`/coach/context`, `POST /clock`) or kept on this device (clock-store). Nudge
+ * and state come from the circle summary (B's thresholds; D's stand-in until social/ lands).
  */
 
 type ClockRow = ClockOut & { delta_years: number | null; show: boolean };
@@ -31,18 +29,6 @@ interface ClockView {
   imputed: string[];
   show: boolean;
 }
-
-const RISK_LABEL = 'Risk-equivalent years, if sustained, population estimate';
-
-/** What an unassessed lever is waiting on (risk_years.json condition variables), and where to get it. */
-const NEEDS: Record<string, { text: string; href: '/onboarding' | '/start' | '/circle' }> = {
-  lonely: { text: 'the loneliness question', href: '/onboarding' },
-  lives_alone: { text: 'whether you live alone', href: '/onboarding' },
-  sleep_h: { text: 'your usual hours of sleep', href: '/onboarding' },
-  smoker: { text: 'the smoking question', href: '/onboarding' },
-  vo2max: { text: 'a fitness age (ten seconds)', href: '/start' },
-  lsns_proxy: { text: 'a connected inbox or chat export', href: '/circle' },
-};
 
 function humanize(exposure: string): string {
   const s = exposure.replace(/_/g, ' ');
@@ -72,7 +58,6 @@ function fromLocal(c: LocalClock): ClockView {
 export default function HomeScreen() {
   const local = useLocalClocks();
   const [context, setContext] = useState<CoachContext | null>(null);
-  const [ledger, setLedger] = useState<Lever[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
 
@@ -87,12 +72,6 @@ export default function HomeScreen() {
       } catch {
         setOffline(true);
       }
-    }
-    try {
-      const res = await fetch('/engine/risk_years.json');
-      if (res.ok) setLedger((await res.json()) as Lever[]);
-    } catch {
-      // the ledger card explains itself when empty
     }
     setLoading(false);
   }, []);
@@ -160,8 +139,6 @@ export default function HomeScreen() {
               </ThemedText>
             </ThemedView>
           )}
-
-          <LeversLedger active={context?.levers ?? null} unknown={context?.levers_unknown ?? null} ledger={ledger} />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -351,98 +328,6 @@ function NudgeCard({ nudge, circleAvailable, hasSession }: { nudge: Nudge | null
   );
 }
 
-function LeversLedger({
-  active,
-  unknown,
-  ledger,
-}: {
-  active: Lever[] | null;
-  unknown: { exposure: string; needs: string }[] | null;
-  ledger: Lever[] | null;
-}) {
-  const assessed = active !== null;
-  return (
-    <View style={styles.section}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
-        Levers
-      </ThemedText>
-      <ThemedText type="small" themeColor="textMuted">
-        {RISK_LABEL}. Years = 8 x log2(hazard ratio), the Gompertz mortality doubling time.
-      </ThemedText>
-
-      {assessed && active.length === 0 && (
-        <ThemedText type="small" themeColor="textSecondary">
-          No lever is costing you years right now.
-        </ThemedText>
-      )}
-
-      <View style={styles.chips}>
-        {assessed &&
-          active.map((row) => (
-            <ThemedView key={row.exposure} type="surface" style={[styles.chip, styles.chipActive]}>
-              <View style={styles.chipHead}>
-                <ThemedText type="smallBold">{humanize(row.exposure)}</ThemedText>
-                <ThemedText type="smallBold" themeColor="silence" style={styles.tabular}>
-                  {row.years > 0 ? '+' : ''}
-                  {row.years} y
-                </ThemedText>
-              </View>
-              <ThemedText type="small" themeColor="textMuted">
-                {row.source}. HR {row.hr}. If sustained.
-              </ThemedText>
-            </ThemedView>
-          ))}
-
-        {assessed &&
-          (unknown ?? []).map((row) => (
-            <ThemedView key={row.exposure} type="surfaceRaised" style={styles.chip}>
-              <ThemedText type="smallBold" themeColor="textSecondary">
-                {humanize(row.exposure)}
-              </ThemedText>
-              <ThemedText type="small" themeColor="textMuted">
-                Needs {NEEDS[row.needs]?.text ?? humanize(row.needs).toLowerCase()}.{' '}
-                <Link href={NEEDS[row.needs]?.href ?? '/onboarding'}>
-                  <ThemedText type="smallBold" themeColor="accent">
-                    {NEEDS[row.needs]?.href === '/onboarding' || !NEEDS[row.needs] ? 'Answer' : 'Add it'}
-                  </ThemedText>
-                </Link>
-              </ThemedText>
-            </ThemedView>
-          ))}
-
-        {!assessed &&
-          (ledger ?? []).map((row) => (
-            <ThemedView key={row.exposure} type="surfaceRaised" style={styles.chip}>
-              <View style={styles.chipHead}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  {humanize(row.exposure)}
-                </ThemedText>
-                <ThemedText type="smallBold" themeColor="textMuted" style={styles.tabular}>
-                  {row.years > 0 ? '+' : ''}
-                  {row.years} y
-                </ThemedText>
-              </View>
-              <ThemedText type="small" themeColor="textMuted">
-                {row.source}. Applies when {row.condition}. Not assessed yet.
-              </ThemedText>
-            </ThemedView>
-          ))}
-      </View>
-
-      {!assessed && (
-        <ThemedText type="small" themeColor="textSecondary">
-          Sign in and answer the onboarding questions to see which of these apply to you.{' '}
-          <Link href="/onboarding">
-            <ThemedText type="smallBold" themeColor="accent">
-              Get started
-            </ThemedText>
-          </Link>
-        </ThemedText>
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
@@ -506,16 +391,4 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.half,
   },
-  section: { gap: Spacing.two },
-  chips: { gap: Spacing.two },
-  chip: {
-    borderRadius: Radius.medium,
-    padding: Spacing.three,
-    gap: Spacing.half,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chipActive: { borderColor: Colors.silence },
-  chipHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.two },
-  tabular: { fontVariant: ['tabular-nums'] },
 });

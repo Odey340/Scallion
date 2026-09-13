@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+import { HeaderAuthButton } from '@/components/header-auth-button';
 import { Wordmark } from '@/components/wordmark';
 import { Colors } from '@/constants/theme';
 
@@ -36,6 +37,7 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: true,
           headerTitle: () => <Wordmark />,
+          headerRight: () => <HeaderAuthButton />,
           headerStyle: { backgroundColor: Colors.surface },
           headerShadowVisible: false,
           headerTintColor: Colors.text,
