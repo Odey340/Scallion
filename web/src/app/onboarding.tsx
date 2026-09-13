@@ -117,10 +117,15 @@ export default function OnboardingScreen() {
   // A real session always wins; the shared demo account is the fallback when nobody is signed in.
   const canUseRealApi = Boolean(session) || Boolean(DEMO_TOKEN && DEMO_USER_ID);
   const personaReferenceId = session?.user.id ?? DEMO_USER_ID ?? null;
-  const verifyUrl = personaReferenceId
-    ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}` +
-      (PERSONA_ENVIRONMENT_ID ? `&environment-id=${PERSONA_ENVIRONMENT_ID}` : '')
-    : null;
+  // Prefer the API's server-minted one-time Persona link (D mints it with PERSONA_API_KEY, which is
+  // what Persona's hosted flow actually accepts); the client-built template link is only the
+  // fallback while GET /me is unavailable, and Persona currently rejects it ("check template-id").
+  const verifyUrl =
+    me?.verify_url ??
+    (personaReferenceId
+      ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}` +
+        (PERSONA_ENVIRONMENT_ID ? `&environment-id=${PERSONA_ENVIRONMENT_ID}` : '')
+      : null);
 
   const refreshMe = async () => {
     if (!canUseRealApi) return;

@@ -16,19 +16,29 @@ export function useSession(): { session: Session | null; loading: boolean } {
   const [loading, setLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
-    if (!supabase) {
+    const client = supabase;
+    if (!client) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setToken(data.session?.access_token ?? DEMO_TOKEN);
-      setSession(data.session);
+    client.auth.getSession().then(async ({ data }) => {
+      let current = data.session;
+      if (current) {
+        // Re-mint the access token on every load. The project's JWT signing key was rotated
+        // (ES256 -> the legacy HS256 secret api/app/auth.py verifies) on 2026-09-13; sessions
+        // established before that carry a token the API rejects until refreshed. Cheap, and it
+        // also keeps a returning tab from presenting a nearly-expired token.
+        const { data: refreshed } = await client.auth.refreshSession();
+        if (refreshed.session) current = refreshed.session;
+      }
+      setToken(current?.access_token ?? DEMO_TOKEN);
+      setSession(current);
       setLoading(false);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = client.auth.onAuthStateChange((_event, nextSession) => {
       setToken(nextSession?.access_token ?? DEMO_TOKEN);
       setSession(nextSession);
     });
