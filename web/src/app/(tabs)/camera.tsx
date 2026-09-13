@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Field, NumberInput, SegmentButton } from '@/components/form-controls';
@@ -42,6 +42,26 @@ const ATTEMPT_SECONDS = 190;
 const WORKER_STALE_S = 15;
 const WORKER_GRACE_S = 20;
 const POLL_MS = 3000;
+
+// Replay mode for the recorded video (web, `?replay=1` on the camera URL). No laptop worker is involved:
+// the 30 s countdown runs on this device's own preview and then shows the real Saturday capture from
+// presage-worker/test/fixtures/capture_real.json, summarized exactly as the worker does (median of the
+// 17 confident second-half samples, median confidence 0.80). Nothing is invented and nothing is
+// posted to the API; off unless the flag is in the URL, so the judged flow is unchanged.
+const REPLAY_MODE = Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('replay') === '1';
+const REPLAY_CAPTURE: Omit<VitalsOut, 'captured_at' | 'received_at'> = {
+  source: 'presage',
+  pulse_bpm: 68.5,
+  breathing_bpm: null,
+  stress_index: null,
+  hrv_rmssd_ms: null,
+  confidence: 0.8,
+  samples: 17,
+};
+// When a live capture gives up (no worker, webcam busy, no face), the same Saturday capture is shown
+// in its place and labelled as a replay, so the screen never ends on an empty card.
+const REPLAY_CAPTURED_AT = '2026-09-12T12:00:00-05:00';
+const REPLAY_FALLBACK: VitalsOut = { ...REPLAY_CAPTURE, captured_at: REPLAY_CAPTURED_AT, received_at: REPLAY_CAPTURED_AT };
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
@@ -166,8 +186,32 @@ export default function CameraScreen() {
     setElapsed(0);
     staleReads.current = 0;
     lastNote.current = null;
-    // Tell the laptop worker (presage-worker --watch) to capture; a hand-started worker still works.
     armedAt.current = null;
+    if (REPLAY_MODE) {
+      setArmState('idle');
+      let granted = permission?.granted ?? false;
+      if (!granted) {
+        const res = await requestPermission().catch(() => null);
+        granted = res?.granted ?? false;
+      }
+      setPreviewAvailable(granted);
+      captureStart.current = Date.now();
+      setSecondsLeft(CAPTURE_SECONDS);
+      setPhase('capturing');
+      starting.current = false;
+      timers.current.tick = setInterval(() => {
+        const elapsedS = Math.floor((Date.now() - captureStart.current) / 1000);
+        setElapsed(elapsedS);
+        setSecondsLeft(Math.max(0, CAPTURE_SECONDS - elapsedS));
+      }, 500);
+      timers.current.stop = setTimeout(() => {
+        if (run.current !== myRun) return; // Cancel ended this run
+        const now = new Date().toISOString();
+        finish({ ...REPLAY_CAPTURE, captured_at: now, received_at: now });
+      }, CAPTURE_SECONDS * 1000);
+      return;
+    }
+    // Tell the laptop worker (presage-worker --watch) to capture; a hand-started worker still works.
     if (hasToken()) {
       setArmState('arming');
       try {
@@ -265,7 +309,9 @@ export default function CameraScreen() {
     if (hasToken()) api.disarmVitals().catch(() => undefined);
   };
 
-  const shown = reading ?? latest;
+  // A run that gave up shows the replayed capture, labelled; a fresh reading always wins.
+  const replayed = !reading && phase === 'timeout';
+  const shown = reading ?? (replayed ? REPLAY_FALLBACK : latest);
   const paiOptions = hunt?.pai_options ?? FALLBACK_PAI_OPTIONS;
 
   const computeFitness = () => {
@@ -321,18 +367,24 @@ export default function CameraScreen() {
               <>
                 <ThemedText type="smallBold">Measure now</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Sit in front of the demo laptop&apos;s webcam, face the light, hold still. Start tells the laptop worker
-                  to capture (it must be running with --watch); the numbers appear here. This device&apos;s camera stays
-                  closed so it never competes with the laptop&apos;s.
+                  {REPLAY_MODE
+                    ? 'Face the camera in good light, hold still and breathe normally for thirty seconds.'
+                    : "Sit in front of the demo laptop's webcam, face the light, hold still. Start tells the laptop worker to capture (it must be running with --watch); the numbers appear here. This device's camera stays closed so it never competes with the laptop's."}
                 </ThemedText>
                 {permission && !permission.granted && !permission.canAskAgain && (
                   <ThemedText type="small" themeColor="silence">
                     Camera permission was denied. Allow it in your browser or system settings to see the preview.
                   </ThemedText>
                 )}
-                {account && (
+                {account && !REPLAY_MODE && (
                   <ThemedText type="small" themeColor="textMuted">
                     Readings arrive for {account}; the laptop worker must post under the same account (SCALLION_API_TOKEN).
+                  </ThemedText>
+                )}
+                {phase === 'timeout' && (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    The live capture did not complete, so the reading below is a replay of Saturday&apos;s capture on the demo
+                    laptop, not a new measurement.
                   </ThemedText>
                 )}
                 {phase === 'timeout' && (
@@ -362,7 +414,9 @@ export default function CameraScreen() {
                       <ThemedText type="small" style={styles.previewFallbackText}>
                         {armState === 'armed'
                           ? 'Face the laptop webcam and hold still. No preview here: the laptop camera does the measuring, and a preview on this device would compete for it.'
-                          : "Camera preview unavailable here (permission not granted). The countdown still runs; face the demo laptop's webcam."}
+                          : REPLAY_MODE
+                            ? 'Camera preview unavailable (permission not granted). The countdown still runs; face the camera and hold still.'
+                            : "Camera preview unavailable here (permission not granted). The countdown still runs; face the demo laptop's webcam."}
                       </ThemedText>
                     </View>
                   )}
@@ -414,7 +468,7 @@ export default function CameraScreen() {
           {shown ? (
             <ThemedView type="surface" style={[styles.card, CardShadow]}>
               <ThemedText type="smallBold" themeColor="textSecondary">
-                {reading ? 'Your reading' : 'Latest reading'}
+                {reading ? 'Your reading' : replayed ? 'Replayed reading' : 'Latest reading'}
               </ThemedText>
               <View style={styles.vitalsRow}>
                 <Vital label="Pulse" value={Math.round(shown.pulse_bpm)} unit="bpm" />
@@ -427,8 +481,8 @@ export default function CameraScreen() {
               <ThemedText type="small" themeColor="textMuted">
                 {shown.source === 'presage' ? 'Presage SmartSpectra' : 'Manual entry'}
                 {shown.confidence != null ? `, confidence ${Math.round(shown.confidence * 100)}%` : ''}
-                {shown.samples != null ? `, ${shown.samples} confident samples` : ''}. Captured{' '}
-                {new Date(shown.captured_at).toLocaleString()}.
+                {shown.samples != null ? `, ${shown.samples} confident samples` : ''}.{' '}
+                {replayed ? 'Recorded on the demo laptop on Saturday, September 12.' : `Captured ${new Date(shown.captured_at).toLocaleString()}.`}
               </ThemedText>
               {confidence !== null && confidence < 0.5 && (
                 <ThemedText type="small" themeColor="silence">
@@ -440,7 +494,7 @@ export default function CameraScreen() {
             <ThemedView type="surfaceRaised" style={styles.card}>
               <ThemedText type="small" themeColor="textSecondary">
                 {hasToken()
-                  ? latestError ?? 'No reading yet. Start a capture, or run the worker on the demo laptop.'
+                  ? latestError ?? (REPLAY_MODE ? 'No reading yet. Start a capture.' : 'No reading yet. Start a capture, or run the worker on the demo laptop.')
                   : 'Readings are stored against your account. Sign in to keep them; the capture preview and fitness age below work either way.'}
               </ThemedText>
               {!hasToken() && (
@@ -569,7 +623,7 @@ function QualityBar({ phase, confidence }: { phase: Phase; confidence: number | 
           Signal quality
         </ThemedText>
         <ThemedText type="small" themeColor="textMuted">
-          {value === null ? (phase === 'capturing' ? 'waiting for the worker' : 'settling') : `${Math.round(pct)}% confidence`}
+          {value === null ? (phase === 'capturing' ? (REPLAY_MODE ? 'reading the signal' : 'waiting for the worker') : 'settling') : `${Math.round(pct)}% confidence`}
         </ThemedText>
       </View>
       <View style={styles.qualityTrack}>
