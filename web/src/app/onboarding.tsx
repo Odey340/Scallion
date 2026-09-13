@@ -22,6 +22,29 @@ const RESEND_COOLDOWN_S = 60;
  *    SMTP; was 2/hour on Supabase's built-in sender) — nothing the app can do but wait.
  *  - "For security purposes, you can only request this after N seconds": per-address 60 s cooldown.
  */
+/**
+ * The sign-in email links to `{{ .SiteURL }}/onboarding?token_hash=...&type=email` (set in the
+ * Supabase email templates) instead of Supabase's own verify URL. Mail scanners (Outlook SafeLinks
+ * especially) pre-fetch links, and Supabase's verify link is single-use — so it was already spent
+ * by the time a human clicked it. Landing here does nothing until the user presses "Finish signing
+ * in", which is when the hash is exchanged. Supabase's own "Email link is invalid or has expired"
+ * bounce (from any old-style link) arrives in the URL hash and is surfaced too.
+ */
+function readSignInLink(): { tokenHash: string | null; error: string | null } {
+  if (typeof window === 'undefined') return { tokenHash: null, error: null };
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return {
+    tokenHash: query.get('token_hash'),
+    error: hash.get('error_description') ?? query.get('error_description'),
+  };
+}
+
+function clearSignInLinkFromUrl() {
+  if (typeof window === 'undefined') return;
+  window.history.replaceState(null, '', window.location.pathname);
+}
+
 function describeAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('rate limit')) {
@@ -59,9 +82,14 @@ export default function OnboardingScreen() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [link] = useState(readSignInLink);
+  const [linkDismissed, setLinkDismissed] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(() =>
+    link.error ? 'That sign-in link no longer works (mail scanners can use links up). Request a code below instead.' : null,
+  );
   const [authBusy, setAuthBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const pendingLink = Boolean(link.tokenHash) && !linkDismissed;
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -153,6 +181,17 @@ export default function OnboardingScreen() {
     setAuthError(null);
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: 'email' });
     setAuthBusy(false);
+    if (error) setAuthError(describeAuthError(error.message));
+  };
+
+  const finishLinkSignIn = async () => {
+    if (!supabase || !link.tokenHash) return;
+    setAuthBusy(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.verifyOtp({ token_hash: link.tokenHash, type: 'email' });
+    setAuthBusy(false);
+    setLinkDismissed(true);
+    clearSignInLinkFromUrl();
     if (error) setAuthError(describeAuthError(error.message));
   };
 
@@ -255,6 +294,31 @@ export default function OnboardingScreen() {
                     <AnimatedPressable style={styles.secondaryButton} onPress={handleSignOut}>
                       <ThemedText type="small">Sign out</ThemedText>
                     </AnimatedPressable>
+                  </>
+                ) : pendingLink ? (
+                  <>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      You opened a sign-in link from your email. Press the button to finish.
+                    </ThemedText>
+                    <AnimatedPressable style={styles.submit} onPress={finishLinkSignIn} disabled={authBusy}>
+                      <ThemedText type="smallBold" themeColor="accentText">
+                        {authBusy ? 'Signing in…' : 'Finish signing in'}
+                      </ThemedText>
+                    </AnimatedPressable>
+                    <AnimatedPressable
+                      style={styles.secondaryButton}
+                      onPress={() => {
+                        setLinkDismissed(true);
+                        clearSignInLinkFromUrl();
+                      }}
+                    >
+                      <ThemedText type="small">Use a code instead</ThemedText>
+                    </AnimatedPressable>
+                    {authError && (
+                      <ThemedText type="small" themeColor="silence">
+                        {authError}
+                      </ThemedText>
+                    )}
                   </>
                 ) : (
                   <>
