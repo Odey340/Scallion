@@ -229,6 +229,10 @@ export default function OnboardingScreen() {
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  // After the Persona tab is opened, poll GET /me until the webhook lands (or 3 min pass), and
+  // re-check whenever this tab regains focus — the approval arrives out of band, so nothing on
+  // this page would otherwise change.
+  const [pollUntil, setPollUntil] = useState<number | null>(null);
   const canUseRealApi = Boolean(session) || Boolean(DEMO_TOKEN && DEMO_USER_ID);
   const who = session?.user.id ?? DEMO_USER_ID ?? null;
   const answersJson = JSON.stringify(answersFromProfile(profile));
@@ -255,6 +259,27 @@ export default function OnboardingScreen() {
     refreshMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
+
+  useEffect(() => {
+    if (!pollUntil || me?.verified) return;
+    const id = setInterval(() => {
+      if (Date.now() > pollUntil) {
+        setPollUntil(null);
+        return;
+      }
+      refreshMe();
+    }, 5000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pollUntil, me?.verified]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !canUseRealApi) return;
+    const onFocus = () => refreshMe();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUseRealApi]);
 
   useEffect(() => {
     if (!canUseRealApi || answersJson === '{}') return;
@@ -350,6 +375,12 @@ export default function OnboardingScreen() {
       ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}` +
         (PERSONA_ENVIRONMENT_ID ? `&environment-id=${PERSONA_ENVIRONMENT_ID}` : '')
       : null);
+
+  const openPersona = () => {
+    if (!verifyUrl) return;
+    setPollUntil(Date.now() + 3 * 60 * 1000);
+    Linking.openURL(verifyUrl);
+  };
 
   const paiOptions = pai ?? [];
   const allReady = READINESS.every((r) => missingFields(r.fields, profile).length === 0);
@@ -711,11 +742,15 @@ export default function OnboardingScreen() {
                     )}
                     {me && (
                       <ThemedText type="small" themeColor={me.verified ? 'connection' : 'textSecondary'}>
-                        {me.verified ? `Verified${me.age ? ` · age ${me.age}` : ''}` : 'Not verified yet'}
+                        {me.verified
+                          ? `Verified${me.age ? ` · age ${me.age}` : ''}`
+                          : pollUntil
+                            ? 'Not verified yet — checking every few seconds while Persona finishes…'
+                            : 'Not verified yet'}
                       </ThemedText>
                     )}
                     {verifyUrl && !me?.verified && (
-                      <AnimatedPressable style={styles.submit} onPress={() => Linking.openURL(verifyUrl)}>
+                      <AnimatedPressable style={styles.submit} onPress={openPersona}>
                         <ThemedText type="smallBold" themeColor="accentText">
                           Verify with Persona
                         </ThemedText>
