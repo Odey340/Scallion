@@ -55,7 +55,12 @@ export default function OnboardingScreen() {
     if (!supabase || !email) return;
     setAuthBusy(true);
     setAuthError(null);
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    // Supabase's default email template is a clickable link, not a typed code — emailRedirectTo
+    // controls where that link sends the user back to. Without it (or without this URL in the
+    // Supabase project's Redirect URLs allowlist), Supabase falls back to its default Site URL,
+    // which is why the email link was landing on an inaccessible localhost address.
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
     setAuthBusy(false);
     if (error) {
       setAuthError(error.message);
@@ -158,10 +163,14 @@ export default function OnboardingScreen() {
                   </Pressable>
                 ) : (
                   <>
-                    <Field label="6-digit code (check your email)">
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Check your email — click the sign-in link and you&apos;ll be brought right back here signed
+                      in. If your email shows a 6-digit code instead of a link, enter it below.
+                    </ThemedText>
+                    <Field label="6-digit code (optional, only if your email shows one)">
                       <TextField value={otp} onChangeText={setOtp} placeholder="123456" keyboardType="number-pad" />
                     </Field>
-                    <Pressable style={styles.submit} onPress={verifyCode} disabled={authBusy}>
+                    <Pressable style={styles.submit} onPress={verifyCode} disabled={authBusy || !otp}>
                       <ThemedText type="smallBold" themeColor="accentText">
                         {authBusy ? 'Verifying…' : 'Verify code'}
                       </ThemedText>
