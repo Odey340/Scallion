@@ -12,6 +12,8 @@ export interface ScanResult {
   meal: MealComputation;
   mealType: string;
   onMeds: boolean;
+  /** Medication question declined — walk-timing advice is hidden, same as onMeds. */
+  medsUnknown?: boolean;
   carbsSource: 'photo' | 'manual';
   gemini: GeminiEstimate | null;
   coffee: { hoursBefore: number; byClockTime: string | null } | null;

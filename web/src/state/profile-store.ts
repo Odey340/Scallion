@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Answers } from '@/lib/api';
+import { loadLocalAnswers } from '@/state/local-identity';
 
 /**
  * The single source of truth for "things Scallion already knows about you" — reused across
@@ -20,6 +21,12 @@ export interface UserProfile extends Answers {
   /** HUNT PAI option key (hunt.json's pai_options[].key) — the model input is derived from this. */
   paiKey?: string;
   fastingGlucoseMgdl?: number;
+  /**
+   * "Prefer not to say" to the blood-sugar medication question. Kept separate from
+   * on_glucose_meds so it is never sent to the API as `false`; Scan treats it conservatively
+   * (walk-timing advice hidden, same as the CLAUDE.md rule 4 safety gate).
+   */
+  glucoseMedsDeclined?: boolean;
 }
 
 type ProfileField = keyof UserProfile;
@@ -30,15 +37,22 @@ let current: UserProfile = load();
 const listeners = new Set<() => void>();
 
 function load(): UserProfile {
+  let profile: UserProfile = {};
   try {
     if (typeof localStorage === 'undefined') return {};
     const raw = localStorage.getItem(KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    return migrate(parsed);
+    if (raw) profile = migrate(JSON.parse(raw) as unknown);
   } catch {
-    return {};
+    profile = {};
   }
+  // Answers saved before the profile store existed (local sign-in era): fill only the gaps.
+  const legacy = loadLocalAnswers();
+  if (legacy) {
+    const old = migrate(legacy) as Record<string, unknown>;
+    const out = profile as Record<string, unknown>;
+    for (const k of Object.keys(old)) if (out[k] === undefined) out[k] = old[k];
+  }
+  return profile;
 }
 
 /** Keeps only known fields with plausible types — an old or corrupted blob degrades to {} per field, not a throw. */
@@ -47,7 +61,7 @@ function migrate(parsed: unknown): UserProfile {
   const src = parsed as Record<string, unknown>;
   const out: UserProfile = {};
   const numberFields: ProfileField[] = ['age', 'weightLb', 'waistCm', 'restingHr', 'fastingGlucoseMgdl', 'sleep_h', 'coffee_mg_per_cup'];
-  const boolFields: ProfileField[] = ['on_glucose_meds', 'smoker', 'lonely', 'lives_alone', 'oral_contraceptive'];
+  const boolFields: ProfileField[] = ['on_glucose_meds', 'smoker', 'lonely', 'lives_alone', 'oral_contraceptive', 'glucoseMedsDeclined'];
   for (const f of numberFields) if (typeof src[f] === 'number') (out as Record<string, unknown>)[f] = src[f];
   for (const f of boolFields) if (typeof src[f] === 'boolean') (out as Record<string, unknown>)[f] = src[f];
   if (src.sex === 'M' || src.sex === 'F') out.sex = src.sex;
@@ -108,5 +122,24 @@ export const PROFILE_REQUIREMENTS = {
 };
 
 export function missingFields(requirement: ProfileField[], profile: UserProfile = current): ProfileField[] {
-  return requirement.filter((f) => profile[f] === undefined || profile[f] === null || profile[f] === '');
+  return requirement.filter((f) => {
+    if (f === 'on_glucose_meds' && profile.glucoseMedsDeclined) return false;
+    return profile[f] === undefined || profile[f] === null || profile[f] === '';
+  });
+}
+
+/** The subset of the profile that is the API's `Answers` (contracts.md §3) — nothing else is uploaded. */
+export function answersFromProfile(p: UserProfile): Answers {
+  const out: Answers = {};
+  if (p.on_glucose_meds !== undefined && !p.glucoseMedsDeclined) out.on_glucose_meds = p.on_glucose_meds;
+  if (p.sleep_h !== undefined) out.sleep_h = p.sleep_h;
+  if (p.smoker !== undefined) out.smoker = p.smoker;
+  if (p.lonely !== undefined) out.lonely = p.lonely;
+  if (p.lives_alone !== undefined) out.lives_alone = p.lives_alone;
+  if (p.oral_contraceptive !== undefined) out.oral_contraceptive = p.oral_contraceptive;
+  if (p.help_family !== undefined) out.help_family = p.help_family;
+  if (p.help_friends !== undefined) out.help_friends = p.help_friends;
+  if (p.bedtime !== undefined) out.bedtime = p.bedtime;
+  if (p.coffee_mg_per_cup !== undefined) out.coffee_mg_per_cup = p.coffee_mg_per_cup;
+  return out;
 }

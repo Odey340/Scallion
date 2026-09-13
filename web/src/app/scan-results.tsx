@@ -36,7 +36,8 @@ export default function ScanResultsScreen() {
     );
   }
 
-  const { meal, mealType, onMeds, carbsSource, gemini, coffee } = result;
+  const { meal, mealType, onMeds, medsUnknown, carbsSource, gemini, coffee } = result;
+  const hideWalk = onMeds || Boolean(medsUnknown);
   const score = computeWellbeingScore(meal.eatNow.curve, meal.tMin);
   const tier = wellbeingTier(score);
   const walkScore = computeWellbeingScore(meal.withWalk.curve, meal.tMin);
@@ -61,7 +62,7 @@ export default function ScanResultsScreen() {
                 {gemini.food_description}
               </ThemedText>
             )}
-            {!onMeds && walkImprovement > 2 && (
+            {!hideWalk && walkImprovement > 2 && (
               <ThemedView type="surfaceRaised" style={styles.insightCard}>
                 <ThemedText type="small">
                   A 30 min walk after eating could raise this to {walkScore}%.
@@ -94,12 +95,13 @@ export default function ScanResultsScreen() {
           </FadeInUp>
 
           <FadeInUp delay={140}>
-          {onMeds ? (
+          {hideWalk ? (
             <ThemedView type="surface" style={[styles.card, CardShadow]}>
               <ThemedText type="smallBold">Exercise timing</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Discuss timing with your clinician — walk-timing advice is hidden because you take medicine that
-                affects blood sugar.
+                {onMeds
+                  ? 'Discuss timing with your clinician — walk-timing advice is hidden because you take medicine that affects blood sugar.'
+                  : 'Walk-timing advice is hidden because the blood-sugar medication question wasn’t answered. Answer it in your profile to see it.'}
               </ThemedText>
             </ThemedView>
           ) : (

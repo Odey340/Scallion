@@ -50,13 +50,73 @@ export function TextField({
   );
 }
 
-export function SegmentButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+export function SegmentButton({
+  label,
+  active,
+  onPress,
+  description,
+  fullWidth,
+  disabled,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  description?: string;
+  fullWidth?: boolean;
+  disabled?: boolean;
+}) {
   return (
-    <Pressable style={[styles.segment, active && styles.segmentActive]} onPress={onPress}>
-      <ThemedText type="small" themeColor={active ? 'accentText' : 'text'}>
+    <Pressable
+      accessibilityRole="radio"
+      aria-checked={active}
+      aria-disabled={disabled}
+      accessibilityLabel={description ? `${label}, ${description}` : label}
+      disabled={disabled}
+      style={[styles.segment, fullWidth && styles.segmentFull, active && styles.segmentActive, disabled && styles.segmentDisabled]}
+      onPress={onPress}>
+      <ThemedText type={description ? 'smallBold' : 'small'} themeColor={active ? 'accentText' : 'text'}>
         {label}
       </ThemedText>
+      {description && (
+        <ThemedText type="small" themeColor={active ? 'accentText' : 'textMuted'} style={styles.segmentDescription}>
+          {description}
+        </ThemedText>
+      )}
     </Pressable>
+  );
+}
+
+export interface Choice<T> {
+  value: T;
+  label: string;
+  description?: string;
+}
+
+/** One question, several tappable answers. `stack` puts one answer per line (for long labels). */
+export function ChoiceGroup<T>({
+  options,
+  value,
+  onChange,
+  layout = 'wrap',
+}: {
+  options: readonly Choice<T>[];
+  value: T | null | undefined;
+  onChange: (value: T) => void;
+  layout?: 'wrap' | 'stack';
+}) {
+  return (
+    <View accessibilityRole="radiogroup" style={layout === 'stack' ? styles.stack : styles.wrap}>
+      {options.map((o) => (
+        <SegmentButton
+          key={String(o.value)}
+          label={o.label}
+          description={o.description}
+          fullWidth={layout === 'stack'}
+          active={value === o.value}
+          onPress={() => onChange(o.value)}
+        />
+      ))}
+    </View>
   );
 }
 
@@ -79,9 +139,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     backgroundColor: Colors.surface,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   segmentActive: {
     backgroundColor: Colors.accent,
     borderColor: Colors.accent,
   },
+  segmentFull: { alignSelf: 'stretch' },
+  segmentDisabled: { opacity: 0.5 },
+  segmentDescription: { marginTop: Spacing.half },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  stack: { gap: Spacing.two },
 });
