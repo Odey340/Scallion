@@ -12,6 +12,7 @@ import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { lastCoffeeHoursBeforeBed, subtractHours, type CaffeineData } from '@/engine/caffeine';
 import { computeMealCurves, type MealComputation, type MealGrid } from '@/engine/meal';
 import { setScanResult, type GeminiEstimate, type ScanResult } from '@/state/scan-store';
+import { updateProfile, useProfile } from '@/state/profile-store';
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const LB_PER_KG = 2.20462;
@@ -23,6 +24,7 @@ const LB_PER_KG = 2.20462;
  */
 export default function ScanScreen() {
   const router = useRouter();
+  const profile = useProfile();
 
   const [grid, setGrid] = useState<MealGrid | null>(null);
   const [caffeine, setCaffeine] = useState<CaffeineData | null>(null);
@@ -35,11 +37,12 @@ export default function ScanScreen() {
   const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [carbsG, setCarbsG] = useState('');
-  const [fastingMgdl, setFastingMgdl] = useState('');
-  const [weightLb, setWeightLb] = useState('');
-  const [onMeds, setOnMeds] = useState<boolean | null>(null);
-  const [caffeineMg, setCaffeineMg] = useState('');
-  const [bedtime, setBedtime] = useState('');
+  const [fastingMgdl, setFastingMgdl] = useState(profile.fastingGlucoseMgdl ? String(profile.fastingGlucoseMgdl) : '');
+  const [weightLb, setWeightLb] = useState(profile.weightLb ? String(profile.weightLb) : '');
+  const [onMeds, setOnMeds] = useState<boolean | null>(profile.on_glucose_meds ?? null);
+  const [caffeineMg, setCaffeineMg] = useState(profile.coffee_mg_per_cup ? String(profile.coffee_mg_per_cup) : '');
+  const [bedtime, setBedtime] = useState(profile.bedtime ?? '');
+  const fromProfile = Boolean(profile.fastingGlucoseMgdl || profile.weightLb || profile.on_glucose_meds !== undefined);
 
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -139,10 +142,24 @@ export default function ScanScreen() {
     if (caffeineMg && bedtime) {
       const doseNum = Number(caffeineMg);
       if (Number.isFinite(doseNum)) {
-        const hoursBefore = lastCoffeeHoursBeforeBed(doseNum, { smoker: false, oralContraceptive: false }, caffeine);
+        const hoursBefore = lastCoffeeHoursBeforeBed(
+          doseNum,
+          { smoker: profile.smoker ?? false, oralContraceptive: profile.oral_contraceptive ?? false },
+          caffeine,
+        );
         coffee = { hoursBefore, byClockTime: hoursBefore > 0 ? subtractHours(bedtime, hoursBefore) : null };
       }
     }
+
+    // Carbs stay scenario-only (this meal, not a persistent fact); everything else here is a
+    // genuine profile attribute, so save it back for next time regardless of source (typed or prefilled).
+    updateProfile({
+      fastingGlucoseMgdl: fastingNum,
+      weightLb: weightLbNum,
+      on_glucose_meds: onMeds === true,
+      ...(caffeineMg ? { coffee_mg_per_cup: Number(caffeineMg) } : {}),
+      ...(bedtime ? { bedtime } : {}),
+    });
 
     setScanResult({
       meal,
@@ -227,6 +244,13 @@ export default function ScanScreen() {
             <ThemedText type="small" themeColor="textMuted">
               Pre-filled from your photo when available — always editable.
             </ThemedText>
+
+            {fromProfile && (
+              <ThemedText type="small" themeColor="textMuted">
+                From your profile below — edit any of these just for this meal, or update them in Onboarding to change
+                them everywhere.
+              </ThemedText>
+            )}
 
             <Field label="Fasting glucose (mg/dL)">
               <NumberInput value={fastingMgdl} onChangeText={setFastingMgdl} placeholder="95" />

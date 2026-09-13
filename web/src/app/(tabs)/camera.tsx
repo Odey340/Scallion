@@ -12,6 +12,7 @@ import { computeFitnessAge, FALLBACK_PAI_OPTIONS, type FitnessAgeResult, type Hu
 import { ApiError, api, hasToken, type VitalsOut } from '@/lib/api';
 import { setFitnessInputs, setLocalClock, useFitnessInputs } from '@/state/clock-store';
 import { useSession } from '@/state/auth-store';
+import { updateProfile, useProfile } from '@/state/profile-store';
 
 /**
  * Camera: thirty seconds of face for pulse and breathing (docs/lanes/C.md Blocks 1 and 3).
@@ -35,6 +36,7 @@ export default function CameraScreen() {
   // Subscribing re-renders this screen when the session (and so hasToken()) changes.
   useSession();
   const inputs = useFitnessInputs();
+  const profile = useProfile();
 
   const [hunt, setHunt] = useState<HuntData | null>(null);
   const [latest, setLatest] = useState<VitalsOut | null>(null);
@@ -53,10 +55,10 @@ export default function CameraScreen() {
     timers.current = {};
   };
 
-  const [ageText, setAgeText] = useState(inputs ? String(inputs.age) : '');
-  const [sex, setSex] = useState<Sex>(inputs?.sex ?? 'M');
-  const [waistText, setWaistText] = useState(inputs ? String(inputs.waistCm) : '');
-  const [paiKey, setPaiKey] = useState<string | null>(inputs?.paiKey ?? null);
+  const [ageText, setAgeText] = useState(profile.age ? String(profile.age) : inputs ? String(inputs.age) : '');
+  const [sex, setSex] = useState<Sex>(profile.sex ?? inputs?.sex ?? 'M');
+  const [waistText, setWaistText] = useState(profile.waistCm ? String(profile.waistCm) : inputs ? String(inputs.waistCm) : '');
+  const [paiKey, setPaiKey] = useState<string | null>(profile.paiKey ?? inputs?.paiKey ?? null);
   const [fitness, setFitness] = useState<FitnessAgeResult | null>(null);
   const [fitnessError, setFitnessError] = useState<string | null>(null);
 
@@ -144,6 +146,7 @@ export default function CameraScreen() {
       const r = computeFitnessAge({ age, sex, waistCm: waist, rhr: shown.pulse_bpm, pai: pai.pai }, hunt);
       setFitness(r);
       setFitnessInputs({ age, sex, waistCm: waist, pai: pai.pai, paiKey: pai.key });
+      updateProfile({ age, sex, waistCm: waist, restingHr: shown.pulse_bpm, paiKey: pai.key });
       setLocalClock({ clock: 'fitness', years: r.fitnessAge, chronologicalAge: age, band: r.band, computedAt: new Date().toISOString() });
       if (hasToken()) {
         api

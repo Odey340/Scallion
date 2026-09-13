@@ -16,6 +16,7 @@ import { findSourceLine, renderPdf, stitchPages, type RenderedPage } from '@/lib
 import { loadRules, type RawRules, type RuleSet } from '@/lib/redaction';
 import { setLocalClock } from '@/state/clock-store';
 import { resetLabs, setLabs, useLabs } from '@/state/labs-store';
+import { updateProfile, useProfile } from '@/state/profile-store';
 
 /**
  * Labs: upload -> review -> waterfall (docs/lanes/C.md Blocks 2-3).
@@ -31,6 +32,7 @@ type Step = 'pick' | 'working' | 'review';
 export default function LabsScreen() {
   const router = useRouter();
   const labs = useLabs();
+  const profile = useProfile();
   const { width: windowWidth } = useWindowDimensions();
 
   const [data, setData] = useState<PhenoAgeData | null>(null);
@@ -41,8 +43,15 @@ export default function LabsScreen() {
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AnalyteKey | null>(null);
-  const [ageText, setAgeText] = useState(labs.age ? String(labs.age) : '');
+  const [ageText, setAgeText] = useState(labs.age ? String(labs.age) : profile.age ? String(profile.age) : '');
   const [altUnits, setAltUnits] = useState<Partial<Record<AnalyteKey, boolean>>>({});
+
+  // Seed age/sex from the local profile (Start/Camera/Onboarding) before the real-account prefill below runs.
+  useEffect(() => {
+    if (!labs.age && profile.age) setLabs({ age: profile.age });
+    if (!labs.sex && profile.sex) setLabs({ sex: profile.sex });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetch('/engine/phenoage.json')
@@ -210,6 +219,7 @@ export default function LabsScreen() {
     }
     const result = computePhenoAge(labs.values, age, labs.sex, data, { fasting: labs.fasting, creatinineRefHigh: labs.creatinineRefHigh });
     setLabs({ age, result });
+    updateProfile({ age, sex: labs.sex });
     if (result.phenoage !== null) {
       setLocalClock({ clock: 'phenoage', years: result.phenoage, chronologicalAge: age, band: result.band, computedAt: new Date().toISOString(), imputed: result.imputed });
       if (hasToken()) {

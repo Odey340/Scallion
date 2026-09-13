@@ -11,6 +11,7 @@ import { api, type Answers, type Me } from '@/lib/api';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { useSession } from '@/state/auth-store';
 import { decodeJwtSub, loadLocalAnswers, saveLocalAnswers } from '@/state/local-identity';
+import { updateProfile, useProfile } from '@/state/profile-store';
 
 const HELP_SCALE = [0, 1, 2, 3, 4, 5] as const;
 const RESEND_COOLDOWN_S = 60;
@@ -36,6 +37,11 @@ function describeAuthError(message: string): string {
 // docs/log/D.md session H13: template created for this project. Not a secret by Persona's own
 // design (it's meant to sit in a client-facing verify_url) — overridable if D rotates it.
 const PERSONA_TEMPLATE_ID = process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID ?? 'itmpl_AH43ZFeBwqDRXTQLsUW8vEpdokrjAU';
+// docs/log/C.md session 19: the template is a Persona sandbox template, so the hosted flow 404s
+// with "could not load template" unless environment-id is also present — same fix D's own
+// api/app/routes/persona.py::_verify_url applies server-side. Unset until D configures the real
+// PERSONA_ENVIRONMENT_ID; this only changes behavior once that value exists.
+const PERSONA_ENVIRONMENT_ID = process.env.EXPO_PUBLIC_PERSONA_ENVIRONMENT_ID ?? null;
 const DEMO_TOKEN = process.env.EXPO_PUBLIC_DEMO_TOKEN ?? null;
 const DEMO_USER_ID = DEMO_TOKEN ? decodeJwtSub(DEMO_TOKEN) : null;
 
@@ -48,6 +54,7 @@ const DEMO_USER_ID = DEMO_TOKEN ? decodeJwtSub(DEMO_TOKEN) : null;
 export default function OnboardingScreen() {
   const { session, loading } = useSession();
   const user = session ? { id: session.user.id, email: session.user.email ?? '' } : null;
+  const profile = useProfile();
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -62,17 +69,17 @@ export default function OnboardingScreen() {
     return () => clearInterval(id);
   }, [cooldown]);
 
-  const [onMeds, setOnMeds] = useState<boolean | null>(null);
-  const [smoker, setSmoker] = useState<boolean | null>(null);
-  const [oralContraceptive, setOralContraceptive] = useState<boolean | null>(null);
-  const [sleepH, setSleepH] = useState('');
-  const [bedtime, setBedtime] = useState('');
-  const [coffeeMgPerCup, setCoffeeMgPerCup] = useState('');
+  const [onMeds, setOnMeds] = useState<boolean | null>(profile.on_glucose_meds ?? null);
+  const [smoker, setSmoker] = useState<boolean | null>(profile.smoker ?? null);
+  const [oralContraceptive, setOralContraceptive] = useState<boolean | null>(profile.oral_contraceptive ?? null);
+  const [sleepH, setSleepH] = useState(profile.sleep_h ? String(profile.sleep_h) : '');
+  const [bedtime, setBedtime] = useState(profile.bedtime ?? '');
+  const [coffeeMgPerCup, setCoffeeMgPerCup] = useState(profile.coffee_mg_per_cup ? String(profile.coffee_mg_per_cup) : '');
 
-  const [helpFamily, setHelpFamily] = useState<(typeof HELP_SCALE)[number] | null>(null);
-  const [helpFriends, setHelpFriends] = useState<(typeof HELP_SCALE)[number] | null>(null);
-  const [lonely, setLonely] = useState<boolean | null>(null);
-  const [livesAlone, setLivesAlone] = useState<boolean | null>(null);
+  const [helpFamily, setHelpFamily] = useState<(typeof HELP_SCALE)[number] | null>(profile.help_family ?? null);
+  const [helpFriends, setHelpFriends] = useState<(typeof HELP_SCALE)[number] | null>(profile.help_friends ?? null);
+  const [lonely, setLonely] = useState<boolean | null>(profile.lonely ?? null);
+  const [livesAlone, setLivesAlone] = useState<boolean | null>(profile.lives_alone ?? null);
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -83,7 +90,8 @@ export default function OnboardingScreen() {
   const canUseRealApi = Boolean(session) || Boolean(DEMO_TOKEN && DEMO_USER_ID);
   const personaReferenceId = session?.user.id ?? DEMO_USER_ID ?? null;
   const verifyUrl = personaReferenceId
-    ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}`
+    ? `https://inquiry.withpersona.com/verify?inquiry-template-id=${PERSONA_TEMPLATE_ID}&reference-id=${personaReferenceId}` +
+      (PERSONA_ENVIRONMENT_ID ? `&environment-id=${PERSONA_ENVIRONMENT_ID}` : '')
     : null;
 
   const refreshMe = async () => {
@@ -96,17 +104,18 @@ export default function OnboardingScreen() {
     }
   };
 
+  /** One-time migration from the pre-profile-store local answers, and only for fields the profile doesn't already have. */
   function applyStoredAnswers(a: Answers) {
-    if (a.on_glucose_meds !== undefined) setOnMeds(a.on_glucose_meds);
-    if (a.smoker !== undefined) setSmoker(a.smoker);
-    if (a.oral_contraceptive !== undefined) setOralContraceptive(a.oral_contraceptive);
-    if (a.sleep_h !== undefined) setSleepH(String(a.sleep_h));
-    if (a.bedtime) setBedtime(a.bedtime);
-    if (a.coffee_mg_per_cup !== undefined) setCoffeeMgPerCup(String(a.coffee_mg_per_cup));
-    if (a.help_family !== undefined) setHelpFamily(a.help_family);
-    if (a.help_friends !== undefined) setHelpFriends(a.help_friends);
-    if (a.lonely !== undefined) setLonely(a.lonely);
-    if (a.lives_alone !== undefined) setLivesAlone(a.lives_alone);
+    if (a.on_glucose_meds !== undefined && profile.on_glucose_meds === undefined) setOnMeds(a.on_glucose_meds);
+    if (a.smoker !== undefined && profile.smoker === undefined) setSmoker(a.smoker);
+    if (a.oral_contraceptive !== undefined && profile.oral_contraceptive === undefined) setOralContraceptive(a.oral_contraceptive);
+    if (a.sleep_h !== undefined && profile.sleep_h === undefined) setSleepH(String(a.sleep_h));
+    if (a.bedtime && !profile.bedtime) setBedtime(a.bedtime);
+    if (a.coffee_mg_per_cup !== undefined && profile.coffee_mg_per_cup === undefined) setCoffeeMgPerCup(String(a.coffee_mg_per_cup));
+    if (a.help_family !== undefined && profile.help_family === undefined) setHelpFamily(a.help_family);
+    if (a.help_friends !== undefined && profile.help_friends === undefined) setHelpFriends(a.help_friends);
+    if (a.lonely !== undefined && profile.lonely === undefined) setLonely(a.lonely);
+    if (a.lives_alone !== undefined && profile.lives_alone === undefined) setLivesAlone(a.lives_alone);
   }
 
   useEffect(() => {
@@ -171,6 +180,10 @@ export default function OnboardingScreen() {
       lonely: lonely ?? undefined,
       lives_alone: livesAlone ?? undefined,
     };
+
+    // The profile store is the single source Start/Scan/Camera/Labs all read — save here regardless
+    // of whether the demo API save below also succeeds, so those screens see it immediately either way.
+    updateProfile(answers);
 
     if (canUseRealApi) {
       try {

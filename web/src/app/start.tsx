@@ -16,20 +16,24 @@ import {
 } from '@/engine/fitness-age';
 import { api, hasToken } from '@/lib/api';
 import { setFitnessInputs, setLocalClock } from '@/state/clock-store';
+import { updateProfile, useProfile } from '@/state/profile-store';
 
 /**
  * QR landing: fitness age in ten seconds, no login. docs/lanes/C.md Block 1.
  * Reads A's export at web/public/engine/hunt.json (Nes 2011 VO2max model, Kurtze 2008 PAI).
+ * Prefills from the profile store when a returning visitor already answered these once.
  */
 export default function StartScreen() {
+  const profile = useProfile();
   const [hunt, setHunt] = useState<HuntData | null>(null);
   const [huntError, setHuntError] = useState<string | null>(null);
 
-  const [age, setAge] = useState('');
-  const [sex, setSex] = useState<Sex>('M');
-  const [waistCm, setWaistCm] = useState('');
-  const [rhr, setRhr] = useState('');
+  const [age, setAge] = useState(profile.age ? String(profile.age) : '');
+  const [sex, setSex] = useState<Sex>(profile.sex ?? 'M');
+  const [waistCm, setWaistCm] = useState(profile.waistCm ? String(profile.waistCm) : '');
+  const [rhr, setRhr] = useState(profile.restingHr ? String(profile.restingHr) : '');
   const [paiIndex, setPaiIndex] = useState<number | null>(null);
+  const [usingProfile, setUsingProfile] = useState(Boolean(profile.age && profile.waistCm && profile.paiKey));
 
   const [result, setResult] = useState<FitnessAgeResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -40,8 +44,15 @@ export default function StartScreen() {
         if (!res.ok) throw new Error(String(res.status));
         return res.json();
       })
-      .then(setHunt)
+      .then((data: HuntData) => {
+        setHunt(data);
+        if (profile.paiKey) {
+          const idx = (data.pai_options ?? FALLBACK_PAI_OPTIONS).findIndex((o) => o.key === profile.paiKey);
+          if (idx >= 0) setPaiIndex(idx);
+        }
+      })
       .catch(() => setHuntError('Could not load the fitness-age model (hunt.json).'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const paiOptions = hunt?.pai_options ?? FALLBACK_PAI_OPTIONS;
@@ -72,6 +83,7 @@ export default function StartScreen() {
       setResult(computed);
       // Home shows this clock until labs replace it (clock-store); the API row lets the coach speak about it.
       setFitnessInputs({ age: ageNum, sex, waistCm: waistNum, pai: paiOptions[paiIndex].pai, paiKey: paiOptions[paiIndex].key });
+      updateProfile({ age: ageNum, sex, waistCm: waistNum, restingHr: rhrNum, paiKey: paiOptions[paiIndex].key });
       setLocalClock({
         clock: 'fitness',
         years: computed.fitnessAge,
@@ -114,51 +126,81 @@ export default function StartScreen() {
             )}
           </FadeInUp>
 
-          <FadeInUp delay={70} style={{ gap: Spacing.four }}>
-            <Field label="Age (years)">
-              <NumberInput value={age} onChangeText={setAge} placeholder="34" />
-            </Field>
+          {usingProfile ? (
+            <FadeInUp delay={70} style={{ gap: Spacing.three }}>
+              <ThemedView type="surfaceRaised" style={styles.profileCard}>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Using your saved profile
+                </ThemedText>
+                <ProfileRow label="Age" value={`${age} years`} />
+                <ProfileRow label="Sex" value={sex === 'M' ? 'Male' : 'Female'} />
+                <ProfileRow label="Waist" value={`${waistCm} cm`} />
+                <ProfileRow label="Resting heart rate" value={rhr ? `${rhr} bpm` : 'not set'} />
+                <ProfileRow label="Activity" value={paiIndex !== null ? paiOptions[paiIndex].label : 'not set'} />
+                <AnimatedPressable style={styles.secondaryButton} onPress={() => setUsingProfile(false)}>
+                  <ThemedText type="smallBold" themeColor="accent">
+                    Update
+                  </ThemedText>
+                </AnimatedPressable>
+              </ThemedView>
+              {formError && (
+                <ThemedText type="small" themeColor="silence">
+                  {formError}
+                </ThemedText>
+              )}
+              <AnimatedPressable style={styles.submit} onPress={handleSubmit}>
+                <ThemedText type="smallBold" themeColor="accentText">
+                  Get my fitness age
+                </ThemedText>
+              </AnimatedPressable>
+            </FadeInUp>
+          ) : (
+            <FadeInUp delay={70} style={{ gap: Spacing.four }}>
+              <Field label="Age (years)">
+                <NumberInput value={age} onChangeText={setAge} placeholder="34" />
+              </Field>
 
-            <Field label="Sex">
-              <View style={styles.row}>
-                <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
-                <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
-              </View>
-            </Field>
+              <Field label="Sex">
+                <View style={styles.row}>
+                  <SegmentButton label="Male" active={sex === 'M'} onPress={() => setSex('M')} />
+                  <SegmentButton label="Female" active={sex === 'F'} onPress={() => setSex('F')} />
+                </View>
+              </Field>
 
-            <Field label="Waist (cm)">
-              <NumberInput value={waistCm} onChangeText={setWaistCm} placeholder="85" />
-            </Field>
+              <Field label="Waist (cm)">
+                <NumberInput value={waistCm} onChangeText={setWaistCm} placeholder="85" />
+              </Field>
 
-            <Field label="Resting heart rate (bpm)">
-              <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
-            </Field>
+              <Field label="Resting heart rate (bpm)">
+                <NumberInput value={rhr} onChangeText={setRhr} placeholder="62" />
+              </Field>
 
-            <Field label="How often do you exercise hard enough to raise your heart rate?">
-              <View style={styles.wrap}>
-                {paiOptions.map((option, index) => (
-                  <SegmentButton
-                    key={option.key}
-                    label={option.label}
-                    active={paiIndex === index}
-                    onPress={() => setPaiIndex(index)}
-                  />
-                ))}
-              </View>
-            </Field>
+              <Field label="How often do you exercise hard enough to raise your heart rate?">
+                <View style={styles.wrap}>
+                  {paiOptions.map((option, index) => (
+                    <SegmentButton
+                      key={option.key}
+                      label={option.label}
+                      active={paiIndex === index}
+                      onPress={() => setPaiIndex(index)}
+                    />
+                  ))}
+                </View>
+              </Field>
 
-            {formError && (
-              <ThemedText type="small" themeColor="silence">
-                {formError}
-              </ThemedText>
-            )}
+              {formError && (
+                <ThemedText type="small" themeColor="silence">
+                  {formError}
+                </ThemedText>
+              )}
 
-            <AnimatedPressable style={styles.submit} onPress={handleSubmit}>
-              <ThemedText type="smallBold" themeColor="accentText">
-                Get my fitness age
-              </ThemedText>
-            </AnimatedPressable>
-          </FadeInUp>
+              <AnimatedPressable style={styles.submit} onPress={handleSubmit}>
+                <ThemedText type="smallBold" themeColor="accentText">
+                  Get my fitness age
+                </ThemedText>
+              </AnimatedPressable>
+            </FadeInUp>
+          )}
 
           {result && (
             <FadeInUp delay={0}>
@@ -182,6 +224,17 @@ export default function StartScreen() {
   );
 }
 
+function ProfileRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.profileRow}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      <ThemedText type="smallBold">{value}</ThemedText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
@@ -201,6 +254,23 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+    marginTop: Spacing.two,
+  },
+  profileCard: {
+    borderRadius: Radius.medium,
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   resultCard: {
     borderRadius: Radius.medium,
