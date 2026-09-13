@@ -1,0 +1,32 @@
+{
+  "$comment": "Provenance for images in this folder. Not read by the app or rendered in the UI — kept here instead of an on-screen caption per product decision (docs/log/C.md). Every image is licensed for commercial use with no attribution required; credited here anyway for our own records.",
+  "images": [
+    {
+      "file": "labs-blood-sample.jpg",
+      "used": "web/src/app/(tabs)/index.tsx — Welcome triptych, \"Labs\"",
+      "source": "https://unsplash.com/photos/a-gloved-hand-holding-a-test-tube-filled-with-liquid-fKC9eWRnlGY",
+      "photographer": "Akram Huseyn",
+      "photographer_url": "https://unsplash.com/@akramhuseyn",
+      "license": "Unsplash License",
+      "attribution_required": false
+    },
+    {
+      "file": "fitness-activity-watch.jpg",
+      "used": "web/src/app/(tabs)/index.tsx — Welcome triptych, \"Fitness\"",
+      "source": "https://unsplash.com/photos/person-wearing-apple-watch-at-1424-0vsk2_9dkqo",
+      "photographer": "Lloyd Dirks",
+      "photographer_url": "https://unsplash.com/@lloyddirks",
+      "license": "Unsplash License",
+      "attribution_required": false
+    },
+    {
+      "file": "circle-friends.jpg",
+      "used": "web/src/app/(tabs)/index.tsx — Welcome triptych, \"Circle\"",
+      "source": "https://unsplash.com/photos/four-friends-laughing-and-high-fiving-over-coffee-l_ExpFwwOEg",
+      "photographer": "Toa Heftiba",
+      "photographer_url": "https://unsplash.com/@heftiba",
+      "license": "Unsplash License",
+      "attribution_required": false
+    }
+  ]
+}
