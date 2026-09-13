@@ -21,7 +21,7 @@ Laptop: MATLAB open on `Scallion.prj` (Lane A), the worker terminal open, `media
 | Step | Live | If it breaks | Same numbers? |
 |---|---|---|---|
 | Labs upload | Phone picks the redacted PDF, `/extract` via Gemini (~30 s) | C sends `X-Scallion-Cache: prefer`, the API returns the cached response for that file's hash instantly (`api/fixtures/cache/`) | Yes, cached from a live run |
-| Camera pulse | `node index.mjs` on the laptop webcam (45-60 s from launch to `POST ok`; it posts to every account in `SCALLION_API_TOKEN`, so the phone can be on the demo account or the presenter's; press Start on the phone any time from launch until 60 s after the post) | `node index.mjs --replay test/fixtures/capture_real.json` posts the real Saturday capture (68.5 bpm) | Yes, real capture replayed |
+| Camera pulse | Before judging: `cd presage-worker && node index.mjs --watch` and leave it. Pressing Start on the phone arms `/vitals/arm`; the watcher captures (45-60 s) and posts to every account in `SCALLION_API_TOKEN`, so the phone can be on the demo account or the presenter's. No timing to get right. | `node index.mjs --replay test/fixtures/capture_real.json` posts the real Saturday capture (68.5 bpm) | Yes, real capture replayed |
 | Circle | B's parser on the demo inbox export | the seeded `contact_events` rows already in Tiger; `daily_connection` shows them | Yes |
 | Coach voice | ElevenLabs agent via `/coach/session` | text mode: `/coach/context` + `/coach/explain/{name}` rendered by C; `/tts` for one sentence | Yes, same context |
 | Persona | hosted flow from `/me.verify_url` | say "verified Saturday" and show `/me` returning `verified: true, over_65: true` | Yes |

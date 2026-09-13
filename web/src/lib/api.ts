@@ -100,6 +100,12 @@ export interface VitalsIn {
 export interface VitalsOut extends Required<VitalsIn> {
   received_at: string;
 }
+/** /vitals/arm: the phone's Start asks the laptop worker (presage-worker --watch) for one capture. */
+export interface VitalsArm {
+  armed_at: string | null;
+  pending: boolean;
+  window_s: number;
+}
 
 export type ClockName = 'phenoage' | 'fitness' | 'social_risk';
 export interface ClockIn {
@@ -259,6 +265,8 @@ export const api = {
 
   postVitals: (v: VitalsIn) => call<{ ok: true }>('/vitals', json(v)),
   latestVitals: () => call<VitalsOut>('/vitals/latest'), // 404 -> ApiError when none
+  armVitals: () => call<VitalsArm>('/vitals/arm', { method: 'POST' }),
+  disarmVitals: () => call<VitalsArm>('/vitals/arm', { method: 'DELETE' }),
 
   me: () => call<Me>('/me'),
   setLang: (lang: 'en' | 'es') => call<Me>('/me/lang', { method: 'PUT', body: JSON.stringify({ lang }) }),

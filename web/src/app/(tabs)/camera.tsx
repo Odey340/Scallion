@@ -26,9 +26,12 @@ import { updateProfile, useProfile } from '@/state/profile-store';
  * Perceived age (@vladmandic/human) is first in the cut order and is not in this build.
  */
 
-const CAPTURE_SECONDS = 30;
-// The worker (camera lock + face + 30 s + stop + POST) takes 45-60 s from launch, and the presenter
-// may only launch it after pressing Start here, so keep polling well past the countdown.
+const CAPTURE_SECONDS = 30; // hand-started worker: its 30 s recording is already under way
+// Armed flow (Start told the laptop worker to capture): the laptop needs ~10-20 s to lock the camera
+// and find the face, then records 30 s, so the hold-still countdown runs a full minute.
+const HOLD_SECONDS = 60;
+// The worker (camera lock + face + 30 s + stop + POST) takes 45-60 s from launch; keep polling well
+// past the countdown for a slow face lock or a retry.
 const SETTLE_SECONDS = 75;
 const POLL_MS = 3000;
 
@@ -50,7 +53,14 @@ export default function CameraScreen() {
   const [secondsLeft, setSecondsLeft] = useState(CAPTURE_SECONDS);
   const [reading, setReading] = useState<VitalsOut | null>(null);
   const captureStart = useRef<number>(0);
-  const [captureStartMs, setCaptureStartMs] = useState(0);
+  // armed_at from POST /vitals/arm (server clock). When set, only a row the API received after it
+  // counts, so a re-Start never finishes on the previous reading; without it (no token, arm failed,
+  // hand-started worker) a row captured up to 60 s before Start is accepted.
+  const armedAt = useRef<number | null>(null);
+  const accepts = (row: VitalsOut) =>
+    armedAt.current != null
+      ? new Date(row.received_at).getTime() >= armedAt.current
+      : new Date(row.captured_at).getTime() >= captureStart.current - 60_000;
   const timers = useRef<{ tick?: ReturnType<typeof setInterval>; poll?: ReturnType<typeof setInterval>; stop?: ReturnType<typeof setTimeout> }>({});
 
   const clearTimers = () => {
@@ -98,6 +108,8 @@ export default function CameraScreen() {
   };
 
   const [previewAvailable, setPreviewAvailable] = useState(true);
+  // 'armed': the API accepted the arm, so a worker left running with --watch will capture now.
+  const [armState, setArmState] = useState<'idle' | 'arming' | 'armed' | 'failed'>('idle');
 
   const start = async () => {
     let granted = permission?.granted ?? false;
@@ -109,29 +121,45 @@ export default function CameraScreen() {
     setPreviewAvailable(granted);
     setReading(null);
     setFitness(null);
+    // Tell the laptop worker (presage-worker --watch) to capture; a hand-started worker still works.
+    armedAt.current = null;
+    if (hasToken()) {
+      setArmState('arming');
+      try {
+        const arm = await api.armVitals();
+        armedAt.current = arm.armed_at ? new Date(arm.armed_at).getTime() : null;
+        setArmState(armedAt.current != null ? 'armed' : 'failed');
+      } catch {
+        setArmState('failed');
+      }
+    } else {
+      setArmState('idle');
+    }
+    const holdSeconds = armedAt.current != null ? HOLD_SECONDS : CAPTURE_SECONDS;
     captureStart.current = Date.now();
-    setCaptureStartMs(captureStart.current);
-    setSecondsLeft(CAPTURE_SECONDS);
+    setSecondsLeft(holdSeconds);
     setPhase('capturing');
     timers.current.tick = setInterval(() => {
       const elapsed = Math.floor((Date.now() - captureStart.current) / 1000);
-      const left = Math.max(0, CAPTURE_SECONDS - elapsed);
+      const left = Math.max(0, holdSeconds - elapsed);
       setSecondsLeft(left);
       if (left === 0) setPhase((p) => (p === 'capturing' ? 'settling' : p));
     }, 500);
     timers.current.poll = setInterval(async () => {
       const row = await fetchLatest();
-      if (row && new Date(row.captured_at).getTime() >= captureStart.current - 60_000) finish(row);
+      if (row && accepts(row)) finish(row);
     }, POLL_MS);
     timers.current.stop = setTimeout(() => {
       clearTimers();
       setPhase((p) => (p === 'done' ? p : 'timeout'));
-    }, (CAPTURE_SECONDS + SETTLE_SECONDS) * 1000);
+    }, (holdSeconds + SETTLE_SECONDS) * 1000);
   };
 
   const stop = () => {
     clearTimers();
     setPhase('idle');
+    setArmState('idle');
+    if (hasToken()) api.disarmVitals().catch(() => undefined);
   };
 
   const shown = reading ?? latest;
@@ -190,7 +218,8 @@ export default function CameraScreen() {
                 <ThemedText type="smallBold">Measure now</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   Face the light, hold still, keep your face inside the oval. The camera preview stays on this device; the
-                  measurement runs on the demo laptop&apos;s webcam and the numbers appear here.
+                  measurement runs on the demo laptop&apos;s webcam and the numbers appear here. Start tells the laptop
+                  worker to capture (it must be running with --watch).
                 </ThemedText>
                 {permission && !permission.granted && !permission.canAskAgain && (
                   <ThemedText type="small" themeColor="silence">
@@ -204,8 +233,9 @@ export default function CameraScreen() {
                 )}
                 {phase === 'timeout' && (
                   <ThemedText type="small" themeColor="silence">
-                    No reading arrived{account ? ` for ${account}` : ''}. On the demo laptop run the worker (`node index.mjs`, or
-                    `--replay` for the recorded capture), check its terminal says it posted as this account, and start again.
+                    No reading arrived{account ? ` for ${account}` : ''}. On the demo laptop the worker must be running
+                    (`node index.mjs --watch`, add `--replay test/fixtures/capture_real.json` when there is no camera) and its
+                    terminal must list this account. Then press Start again.
                   </ThemedText>
                 )}
                 <Pressable style={styles.primaryButton} onPress={start}>
@@ -234,10 +264,25 @@ export default function CameraScreen() {
                     </ThemedText>
                   </View>
                 </View>
-                <QualityBar phase={phase} confidence={latest && new Date(latest.captured_at).getTime() >= captureStartMs - 60_000 ? latest.confidence : null} />
+                <QualityBar phase={phase} confidence={latest && accepts(latest) ? latest.confidence : null} />
                 <ThemedText type="small" themeColor="textSecondary">
-                  {phase === 'capturing' ? 'Hold still. Breathe normally.' : 'Capture finished. Waiting for the reading to arrive…'}
+                  {armState === 'armed'
+                    ? phase === 'capturing'
+                      ? 'Face the laptop webcam and hold still. It records for 30 seconds once it finds your face.'
+                      : 'Keep still a little longer. Waiting for the reading to arrive…'
+                    : phase === 'capturing'
+                      ? 'Hold still. Breathe normally.'
+                      : 'Capture finished. Waiting for the reading to arrive…'}
                 </ThemedText>
+                {armState !== 'idle' && (
+                  <ThemedText type="small" themeColor={armState === 'failed' ? 'silence' : 'textMuted'}>
+                    {armState === 'arming'
+                      ? 'Telling the laptop worker to capture…'
+                      : armState === 'armed'
+                        ? 'Laptop worker told to capture (needs node index.mjs --watch running there).'
+                        : 'Could not reach the API to start the laptop worker; run node index.mjs there by hand.'}
+                  </ThemedText>
+                )}
                 <Pressable style={styles.secondaryButton} onPress={stop}>
                   <ThemedText type="smallBold" themeColor="accent">
                     Cancel

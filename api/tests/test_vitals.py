@@ -5,6 +5,7 @@ import json
 import pytest
 
 from app.config import REPO_DIR
+from app.routes import vitals as vitals_routes
 from app.routes.vitals import get_store
 
 WORKER_PAYLOAD = REPO_DIR / "presage-worker" / "test" / "fixtures" / "payload.json"
@@ -15,8 +16,10 @@ BASE = {"source": "presage", "pulse_bpm": 62, "breathing_bpm": 14, "stress_index
 @pytest.fixture(autouse=True)
 def fresh_store(client):
     get_store().clear()
+    vitals_routes.clear_arms()
     yield
     get_store().clear()
+    vitals_routes.clear_arms()
 
 
 def test_latest_is_404_when_empty(client):
@@ -65,3 +68,56 @@ def test_worker_fixture_payload_is_accepted_verbatim(client):
 
 def test_health_reports_memory_db(client):
     assert client.get("/health").json()["db"] == "memory"
+
+
+# ---- /vitals/arm: the phone's Start asks the laptop worker (--watch) for one capture ----
+
+
+def test_arm_is_idle_by_default(client):
+    body = client.get("/vitals/arm").json()
+    assert body == {"armed_at": None, "pending": False, "window_s": vitals_routes.ARM_WINDOW_S}
+
+
+def test_arm_then_post_clears_pending(client):
+    r = client.post("/vitals/arm")
+    assert r.status_code == 200 and r.json()["pending"] is True and r.json()["armed_at"]
+    assert client.get("/vitals/arm").json()["pending"] is True
+    # a row captured before the arm but received after it still satisfies it: received_at is what counts
+    assert client.post("/vitals", json=BASE).status_code == 200
+    body = client.get("/vitals/arm").json()
+    assert body["pending"] is False and body["armed_at"]  # armed_at is kept so the worker can dedupe
+
+
+def test_arm_ignores_rows_received_before_it(client):
+    client.post("/vitals", json=BASE)
+    client.post("/vitals/arm")
+    assert client.get("/vitals/arm").json()["pending"] is True
+
+
+def test_arm_expires_after_window(client, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    t0 = datetime(2026, 9, 13, 14, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0)
+    client.post("/vitals/arm")
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0 + timedelta(seconds=vitals_routes.ARM_WINDOW_S + 1))
+    body = client.get("/vitals/arm").json()
+    assert body["pending"] is False and body["armed_at"].startswith("2026-09-13T14:00:00")
+
+
+def test_disarm(client):
+    client.post("/vitals/arm")
+    r = client.delete("/vitals/arm")
+    assert r.status_code == 200 and r.json()["pending"] is False and r.json()["armed_at"] is None
+    assert client.get("/vitals/arm").json()["pending"] is False
+
+
+def test_rearm_moves_armed_at(client, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    t0 = datetime(2026, 9, 13, 14, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0)
+    client.post("/vitals/arm")
+    monkeypatch.setattr(vitals_routes, "_now", lambda: t0 + timedelta(seconds=5))
+    body = client.post("/vitals/arm").json()
+    assert body["armed_at"].startswith("2026-09-13T14:00:05") and body["pending"] is True

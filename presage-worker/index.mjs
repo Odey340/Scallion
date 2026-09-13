@@ -21,6 +21,43 @@ const verbose = args.includes('--verbose');
 const dump = flag('dump', '');
 const replay = flag('replay', '');
 
+// --watch: stay running and capture whenever a phone presses Start (GET /vitals/arm, contract v12).
+// Each capture is a child `node index.mjs` with the other flags passed through, so an SDK hang in
+// one capture cannot take the watcher down and the camera is released between captures.
+if (args.includes('--watch')) {
+  const { watchLoop } = await import('./src/watch.mjs');
+  const { spawn } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const self = fileURLToPath(import.meta.url);
+  const childArgs = args.filter((a) => a !== '--watch');
+  const watchTokens = parseTokens(process.env.SCALLION_API_TOKEN);
+  const watchUrl = process.env.SCALLION_API_URL || 'http://localhost:8000';
+  if (!process.env.PRESAGE_API_KEY && !replay) {
+    console.error('PRESAGE_API_KEY is empty. Put the key from physiology.presagetech.com in ../.env (see .env.example).');
+    process.exit(2);
+  }
+  console.error(`[presage] watching ${watchUrl}/vitals/arm for ${watchTokens.length || 'anonymous'} account(s)${replay ? ` (replay ${replay})` : ''}; press Start on the phone`);
+  for (const t of watchTokens) console.error(`[presage]   ${describeToken(t)}`);
+  await watchLoop({
+    apiUrl: watchUrl,
+    tokens: watchTokens,
+    runCapture: () =>
+      new Promise((resolve) => {
+        // Deadline: the SDK can block natively (camera held by another app, no timer fires in the
+        // child), so the watcher kills a child that has not exited and keeps serving later Starts.
+        const deadlineS = replay ? 60 : 180;
+        const child = spawn(process.execPath, [self, ...childArgs], { stdio: 'inherit', env: process.env });
+        const timer = setTimeout(() => {
+          console.error(`[presage] capture hung for ${deadlineS} s; killed it. Press Start again`);
+          child.kill();
+          resolve(1);
+        }, deadlineS * 1000);
+        child.on('exit', (code) => { clearTimeout(timer); resolve(code ?? 1); });
+        child.on('error', (e) => { clearTimeout(timer); console.error(`[presage] could not start capture: ${e.message}`); resolve(1); });
+      }),
+  });
+}
+
 const apiKey = process.env.PRESAGE_API_KEY;
 if (!apiKey && !replay) {
   console.error('PRESAGE_API_KEY is empty. Put the key from physiology.presagetech.com in ../.env (see .env.example).');

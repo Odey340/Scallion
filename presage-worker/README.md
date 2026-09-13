@@ -7,11 +7,17 @@ SDK process; only the numbers below go over the wire.
 
 ```
 npm install                 # pulls the native runtime for every platform (a few hundred MB, once)
-npm test                    # summarize + post unit tests, no camera, no key
+npm test                    # summarize + token + watch unit tests, no camera, no key
+node index.mjs --watch      # DEMO: stay running; capture + POST each time a phone presses Start
 node index.mjs --dry-run    # capture and print, do not POST
-node index.mjs              # capture and POST to $SCALLION_API_URL/vitals
+node index.mjs              # one capture, POST to $SCALLION_API_URL/vitals
 node index.mjs --seconds 30 --device 0 --verbose
+node index.mjs --watch --replay test/fixtures/capture_real.json   # no camera: post the recorded capture per Start
 ```
+
+`--watch` polls `GET /vitals/arm` for every token every 2 s (contract v12). When the camera screen's
+Start arms an account, it spawns one `node index.mjs` child (the other flags pass through) that
+captures, POSTs, and exits; then it goes back to polling. Leave it running for the whole demo.
 
 Environment (read from the repo-root `.env`): `PRESAGE_API_KEY` (physiology.presagetech.com),
 `SCALLION_API_URL` (default `http://localhost:8000`), `SCALLION_API_TOKEN` (one or more Supabase JWTs,
