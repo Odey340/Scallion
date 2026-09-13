@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 
 import { HeaderAuthButton } from '@/components/header-auth-button';
 import { Wordmark } from '@/components/wordmark';
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors, Fonts, GlassBlur } from '@/constants/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -23,14 +23,16 @@ export default function TabsLayout() {
         headerShown: true,
         headerTitle: () => <Wordmark />,
         headerRight: () => <HeaderAuthButton />,
-        headerStyle: { backgroundColor: Colors.surface },
+        headerStyle: { backgroundColor: Colors.surface, ...GlassBlur },
         headerShadowVisible: false,
         headerTintColor: Colors.text,
+        sceneStyle: { backgroundColor: 'transparent' },
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
+          ...GlassBlur,
         },
         tabBarLabelStyle: {
           fontFamily: Fonts.bodyMedium,

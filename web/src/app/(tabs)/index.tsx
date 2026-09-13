@@ -1,14 +1,15 @@
 import { Link, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Image, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedNumber, AnimatedPressable, FadeInUp } from '@/components/animated';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { ANALYTE_LABELS } from '@/components/waterfall';
 import { Wordmark } from '@/components/wordmark';
 import { cupLabel, formatClock } from '@/constants/profile-options';
-import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { CardShadow, Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { lastCoffeeHoursBeforeBed, subtractHours, type CaffeineData } from '@/engine/caffeine';
 import { ANALYTES, type PhenoAgeData, type Sex } from '@/engine/phenoage';
 import { parseStoredInputs, rebuildDrivers, type Drivers } from '@/engine/phenoage-drivers';
@@ -27,24 +28,12 @@ import { missingFields, PROFILE_FEATURES, useProfile, type UserProfile } from '@
  * stored age (engine/phenoage-drivers.ts). The coffee line runs caffeine.json's rule on the profile.
  * The nudge and circle state come from the circle summary.
  *
- * Visual language on this screen only (docs/log/C.md — visual redesign pass): a warm-paper ground,
- * an ink headline color, and thin rules in place of the boxed/shadowed cards used elsewhere in the
- * app — a small, deliberate departure scoped to Home, reusing the app's own blue/green/red semantics
- * so navigating to another tab still reads as the same product.
+ * Visual language (docs/log/C.md Session 29 — glassmorphism dashboard pass): every card on this
+ * screen is a translucent glass surface (Colors.surface) over the app-wide gradient painted once in
+ * the root layout, using the same tokens every other screen now uses — see constants/theme.ts.
  */
 
 const WIDE = 960;
-
-// Home-only palette. Deliberately not added to constants/theme.ts: the redesign brief scoped this
-// pass to Home, and every other screen keeps its existing look. The accent blue and the
-// connection/silence green & red are the app's own (Colors.accent/.connection/.silence) — kept
-// as-is everywhere below, so Home still feels like the same product once you tap to another tab.
-const Paper = {
-  ground: '#FBFAF7',
-  ink: '#141C2C',
-  hairline: '#E4E0D6',
-  muted: '#6B6558',
-} as const;
 
 type ClockRow = ClockOut & { delta_years: number | null; show: boolean };
 
@@ -240,12 +229,6 @@ export default function HomeScreen() {
   );
 }
 
-const PILLARS: { key: string; label: string; image: number }[] = [
-  { key: 'labs', label: 'Biological age', image: require('@/assets/images/scallion/labs-blood-sample.jpg') },
-  { key: 'fitness', label: 'Fitness', image: require('@/assets/images/scallion/fitness-activity-watch.jpg') },
-  { key: 'circle', label: 'Circle', image: require('@/assets/images/scallion/circle-friends.jpg') },
-];
-
 function Welcome() {
   return (
     <View style={styles.welcome}>
@@ -254,34 +237,24 @@ function Welcome() {
         Know your biological age. Know your circle. Then move both.
       </ThemedText>
 
-      <View style={styles.triptych}>
-        {PILLARS.map((p) => (
-          <View key={p.key} style={styles.triptychItem}>
-            <View style={styles.triptychFrame}>
-              <Image source={p.image} style={styles.triptychPhoto} resizeMode="cover" accessibilityLabel={p.label} />
-            </View>
-            <ThemedText type="small" style={styles.triptychLabel}>
-              {p.label}
-            </ThemedText>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.welcomeActions}>
-        <LinkButton href="/start" primary>
-          Fitness age in ten seconds
-        </LinkButton>
-        <LinkButton href="/labs">Upload labs or try a sample</LinkButton>
-      </View>
-      <ThemedText type="small" style={styles.welcomeFootnote}>
-        Estimate, not diagnosis. Nothing is required up front — Scallion only asks for what a feature needs.
-      </ThemedText>
+      <ThemedView type="surface" style={[styles.card, CardShadow, styles.welcomeCard]}>
+        <ThemedText type="smallBold">Get your first number</ThemedText>
+        <View style={styles.welcomeActions}>
+          <LinkButton href="/start" primary>
+            Fitness age in ten seconds
+          </LinkButton>
+          <LinkButton href="/labs">Upload labs or try a sample</LinkButton>
+        </View>
+        <ThemedText type="small" style={styles.welcomeFootnote}>
+          Estimate, not diagnosis. Nothing is required up front — Scallion only asks for what a feature needs.
+        </ThemedText>
+      </ThemedView>
     </View>
   );
 }
 
 function StatePill({ state }: { state: 'distancing' | 'active' | 'steady' }) {
-  const color = state === 'distancing' ? Colors.silence : state === 'active' ? Colors.connection : Paper.muted;
+  const color = state === 'distancing' ? Colors.silence : state === 'active' ? Colors.connection : Colors.textSecondary;
   const text = state === 'distancing' ? 'Circle: distancing' : state === 'active' ? 'Circle: active' : 'Circle: steady';
   return (
     <View style={styles.pill}>
@@ -310,7 +283,7 @@ function ClockHero({
 
   if (critical || (clock && !clock.show)) {
     return (
-      <View style={styles.hero}>
+      <ThemedView type="surface" style={[styles.hero, CardShadow]}>
         <ThemedText type="small" style={styles.sectionLabel}>
           Biological age
         </ThemedText>
@@ -322,13 +295,13 @@ function ClockHero({
           seen the report.
         </ThemedText>
         <LinkButton href="/labs">Review the report</LinkButton>
-      </View>
+      </ThemedView>
     );
   }
 
   if (!clock) {
     return (
-      <View style={styles.hero}>
+      <ThemedView type="surface" style={[styles.hero, CardShadow]}>
         <ThemedText type="small" style={styles.sectionLabel}>
           Your clock
         </ThemedText>
@@ -350,7 +323,7 @@ function ClockHero({
             </View>
           </>
         )}
-      </View>
+      </ThemedView>
     );
   }
 
@@ -370,7 +343,7 @@ function ClockHero({
   }
 
   return (
-    <View style={styles.hero}>
+    <ThemedView type="surface" style={[styles.hero, CardShadow]}>
       <ThemedText type="small" style={styles.sectionLabel}>
         {isPheno ? 'Biological age — PhenoAge' : 'Fitness age'}
       </ThemedText>
@@ -418,7 +391,7 @@ function ClockHero({
         {estimate}.{isPheno ? ` ${source ?? 'Levine et al. 2018'}.` : ''}
         {clock.computedAt ? ` Computed ${formatDay(clock.computedAt)}.` : ''}
       </ThemedText>
-    </View>
+    </ThemedView>
   );
 }
 
@@ -639,7 +612,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <ThemedText type="small" style={styles.sectionLabel}>
         {title}
       </ThemedText>
-      {children}
+      <ThemedView type="surface" style={[styles.card, CardShadow]}>
+        {children}
+      </ThemedView>
     </View>
   );
 }
@@ -657,7 +632,7 @@ function LinkButton({ href, primary, children }: { href: Href; primary?: boolean
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Paper.ground },
+  container: { flex: 1 },
   safeArea: { flex: 1, alignItems: 'center' },
   scrollOuter: { flex: 1, width: '100%' },
   scrollContent: { alignItems: 'center' },
@@ -672,66 +647,52 @@ const styles = StyleSheet.create({
   columns: { flexDirection: 'row', gap: Spacing.six, alignItems: 'flex-start' },
   mainCol: { flex: 3, minWidth: 0 },
   sideCol: { flex: 2, minWidth: 0 },
-  column: { gap: Spacing.six },
+  column: { gap: Spacing.three },
 
   // Typography — a quiet, sentence-case section label instead of tracked-out caps; used for every
   // section heading on this screen (Today, What is moving it, Today's move, Tonight, Your data).
   sectionLabel: {
     fontFamily: Fonts.displayMedium,
     fontSize: 15,
-    color: Paper.muted,
+    color: Colors.textSecondary,
   },
-  mutedText: { color: Paper.muted },
-  footnote: { color: Paper.muted },
+  mutedText: { color: Colors.textSecondary },
+  footnote: { color: Colors.textMuted },
   tabular: { fontVariant: ['tabular-nums'] },
 
   todayRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
-  // Welcome (first visit only) — the one place on this screen with photography; see manifest.json
-  // in assets/images/scallion for where the three photos come from.
-  welcome: { gap: Spacing.four, paddingTop: Spacing.two },
-  welcomeTagline: { color: Paper.muted, maxWidth: 420, fontSize: 17, lineHeight: 25 },
-  triptych: { flexDirection: 'row', gap: Spacing.three },
-  triptychItem: { flex: 1, gap: Spacing.two },
-  triptychFrame: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: Radius.small,
-    backgroundColor: Colors.surfaceRaised,
-    overflow: 'hidden',
-  },
-  triptychPhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  triptychLabel: { color: Paper.muted, textAlign: 'center' },
-  welcomeActions: { gap: Spacing.two, alignItems: 'flex-start', marginTop: Spacing.two },
-  welcomeFootnote: { color: Paper.muted, maxWidth: 480 },
-
-  // The clock hero — no card, no shadow; the number is the only bold gesture on the page.
-  hero: { gap: Spacing.two },
-  heroBody: { color: Paper.ink, maxWidth: 440 },
-  bigRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two },
-  bigNumber: { fontSize: 128, lineHeight: 128, color: Paper.ink, letterSpacing: -2 },
-  bigUnit: { paddingBottom: Spacing.four, color: Paper.muted },
-  interpretation: { color: Paper.ink },
-
-  section: {
+  // Every card on this screen (glass surface over the page gradient) shares this shape.
+  card: {
+    borderRadius: Radius.large,
+    padding: Spacing.four,
     gap: Spacing.two,
-    paddingTop: Spacing.four,
-    borderTopWidth: 1,
-    borderTopColor: Paper.hairline,
   },
-  sideBody: { color: Paper.ink },
+
+  welcome: { gap: Spacing.four, paddingTop: Spacing.two },
+  welcomeTagline: { color: Colors.textSecondary, maxWidth: 420, fontSize: 17, lineHeight: 25 },
+  welcomeCard: { gap: Spacing.three },
+  welcomeActions: { gap: Spacing.two, alignItems: 'flex-start' },
+  welcomeFootnote: { color: Colors.textMuted, maxWidth: 480 },
+
+  hero: { borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.two },
+  heroBody: { color: Colors.text, maxWidth: 440 },
+  bigRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two },
+  bigNumber: { fontSize: 96, lineHeight: 100, color: Colors.text, letterSpacing: -1.5 },
+  bigUnit: { paddingBottom: Spacing.three, color: Colors.textSecondary },
+  interpretation: { color: Colors.text },
+
+  section: { gap: Spacing.two },
+  sideBody: { color: Colors.text },
 
   drivers: { gap: Spacing.three, marginVertical: Spacing.two },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  driverName: { width: 128, color: Paper.ink },
-  driverBarTrack: { flex: 1, height: 3, backgroundColor: Paper.hairline, borderRadius: 1.5, overflow: 'hidden' },
+  driverName: { width: 128, color: Colors.text },
+  driverBarTrack: { flex: 1, height: 3, backgroundColor: Colors.border, borderRadius: 1.5, overflow: 'hidden' },
   driverBar: { height: 3, borderRadius: 1.5 },
-  driverValue: { width: 64, textAlign: 'right', fontVariant: ['tabular-nums'], color: Paper.ink },
+  driverValue: { width: 64, textAlign: 'right', fontVariant: ['tabular-nums'], color: Colors.text },
 
-  coffeeTime: { fontSize: 20, lineHeight: 24, color: Paper.ink },
+  coffeeTime: { fontSize: 20, lineHeight: 24, color: Colors.text },
 
   dataRow: {
     flexDirection: 'row',
@@ -741,9 +702,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     minHeight: 44,
     borderBottomWidth: 1,
-    borderBottomColor: Paper.hairline,
+    borderBottomColor: Colors.border,
   },
-  dataLabel: { color: Paper.ink },
+  dataLabel: { color: Colors.text },
   dataValue: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexShrink: 1 },
 
   pill: {

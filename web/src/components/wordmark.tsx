@@ -1,24 +1,25 @@
 import { Link } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable } from 'react-native';
 
-import { Colors, Fonts } from '@/constants/theme';
-import { ThemedText } from '@/components/themed-text';
+// Source is 788x182 (media/Scallion Logo.png, trimmed) — kept as one constant so every
+// size below scales from the same aspect ratio instead of guessing per-use dimensions.
+const LOGO_ASPECT = 788 / 182;
 
 const SIZES = {
-  small: { dot: 8, gap: 6, fontSize: 18 },
-  large: { dot: 20, gap: 14, fontSize: 52 },
+  small: { height: 28 },
+  large: { height: 64 },
 } as const;
 
 /** The mark itself; `Wordmark` below wraps this in a link to Home for every header use. */
 function Mark({ size = 'small' }: { size?: keyof typeof SIZES }) {
-  const s = SIZES[size];
+  const height = SIZES[size].height;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: s.gap }}>
-      <View style={{ width: s.dot, height: s.dot, borderRadius: s.dot / 2, backgroundColor: Colors.accent }} />
-      <ThemedText style={{ fontFamily: Fonts.display, fontSize: s.fontSize, color: Colors.text, letterSpacing: 0.2 }}>
-        Scallion
-      </ThemedText>
-    </View>
+    <Image
+      source={require('@/assets/images/scallion/logo.png')}
+      accessibilityLabel="Scallion"
+      resizeMode="contain"
+      style={{ height, width: height * LOGO_ASPECT }}
+    />
   );
 }
 
