@@ -307,6 +307,7 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 
 **Next:** someone should walk the full loop once on a phone (send code, type it, Save answers -> "Saved to your account", Persona). Revoke `SUPABASE_ACCESS_TOKEN` and `VERCEL_TOKEN` and rotate `RESEND_API_KEY` after judging. **Contract changes needed:** None.
 
+<<<<<<< HEAD
 ## Session 19 (2026-09-12): fixed misleading sign-in gates; audited the app for a UX/profile-reuse pass; shipped Phase 1 (persistent profile store)
 
 **Human report, two items:** (1) after the fake local sign-in, Camera/Coach still gated on "Sign in" as if finishing onboarding would unlock them; (2) asked me to check whether Supabase now works on GitHub, with the explicit instruction "if not, don't implement just yet."
@@ -332,4 +333,6 @@ Concurrent with sessions 5-9 above (discovered on rebase, not before) — renumb
 **Contract changes needed:** None — Phase 1 is pure client-side persistence; no `docs/contracts.md` interface changed.
 
 **Post-rebase note:** the "Blocked: Supabase decision" line two paragraphs up was written before rebasing onto Joseph's `dd79be1` (above) — that decision is no longer pending, it's made and deployed: real Supabase sign-in, rebuilt on top of this session's questionnaire/profile-store work rather than reverting it. Rebasing Phase 1 onto that commit meant re-merging `onboarding.tsx` and `camera.tsx` by hand (their real-session sign-in structure plus this session's `useProfile()`/`updateProfile()` prefill-and-write-back calls, which don't touch auth at all) — the profile store composes cleanly with whichever auth mechanism is live, real or demo-token. This session's honest "local profile but no demo account" messaging in `camera.tsx`/`coach.tsx` is superseded by their fix and correctly gone (a real session now genuinely satisfies `hasToken()`, so "Sign in" is no longer a dead-end there); `labs.tsx`/`index.tsx`'s equivalent messaging (files Joseph's commit didn't touch) still stands and is still accurate for the no-token case.
+=======
+>>>>>>> 6a7130b ([D] Persona: mint a hosted one-time link server-side when PERSONA_API_KEY is set (no environment-id needed); fall back to the template link; tests)
 **Persona fix (cross-lane, at Joseph's request):** see `docs/log/D.md` item 33. `/me.verify_url` is now a Persona one-time link minted server-side when `PERSONA_API_KEY` is set; no environment id needed. Onboarding's "Verify with Persona" button is unchanged.
